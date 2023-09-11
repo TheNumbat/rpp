@@ -98,7 +98,7 @@ void debug_break() {
 
 #endif
 
-void log_impl(Level level, Location loc, String_View msg) {
+void output(Level level, Location loc, String_View msg) {
 
     const char* level_str;
     const char* format_str;
