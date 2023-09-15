@@ -320,6 +320,18 @@ i32 main() {
         }
     }
 
+    // Hash
+    {
+        u64 h0 = Hash::hash("Hello"_v);
+        u64 h1 = Hash::hash("World"_v.string());
+        u64 h2 = Hash::hash(0);
+        u64 h3 = Hash::hash(0ll);
+        u64 h4 = Hash::hash(0ull);
+        u64 h5 = Hash::hash(0.0f);
+        u64 h6 = Hash::hash(0.0);
+        printf("%llu %llu %llu %llu %llu %llu %llu\n", h0, h1, h2, h3, h4, h5, h6);
+    }
+
     assert(sys_net_allocs() == 0);
 
     return 0;

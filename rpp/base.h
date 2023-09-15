@@ -102,3 +102,5 @@ typedef double f64;
 #include "queue.h"
 
 #include "heap.h"
+
+#include "hash.h"
