@@ -56,7 +56,7 @@ struct Queue {
 
     template<Allocator B = A>
     Queue<T, B> clone() const
-        requires Clone<T>
+        requires Clone<T> || Trivial<T>
     {
         Queue<T, B> ret;
         ret.data_ = reinterpret_cast<T*>(B::alloc(capacity_ * sizeof(T)));
@@ -64,24 +64,16 @@ struct Queue {
         ret.last_ = last_;
         ret.capacity_ = capacity_;
 
-        u64 start = start_idx();
-        u64 end = end_idx();
-        for(u64 i = start; i != end; i = i == capacity_ - 1 ? 0 : i + 1) {
-            new(&ret.data_[i]) T{data_[i].clone()};
+        if constexpr(Clone<T>) {
+            u64 start = start_idx();
+            u64 end = end_idx();
+            for(u64 i = start; i != end; i = i == capacity_ - 1 ? 0 : i + 1) {
+                new(&ret.data_[i]) T{data_[i].clone()};
+            }
+        } else {
+            static_assert(Trivial<T>);
+            std::memcpy(ret.data_, data_, capacity_ * sizeof(T));
         }
-        return ret;
-    }
-
-    template<Allocator B = A>
-    Queue<T, B> clone() const
-        requires Trivial<T>
-    {
-        Queue<T, B> ret;
-        ret.data_ = reinterpret_cast<T*>(B::alloc(capacity_ * sizeof(T)));
-        ret.length_ = length_;
-        ret.last_ = last_;
-        ret.capacity_ = capacity_;
-        std::memcpy(ret.data_, data_, capacity_ * sizeof(T));
         return ret;
     }
 
@@ -134,7 +126,7 @@ struct Queue {
     T& push(T&& value)
         requires Move_Constructable<T>
     {
-        if(length_ == capacity_) grow();
+        if(full()) grow();
 
         new(&data_[last_]) T{std::move(value)};
         T& ret = data_[last_];
@@ -148,7 +140,7 @@ struct Queue {
     T& emplace(Args&&... args)
         requires Constructable<T, Args...>
     {
-        if(length_ == capacity_) grow();
+        if(full()) grow();
 
         new(&data_[last_]) T{std::forward<Args>(args)...};
         T& ret = data_[last_];

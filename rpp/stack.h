@@ -25,16 +25,7 @@ struct Stack {
 
     template<Allocator B = A>
     Stack<T, B> clone() const
-        requires Clone<T>
-    {
-        Stack<T, B> ret;
-        ret.data_ = data_.clone();
-        return ret;
-    }
-
-    template<Allocator B = A>
-    Stack<T, B> clone() const
-        requires Trivial<T>
+        requires Clone<T> || Trivial<T>
     {
         Stack<T, B> ret;
         ret.data_ = data_.clone();

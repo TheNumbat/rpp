@@ -100,3 +100,5 @@ typedef double f64;
 #include "stack.h"
 
 #include "queue.h"
+
+#include "heap.h"

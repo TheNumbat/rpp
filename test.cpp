@@ -263,9 +263,11 @@ i32 main() {
         v.push(3);
 
         assert(v.length() == 3);
+        assert(v.front() == 1);
 
         v.pop();
         assert(v.length() == 2);
+        assert(v.front() == 2);
 
         Queue<i32> v2 = v.clone();
         Queue<i32> v3 = std::move(v2);
@@ -279,6 +281,43 @@ i32 main() {
         assert(sv3.length() == 2);
 
         Queue<M> m;
+    }
+
+    // Heap
+    {
+        {
+            Heap<String<>> sv{"Hello"_v.string(), "World"_v.string()};
+            sv.pop();
+        }
+
+        Heap<i32> v;
+        v.push(1);
+        v.push(2);
+        v.push(3);
+        v.push(0);
+
+        assert(v.length() == 4);
+        assert(v.top() == 0);
+
+        v.pop();
+        assert(v.length() == 3);
+        assert(v.top() == 1);
+
+        Heap<i32> v2 = v.clone();
+        Heap<i32> v3 = std::move(v2);
+
+        assert(v3.length() == 3);
+
+        Heap<SV> sv{"Hello"_v, "World"_v};
+        Heap<SV> sv2 = sv.clone();
+        Heap<SV> sv3 = std::move(sv2);
+
+        assert(sv3.length() == 2);
+
+        Heap<SV> o{"a"_v, "aa"_v, "ab"_v, "bb"_v, "aab"_v};
+        while(o.length() > 0) {
+            o.pop();
+        }
     }
 
     assert(sys_net_allocs() == 0);

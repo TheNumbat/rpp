@@ -27,6 +27,7 @@ set(SOURCES_RPP
     "vec.h"
     "stack.h"
     "queue.h"
+    "heap.h"
 )
 
 if(WIN32)

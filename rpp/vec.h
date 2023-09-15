@@ -58,23 +58,18 @@ struct Vec {
 
     template<Allocator B = A>
     Vec<T, B> clone() const
-        requires Clone<T>
+        requires Clone<T> || Trivial<T>
     {
         Vec<T, B> ret(capacity_);
         ret.length_ = length_;
-        for(u64 i = 0; i < length_; i++) {
-            new(&ret.data_[i]) T{data_[i].clone()};
+        if constexpr(Clone<T>) {
+            for(u64 i = 0; i < length_; i++) {
+                new(&ret.data_[i]) T{data_[i].clone()};
+            }
+        } else {
+            static_assert(Trivial<T>);
+            std::memcpy(ret.data_, data_, length_ * sizeof(T));
         }
-        return ret;
-    }
-
-    template<Allocator B = A>
-    Vec<T, B> clone() const
-        requires Trivial<T>
-    {
-        Vec<T, B> ret(capacity_);
-        ret.length_ = length_;
-        std::memcpy(ret.data_, data_, length_ * sizeof(T));
         return ret;
     }
 

@@ -279,6 +279,11 @@ concept Equality = requires(T l, T r) {
     { l != r } -> Same<bool>;
 };
 
+template<typename T>
+concept Ordered = requires(T l, T r) {
+    { l < r } -> Same<bool>;
+};
+
 template<u64 N, typename... Ts>
 concept Length = sizeof...(Ts) == N;
 
