@@ -3,7 +3,7 @@
 
 namespace rpp {
 
-template<typename T, Allocator A = Mdefault>
+template<Movable T, Allocator A = Mdefault>
 struct Stack {
 
     Stack() = default;

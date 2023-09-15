@@ -33,6 +33,17 @@ struct Pair {
         return Pair<A, B>{first.clone(), second.clone()};
     }
 
+    template<u64 Index>
+    auto& get() {
+        if constexpr(Index == 0) return first;
+        if constexpr(Index == 1) return second;
+    }
+    template<u64 Index>
+    const auto& get() const {
+        if constexpr(Index == 0) return first;
+        if constexpr(Index == 1) return second;
+    }
+
     A first;
     B second;
 };
@@ -47,43 +58,3 @@ struct Reflect<Pair<A, B>> {
 };
 
 } // namespace rpp
-
-namespace std {
-
-using rpp::Pair;
-
-template<typename A, typename B>
-struct tuple_size<Pair<A, B>> {
-    static constexpr size_t value = 2;
-};
-template<typename A, typename B>
-struct tuple_element<0, Pair<A, B>> {
-    using type = A;
-};
-template<typename A, typename B>
-struct tuple_element<1, Pair<A, B>> {
-    using type = B;
-};
-
-template<size_t Index, typename A, typename B>
-tuple_element_t<Index, Pair<A, B>>& get(Pair<A, B>& p) {
-    if constexpr(Index == 0) return p.first;
-    if constexpr(Index == 1) return p.second;
-}
-template<size_t Index, typename A, typename B>
-const tuple_element_t<Index, Pair<A, B>>& get(const Pair<A, B>& p) {
-    if constexpr(Index == 0) return p.first;
-    if constexpr(Index == 1) return p.second;
-}
-template<size_t Index, typename A, typename B>
-tuple_element_t<Index, Pair<A, B>>&& get(Pair<A, B>&& p) {
-    if constexpr(Index == 0) return move(p.first);
-    if constexpr(Index == 1) return move(p.second);
-}
-template<size_t Index, typename A, typename B>
-const tuple_element_t<Index, Pair<A, B>>&& get(const Pair<A, B>&& p) {
-    if constexpr(Index == 0) return move(p.first);
-    if constexpr(Index == 1) return move(p.second);
-}
-
-} // namespace std

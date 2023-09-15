@@ -3,7 +3,7 @@
 
 namespace rpp {
 
-template<typename T, Allocator A = Mdefault>
+template<Movable T, Allocator A = Mdefault>
 struct Queue {
 
     Queue() = default;
@@ -77,16 +77,12 @@ struct Queue {
         return ret;
     }
 
-    void grow()
-        requires Trivially_Movable<T> || Move_Constructable<T>
-    {
+    void grow() {
         u64 new_capacity = capacity_ ? 2 * capacity_ : 8;
         reserve(new_capacity);
     }
 
-    void reserve(u64 new_capacity)
-        requires Trivially_Movable<T> || Move_Constructable<T>
-    {
+    void reserve(u64 new_capacity) {
         if(new_capacity <= capacity_) return;
 
         T* new_data = reinterpret_cast<T*>(A::alloc(new_capacity * sizeof(T)));
@@ -250,10 +246,9 @@ struct Queue {
         return found;
     }
 
-    template<typename E>
+    template<bool const_>
     struct Iterator {
-        Iterator(Queue<E, A>& queue, u64 count) : queue_(queue), count_(count) {
-        }
+        using Q = typename If<const_, const Queue, Queue>::type;
 
         Iterator operator++() {
             count_++;
@@ -265,17 +260,21 @@ struct Queue {
             return prev;
         }
 
-        E& operator*() {
+        T& operator*() const
+            requires(!const_)
+        {
             return queue_.data_[queue_.idx_at(count_)];
         }
-        const E& operator*() const {
+        const T& operator*() const {
             return queue_.data_[queue_.idx_at(count_)];
         }
 
-        E* operator->() {
+        T* operator->() const
+            requires(!const_)
+        {
             return &queue_.data_[queue_.idx_at(count_)];
         }
-        const E* operator->() const {
+        const T* operator->() const {
             return &queue_.data_[queue_.idx_at(count_)];
         }
 
@@ -283,25 +282,31 @@ struct Queue {
             return &queue_ == &rhs.queue_ && count_ == rhs.count_;
         }
 
-        Queue<E, A>& queue_;
+    private:
+        Iterator(Q& queue, u64 count) : queue_(queue), count_(count) {
+        }
+
+        Q& queue_;
         u64 count_ = 0;
+
+        friend struct Queue;
     };
 
-    using iterator = Iterator<T>;
-    using const_iterator = Iterator<const T>;
+    using iterator = Iterator<false>;
+    using const_iterator = Iterator<true>;
 
     iterator begin() {
-        return Iterator<T>{*this, 0};
+        return iterator{*this, 0};
     }
     const_iterator begin() const {
-        return Iterator<const T>{*this, 0};
+        return const_iterator{*this, 0};
     }
 
     iterator end() {
-        return Iterator<T>{*this, length_};
+        return iterator{*this, length_};
     }
     const_iterator end() const {
-        return Iterator<const T>{*this, length_};
+        return const_iterator{*this, length_};
     }
 
 private:
@@ -324,6 +329,8 @@ private:
     u64 capacity_ = 0;
 
     friend struct Reflect<Queue>;
+    template<bool>
+    friend struct Iterator;
 };
 
 template<typename Q, Allocator A>

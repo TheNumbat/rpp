@@ -104,3 +104,5 @@ typedef double f64;
 #include "heap.h"
 
 #include "hash.h"
+
+#include "map.h"

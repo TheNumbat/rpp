@@ -72,19 +72,21 @@ struct Opt {
     }
 
     T& operator*() {
+        assert(ok_);
         return *value_;
     }
     const T& operator*() const {
+        assert(ok_);
         return *value_;
     }
 
-    T& get_or(T& value) {
-        if(!ok_) return value;
-        return *value_;
+    T* operator->() {
+        assert(ok_);
+        return &*value_;
     }
-    const T& get_or(const T& value) const {
-        if(!ok_) return value;
-        return *value_;
+    const T* operator->() const {
+        assert(ok_);
+        return &*value_;
     }
 
     operator bool() const {

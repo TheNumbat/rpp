@@ -83,16 +83,20 @@ struct Box {
         return data_ != null;
     }
     T* operator->() {
+        assert(data_);
         return data_;
     }
     const T* operator->() const {
+        assert(data_);
         return data_;
     }
 
     T& operator*() {
+        assert(data_);
         return *data_;
     }
     const T& operator*() const {
+        assert(data_);
         return *data_;
     }
 

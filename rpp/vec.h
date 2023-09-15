@@ -6,7 +6,7 @@ namespace rpp {
 template<typename T>
 struct Slice;
 
-template<typename T, Allocator A = Mdefault>
+template<Movable T, Allocator A = Mdefault>
 struct Vec {
 
     Vec() = default;
@@ -73,9 +73,7 @@ struct Vec {
         return ret;
     }
 
-    void grow()
-        requires Trivially_Movable<T> || Move_Constructable<T>
-    {
+    void grow() {
         u64 new_capacity = capacity_ ? 2 * capacity_ : 8;
         reserve(new_capacity);
     }
@@ -89,9 +87,7 @@ struct Vec {
         length_ = 0;
     }
 
-    void reserve(u64 new_capacity)
-        requires Trivially_Movable<T> || Move_Constructable<T>
-    {
+    void reserve(u64 new_capacity) {
         if(new_capacity <= capacity_) return;
 
         T* new_data = reinterpret_cast<T*>(A::alloc(new_capacity * sizeof(T)));

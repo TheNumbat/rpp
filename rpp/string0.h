@@ -191,8 +191,8 @@ inline bool operator<(const String_View& l, const String_View& r) {
 }
 
 template<Allocator A, Allocator B>
-bool operator!=(const String<A>& l, const String<B>& r) {
-    if(l.length() != r.length()) return true;
+bool operator==(const String<A>& l, const String<B>& r) {
+    if(l.length() != r.length()) return false;
     return std::strncmp(reinterpret_cast<const char*>(l.data()),
                         reinterpret_cast<const char*>(r.data()), l.length()) == 0;
 }

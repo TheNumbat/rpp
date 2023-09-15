@@ -1,4 +1,6 @@
 
+#include <functional>
+
 #include "rpp/base.h"
 
 using namespace rpp;
@@ -113,9 +115,6 @@ i32 main() {
         o = 5;
         assert(o);
 
-        i32 i = o.get_or(10);
-        assert(i == 5);
-
         Opt<i32> o2 = o;
         Opt<i32> o3 = std::move(o2);
 
@@ -126,8 +125,7 @@ i32 main() {
         SV vv = std::move(*os3);
         assert(vv == "Hello"_v);
 
-        const SV& v = os.get_or("World"_v);
-        assert(v == "Hello"_v);
+        assert(os->length() == 5);
 
         Opt<M> m;
     }
@@ -143,8 +141,23 @@ i32 main() {
         assert(c[2] == 3);
 
         for(i32 i : c) {
-            assert(i > 0 && i < 5);
+            printf("%d ", i);
         }
+        printf("\n");
+        for(i32& i : c) {
+            printf("%d ", i);
+        }
+        printf("\n");
+
+        const Array<i32, 4>& cc = c;
+        for(i32 i : cc) {
+            printf("%d ", i);
+        }
+        printf("\n");
+        for(const i32& i : cc) {
+            printf("%d ", i);
+        }
+        printf("\n");
 
         Array<i32, 4> d = std::move(c);
         assert(d[2] == 3);
@@ -164,6 +177,25 @@ i32 main() {
         v.push(3);
 
         assert(v.length() == 3);
+
+        for(i32 i : v) {
+            printf("%d ", i);
+        }
+        printf("\n");
+        for(i32& i : v) {
+            printf("%d ", i);
+        }
+        printf("\n");
+
+        const auto& constv = v;
+        for(i32 i : constv) {
+            printf("%d ", i);
+        }
+        printf("\n");
+        for(const i32& i : constv) {
+            printf("%d ", i);
+        }
+        printf("\n");
 
         v.pop();
         assert(v.length() == 2);
@@ -198,8 +230,12 @@ i32 main() {
         Slice<M> smm;
         Slice<M> sm = {M{}};
 
-        Vec<M> m;
-        Slice<M> m2{m};
+        Slice<M> m2{};
+
+        Vec<std::function<void()>> vf;
+        for(i32 i = 0; i < 10; i++) {
+            vf.push([]() { printf("Hello\n"); });
+        }
     }
 
     // Box
@@ -233,6 +269,25 @@ i32 main() {
 
         assert(v.length() == 3);
 
+        for(i32 i : v) {
+            printf("%d ", i);
+        }
+        printf("\n");
+        for(i32& i : v) {
+            printf("%d ", i);
+        }
+        printf("\n");
+
+        const auto& constv = v;
+        for(i32 i : constv) {
+            printf("%d ", i);
+        }
+        printf("\n");
+        for(const i32& i : constv) {
+            printf("%d ", i);
+        }
+        printf("\n");
+
         v.pop();
         assert(v.length() == 2);
 
@@ -247,7 +302,10 @@ i32 main() {
 
         assert(sv3.length() == 2);
 
-        Stack<M> m;
+        Stack<std::function<void()>> vf;
+        for(i32 i = 0; i < 10; i++) {
+            vf.push([]() { printf("Hello\n"); });
+        }
     }
 
     // Queue
@@ -261,6 +319,25 @@ i32 main() {
         v.push(1);
         v.push(2);
         v.push(3);
+
+        for(i32 i : v) {
+            printf("%d ", i);
+        }
+        printf("\n");
+        for(i32& i : v) {
+            printf("%d ", i);
+        }
+        printf("\n");
+
+        const auto& constv = v;
+        for(i32 i : constv) {
+            printf("%d ", i);
+        }
+        printf("\n");
+        for(const i32& i : constv) {
+            printf("%d ", i);
+        }
+        printf("\n");
 
         assert(v.length() == 3);
         assert(v.front() == 1);
@@ -280,7 +357,10 @@ i32 main() {
 
         assert(sv3.length() == 2);
 
-        Queue<M> m;
+        Queue<std::function<void()>> vf;
+        for(i32 i = 0; i < 10; i++) {
+            vf.push([]() { printf("Hello\n"); });
+        }
     }
 
     // Heap
@@ -295,6 +375,25 @@ i32 main() {
         v.push(2);
         v.push(3);
         v.push(0);
+
+        for(i32 i : v) {
+            printf("%d ", i);
+        }
+        printf("\n");
+        for(i32& i : v) {
+            printf("%d ", i);
+        }
+        printf("\n");
+
+        const auto& constv = v;
+        for(i32 i : constv) {
+            printf("%d ", i);
+        }
+        printf("\n");
+        for(const i32& i : constv) {
+            printf("%d ", i);
+        }
+        printf("\n");
 
         assert(v.length() == 4);
         assert(v.top() == 0);
@@ -318,18 +417,77 @@ i32 main() {
         while(o.length() > 0) {
             o.pop();
         }
+
+        struct F {
+            std::function<void()> f;
+            bool operator<(const F& other) const {
+                return true;
+            }
+        };
+
+        Heap<F> vf;
+        for(i32 i = 0; i < 10; i++) {
+            vf.push({[]() { printf("Hello\n"); }});
+        }
     }
 
-    // Hash
+    // Map
     {
-        u64 h0 = Hash::hash("Hello"_v);
-        u64 h1 = Hash::hash("World"_v.string());
-        u64 h2 = Hash::hash(0);
-        u64 h3 = Hash::hash(0ll);
-        u64 h4 = Hash::hash(0ull);
-        u64 h5 = Hash::hash(0.0f);
-        u64 h6 = Hash::hash(0.0);
-        printf("%llu %llu %llu %llu %llu %llu %llu\n", h0, h1, h2, h3, h4, h5, h6);
+        {
+            Map<String<>, String<>> sv{Pair{"Hello"_v.string(), "World"_v.string()}};
+            //
+        }
+
+        Map<i32, i32> v;
+        v.insert(1, 1);
+        v.insert(2, 2);
+        v.insert(3, 3);
+
+        for(auto [k, vv] : v) {
+            vv = k;
+            printf("%d %d\n", k, vv);
+        }
+        for(auto& [k, vv] : v) {
+            vv = k;
+            printf("%d %d\n", k, vv);
+        }
+
+        const auto& constv = v;
+        for(auto [k, vv] : constv) {
+            k = 0;
+            vv = k;
+            printf("%d %d\n", k, vv);
+        }
+        for(const auto& [k, vv] : constv) {
+            printf("%d %d\n", k, vv);
+        }
+
+        assert(v.length() == 3);
+        assert(v.get(1) == 1);
+
+        v.erase(2);
+        assert(v.length() == 2);
+        assert(v.get(3) == 3);
+
+        Map<i32, i32> v2 = v.clone();
+        Map<i32, i32> v3 = std::move(v2);
+
+        assert(v3.length() == 2);
+
+        Map<i32, String_View> i_sv{Pair{1, "Hello"_v}, Pair{2, "World"_v}};
+        Map<SV, i32> sv_i{Pair{"Hello"_v, 1}, Pair{"World"_v, 2}};
+
+        Map<SV, SV> sv{Pair{"Hello"_v, "World"_v}};
+
+        Map<SV, SV> sv2 = sv.clone();
+        Map<SV, SV> sv3 = std::move(sv2);
+
+        assert(sv3.length() == 1);
+
+        Map<i32, std::function<void()>> ff;
+        for(i32 i = 0; i < 40; i++) {
+            ff.insert(i, []() { printf("Hello\n"); });
+        }
     }
 
     assert(sys_net_allocs() == 0);

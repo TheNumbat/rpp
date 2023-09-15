@@ -276,7 +276,6 @@ concept Int = Is_Int<I>::value;
 template<typename T>
 concept Equality = requires(T l, T r) {
     { l == r } -> Same<bool>;
-    { l != r } -> Same<bool>;
 };
 
 template<typename T>
@@ -284,11 +283,14 @@ concept Ordered = requires(T l, T r) {
     { l < r } -> Same<bool>;
 };
 
-template<u64 N, typename... Ts>
-concept Length = sizeof...(Ts) == N;
-
 template<typename T>
 concept Trivial = std::is_trivial_v<T>;
+
+template<typename T>
+concept Movable = Move_Constructable<T> || Trivial<T>;
+
+template<u64 N, typename... Ts>
+concept Length = sizeof...(Ts) == N;
 
 template<typename T>
 concept Clone = Move_Constructable<T> && requires(T value) {

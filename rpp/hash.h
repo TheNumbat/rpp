@@ -1,10 +1,9 @@
 
 #pragma once
 
-namespace rpp::Hash {
+namespace rpp {
 
-template<typename K>
-using Hasher = u64(K);
+namespace Hash {
 
 inline u64 squirrel5(u64 at) {
     constexpr u64 BIT_NOISE1 = 0xA278032FB08BA40Dul;
@@ -30,7 +29,7 @@ inline u64 combine(u64 h1, u64 h2) {
 }
 
 template<Int I>
-inline u64 hash(I key) {
+u64 hash(I key) {
     return squirrel5(static_cast<u64>(key));
 }
 
@@ -43,12 +42,12 @@ inline u64 hash(f64 key) {
 }
 
 template<typename T>
-inline u64 hash(T* key) {
+u64 hash(T* key) {
     return hash(static_cast<u64>(reinterpret_cast<uintptr_t>(key)));
 }
 
-template<Allocator A>
-inline u64 hash(const String<A>& string) {
+template<Allocator A = Mdefault>
+u64 hash(const String<A>& string) {
     u64 h = 0;
     for(u8 c : string) h = combine(h, hash(static_cast<u64>(c)));
     return h;
@@ -65,10 +64,22 @@ inline u64 hash(Log::Location l) {
 }
 
 template<typename T, u64 N>
-inline u64 hash(Math::Vect<T, N> v) {
+u64 hash(Math::Vect<T, N> v) {
     u64 h = 0;
     for(u64 i = 0; i < N; i++) h = combine(h, hash(v[i]));
     return h;
 }
 
-} // namespace rpp::Hash
+} // namespace Hash
+
+template<typename K>
+concept Hashable = requires(K k) {
+    { Hash::hash(k) } -> Same<u64>;
+};
+
+template<Hashable T>
+u64 hash(T&& value) {
+    return Hash::hash(std::forward<T>(value));
+}
+
+} // namespace rpp
