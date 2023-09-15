@@ -50,7 +50,7 @@ void set_priority(Priority p) {
     }
     bool ret = SetThreadPriority(GetCurrentThread(), value);
     if(!ret) {
-        die("Failed to set thread % to priority %", this_id(), p);
+        warn("Failed to set thread % to priority %", this_id(), p);
     }
 }
 
@@ -63,7 +63,7 @@ void set_affinity(u64 core) {
     DWORD_PTR mask = 1ll << core;
     DWORD_PTR ret = SetThreadAffinityMask(GetCurrentThread(), mask);
     if(!ret) {
-        die("Failed to set thread affinity to %: %", core, Log::sys_error());
+        warn("Failed to set thread affinity to %: %", core, Log::sys_error());
     }
 }
 
