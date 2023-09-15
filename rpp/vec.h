@@ -135,6 +135,12 @@ struct Vec {
         return length_ == capacity_;
     }
 
+    T& push(const T& value)
+        requires Trivial<T>
+    {
+        return push(T{value});
+    }
+
     T& push(T&& value)
         requires Move_Constructable<T>
     {

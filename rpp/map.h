@@ -131,14 +131,16 @@ public:
         return length_;
     }
 
+    V& insert(const K& key, const V& value)
+        requires Trivial<K> && Trivial<V>
+    {
+        return insert(K{key}, V{value});
+    }
+
     V& insert(const K& key, V&& value)
         requires Trivial<K>
     {
-        if(full()) grow();
-        Slot slot{K{key}, std::move(value)};
-        Slot& placed = insert_slot(std::move(slot));
-        length_ += 1;
-        return placed.data->second;
+        return insert(K{key}, std::move(value));
     }
 
     V& insert(K&& key, V&& value) {
@@ -187,7 +189,7 @@ public:
             u64 k = data_[idx].hash;
             if(k == EMPTY_SLOT) return {};
             if(k == hash && data_[idx].data->first == key) {
-                return Opt{Ref{data_[idx].data->second}};
+                return Opt{Ref<const V>{data_[idx].data->second}};
             }
             u64 kidx = k >> shift_;
             u64 kdist = kidx <= idx ? idx - kidx : capacity_ + idx - kidx;
@@ -236,6 +238,16 @@ public:
 
     void erase(const K& key) {
         if(!try_erase(key)) die("Failed to erase key %!", key);
+    }
+
+    V& get_or_insert(K&& key)
+        requires Default_Constructable<V>
+    {
+        Opt<Ref<V>> entry = try_get(key);
+        if(entry) {
+            return **entry;
+        }
+        return insert(std::move(key), V{});
     }
 
     template<bool const_>

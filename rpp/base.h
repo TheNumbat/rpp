@@ -106,3 +106,7 @@ typedef double f64;
 #include "hash.h"
 
 #include "map.h"
+
+#include "profile.h"
+
+#include "rng.h"

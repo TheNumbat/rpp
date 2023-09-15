@@ -28,6 +28,10 @@ set(SOURCES_RPP
     "stack.h"
     "queue.h"
     "heap.h"
+    "map.h"
+    "profile.cpp"
+    "profile.h"
+    "rng.h"
 )
 
 if(WIN32)

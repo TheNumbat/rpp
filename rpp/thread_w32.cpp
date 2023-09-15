@@ -28,7 +28,7 @@ static u64 get_perf_frequency() {
     return li.QuadPart;
 }
 
-u64 perf_freq() {
+u64 perf_frequency() {
     static u64 cache = get_perf_frequency();
     return cache;
 }

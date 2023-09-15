@@ -9,7 +9,9 @@
 #include <errno.h>
 #endif
 
-namespace rpp::Log {
+namespace rpp {
+
+namespace Log {
 
 struct Static_Data {
     Thread::Mutex lock;
@@ -166,4 +168,10 @@ Scope::~Scope() {
     g_log_indent--;
 }
 
-} // namespace rpp::Log
+} // namespace Log
+
+bool operator==(const Log::Location& a, const Log::Location& b) {
+    return a.function == b.function && a.file == b.file && a.line == b.line && a.column == b.column;
+}
+
+} // namespace rpp

@@ -119,6 +119,12 @@ struct Queue {
         data_ = new_data;
     }
 
+    T& push(const T& value)
+        requires Trivial<T>
+    {
+        return push(T{value});
+    }
+
     T& push(T&& value)
         requires Move_Constructable<T>
     {

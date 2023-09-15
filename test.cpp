@@ -7,8 +7,16 @@ using namespace rpp;
 
 i32 main() {
 
+    Profile::track_alloc_stats();
+    Thread::set_priority(Thread::Priority::high);
+    Profile::start_thread();
+
+    Profile::begin_frame();
+
     // Alloc0
     {
+        Prof_Scope("Alloc0");
+
         using A = Mallocator<"Test">;
         void* ptr = A::alloc(100);
         A::free(ptr);
@@ -16,6 +24,8 @@ i32 main() {
 
     // Ref0/1
     {
+        Prof_Scope("Ref0/1");
+
         i32 i = 5;
         Ref<i32> r{i};
 
@@ -28,6 +38,8 @@ i32 main() {
 
     // String0
     {
+        Prof_Scope("String0");
+
         String_View sv = "Hello World"_v;
         String s = sv.string();
 
@@ -53,6 +65,8 @@ i32 main() {
 
     // Thread0
     {
+        Prof_Scope("Thread0");
+
         Thread::Mutex mut;
         mut.lock();
         mut.unlock();
@@ -61,6 +75,8 @@ i32 main() {
 
     // Log
     {
+        Prof_Scope("Log");
+
         info("Info");
         warn("Warn");
     }
@@ -70,6 +86,8 @@ i32 main() {
 
     // Pair
     {
+        Prof_Scope("Pair");
+
         Pair<i32, i32> p{1, 2};
         assert(p.first == 1 && p.second == 2);
 
@@ -89,6 +107,8 @@ i32 main() {
 
     // Storage
     {
+        Prof_Scope("Storage");
+
         Storage<String<>> s;
         s.construct("Hello"_v.string());
         s.destruct();
@@ -110,6 +130,8 @@ i32 main() {
 
     // Opt
     {
+        Prof_Scope("Opt");
+
         Opt<i32> o;
         assert(!o);
         o = 5;
@@ -132,6 +154,8 @@ i32 main() {
 
     // Array
     {
+        Prof_Scope("Array");
+
         Array<i32, 1> a;
         a[0] = 5;
 
@@ -171,6 +195,8 @@ i32 main() {
 
     // Vec
     {
+        Prof_Scope("Vec");
+
         Vec<i32> v;
         v.push(1);
         v.push(2);
@@ -240,6 +266,8 @@ i32 main() {
 
     // Box
     {
+        Prof_Scope("Box");
+
         Box<i32> b{5};
         assert(b && *b == 5);
 
@@ -262,6 +290,8 @@ i32 main() {
 
     // Stack
     {
+        Prof_Scope("Stack");
+
         Stack<i32> v;
         v.push(1);
         v.push(2);
@@ -310,6 +340,8 @@ i32 main() {
 
     // Queue
     {
+        Prof_Scope("Queue");
+
         {
             Queue<String<>> sv{"Hello"_v.string(), "World"_v.string()};
             sv.pop();
@@ -365,6 +397,8 @@ i32 main() {
 
     // Heap
     {
+        Prof_Scope("Heap");
+
         {
             Heap<String<>> sv{"Hello"_v.string(), "World"_v.string()};
             sv.pop();
@@ -433,6 +467,8 @@ i32 main() {
 
     // Map
     {
+        Prof_Scope("Map");
+
         {
             Map<String<>, String<>> sv{Pair{"Hello"_v.string(), "World"_v.string()}};
             //
@@ -490,7 +526,8 @@ i32 main() {
         }
     }
 
-    assert(sys_net_allocs() == 0);
+    Profile::end_frame();
+    Profile::end_thread();
 
     return 0;
 }

@@ -42,6 +42,12 @@ struct Stack {
         return data_.full();
     }
 
+    T& push(const T& value)
+        requires Trivial<T>
+    {
+        return push(T{value});
+    }
+
     T& push(T&& value)
         requires Move_Constructable<T>
     {

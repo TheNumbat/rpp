@@ -64,6 +64,8 @@ void log(Level level, Location loc, String_View fmt, Ts&&... args) {
 
 } // namespace Log
 
+bool operator==(const Log::Location& a, const Log::Location& b);
+
 template<>
 struct Reflect<Log::Level> {
     using T = Log::Level;
