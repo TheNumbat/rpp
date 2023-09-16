@@ -564,6 +564,12 @@ i32 main() {
         i32 i = 0;
         info("%", Ref{i});
 
+        info("%", null);
+        info("%", &i);
+
+        info("%", Box<i32>{});
+        info("%", Box<i32>{i});
+
         info("%", Pair{23, 13.0f});
 
         info("%", Storage<Ints>{});
