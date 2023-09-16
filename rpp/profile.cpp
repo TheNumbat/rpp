@@ -22,7 +22,7 @@ void Profile::start_thread() {
     assert(!threads.contains(id));
 
     this_thread.during_frame = false;
-    threads.insert(id, &this_thread);
+    threads.insert(id, Ref{this_thread});
 }
 
 void Profile::end_thread() {

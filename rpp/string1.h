@@ -36,4 +36,25 @@ inline String_View String_View::file_suffix() const {
     return String_View{data_ + i + offset, length_ - i - offset};
 }
 
+template<Allocator A>
+u64 String<A>::write(u64 i, char c) {
+    assert(i < length_);
+    data_[i] = c;
+    return i + 1;
+}
+
+template<Allocator A>
+u64 String<A>::write(u64 i, const String& text) {
+    assert(i + text.length_ < length_);
+    std::memcpy(data_ + i, text.data_, text.length_);
+    return i + text.length_;
+}
+
+template<Allocator A>
+u64 String<A>::write(u64 i, const String_View& text) {
+    assert(i + text.length() < length_);
+    std::memcpy(data_ + i, text.data(), text.length());
+    return i + text.length();
+}
+
 } // namespace rpp

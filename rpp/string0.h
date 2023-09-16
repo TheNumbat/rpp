@@ -10,11 +10,11 @@ struct String_View {
 
     String_View() = default;
     explicit String_View(const char* c_string)
-        : data_(reinterpret_cast<const u8*>(c_string)), length_(std::strlen(c_string) + 1) {
+        : data_(reinterpret_cast<const u8*>(c_string)), length_(std::strlen(c_string)) {
     }
     explicit String_View(const Literal& literal)
         : data_(reinterpret_cast<const u8*>(literal.c_string)),
-          length_(std::strlen(literal.c_string) + 1) {
+          length_(std::strlen(literal.c_string)) {
     }
     explicit String_View(const u8* data, u64 length) : data_(data), length_(length) {
     }
@@ -125,6 +125,10 @@ struct String {
     String_View view() const {
         return String_View{data_, length_};
     }
+
+    u64 write(u64 i, char c);
+    u64 write(u64 i, const String& text);
+    u64 write(u64 i, const String_View& text);
 
     u8* begin() {
         return data_;

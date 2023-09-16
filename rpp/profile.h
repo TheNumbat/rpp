@@ -78,21 +78,20 @@ struct Profile {
         for(auto& entry : threads) {
 
             Thread::Id id = entry.first;
-            Thread_Profile& tp = entry.second;
+            Thread_Profile& thread = *entry.second;
+            Thread::Lock frames_lock(thread.frames_lock);
 
-            Thread::Lock flock(tp->frames_lock);
-
-            Frame_Profile& fp = null;
-            if(tp->during_frame && tp->frames.size() > 1u) {
-                fp = tp->frames.penultimate();
-            } else if(!tp->during_frame && !tp->frames.empty()) {
-                fp = tp->frames.back();
+            Frame_Profile* frame = null;
+            if(thread.during_frame && thread.frames.length() > 1u) {
+                frame = &thread.frames.penultimate();
+            } else if(!thread.during_frame && !thread.frames.empty()) {
+                frame = &thread.frames.back();
             } else {
                 continue;
             }
 
-            for(auto& node : fp.nodes) {
-                f(node);
+            for(auto& node : frame->nodes) {
+                f(id, node);
             }
         }
     }
@@ -101,6 +100,9 @@ struct Profile {
 
 private:
     struct Alloc_Profile {
+        Alloc_Profile() {
+        }
+
         i64 allocates = 0, frees = 0;
         i64 allocate_size = 0, free_size = 0;
         i64 high_water = 0;
@@ -121,7 +123,10 @@ private:
     };
 
     struct Thread_Profile {
-        bool during_frame = false;
+        Thread_Profile() : during_frame(false) {
+        }
+
+        bool during_frame;
         Thread::Mutex frames_lock;
         Queue<Frame_Profile, Mhidden> frames;
     };
@@ -131,7 +136,7 @@ private:
     static inline Thread::Mutex threads_lock;
     static inline Thread::Mutex allocs_lock;
     static inline thread_local Thread_Profile this_thread;
-    static inline Map<Thread::Id, Thread_Profile*, Mhidden> threads;
+    static inline Map<Thread::Id, Ref<Thread_Profile>, Mhidden> threads;
     static inline Map<String_View, Alloc_Profile, Mhidden> allocs;
 };
 

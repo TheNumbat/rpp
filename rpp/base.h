@@ -77,6 +77,8 @@ typedef double f64;
 
 #include "log.h"
 
+#include "format.h"
+
 #include "ref1.h"
 
 #include "pair.h"
@@ -89,13 +91,9 @@ typedef double f64;
 
 #include "vec.h"
 
-#include "alloc1.h"
-
 #include "string1.h"
 
 #include "box.h"
-
-#include "format.h"
 
 #include "stack.h"
 
@@ -110,3 +108,5 @@ typedef double f64;
 #include "profile.h"
 
 #include "rng.h"
+
+#include "alloc1.h"

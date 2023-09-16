@@ -100,7 +100,7 @@ void debug_break() {
 
 #endif
 
-void output(Level level, Location loc, String_View msg) {
+void output(Level level, const Location& loc, const String_View& msg) {
 
     const char* level_str;
     const char* format_str;

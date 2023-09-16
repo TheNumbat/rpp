@@ -5,6 +5,21 @@
 
 using namespace rpp;
 
+struct Ints {
+    i32 i;
+    u16 u;
+};
+namespace rpp {
+template<>
+struct Reflect<Ints> {
+    using T = Ints;
+    static constexpr Literal name = "Ints";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(i), FIELD(u)>;
+    static_assert(Record<T>);
+};
+} // namespace rpp
+
 i32 main() {
 
     Profile::track_alloc_stats();
@@ -524,6 +539,20 @@ i32 main() {
         for(i32 i = 0; i < 40; i++) {
             ff.insert(i, []() { printf("Hello\n"); });
         }
+    }
+
+    // Format
+    {
+        printf("Size: %zu\n", format_length("%"_v, true));
+        printf("Size: %zu\n", format_length("%"_v, false));
+
+        i32 array[2] = {1, 2};
+        printf("Size: %zu\n", format_length("%"_v, array));
+
+        printf("Size: %zu\n", format_length("%"_v, Ints{1, 2}));
+        // Ints{i : 1, u : 2}
+
+        printf("Size: %zu\n", format_length("%"_v, Kind::enum_));
     }
 
     Profile::end_frame();

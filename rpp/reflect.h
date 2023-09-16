@@ -432,8 +432,8 @@ struct Reflect;
 
 template<typename T>
 concept Reflectable = requires() {
-    { Reflect<T>::name } -> Same<Literal>;
-    { Reflect<T>::kind } -> Same<Kind>;
+    Same<Literal, decltype(Reflect<T>::name)>;
+    Same<Kind, decltype(Reflect<T>::kind)>;
 };
 
 template<typename E, E V, Literal N>
@@ -511,11 +511,11 @@ struct Invoke_Field {
         requires Field_Iterator<F, typename RF::type>
     void apply() {
         using T = typename RF::type;
-        T* field = reinterpret_cast<T*>(address + RF::offset);
+        const T* field = reinterpret_cast<const T*>(address + RF::offset);
         f.template apply<T>(RF::name, *field);
     }
     F f;
-    u8* address;
+    const u8* address;
 };
 
 template<Enum E, typename F>
@@ -527,7 +527,7 @@ void iterate_enum(F&& f) {
 
 template<Record R, typename F>
 void iterate_record(F&& f, R& record) {
-    u8* address = reinterpret_cast<u8*>(&record);
+    const u8* address = reinterpret_cast<const u8*>(&record);
     list::Iter<Invoke_Field<F>, typename Reflect<R>::members>::apply(
         Invoke_Field<F>{std::forward<F>(f), address});
 }
@@ -654,6 +654,7 @@ using detail::Kind;
 using detail::Literal;
 using detail::Record;
 using detail::Reflect;
+using detail::Reflectable;
 
 using detail::iterate_enum;
 using detail::iterate_record;
