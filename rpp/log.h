@@ -2,7 +2,7 @@
 #pragma once
 
 #define Here Log::Location::make(std::source_location::current())
-#define Log_Scope Log::Scope __log_scope_##__COUNTER__
+#define Log_Scope Log::Scope log_scope__##__COUNTER__
 
 #define info(fmt, ...) (void)(Log::log(Log::Level::info, Here, fmt##_v, ##__VA_ARGS__), 0)
 
@@ -58,7 +58,8 @@ void output(Level level, const Location& loc, const String_View& msg);
 
 template<typename... Ts>
 void log(Level level, const Location& loc, const String_View& fmt, const Ts&... args) {
-    output(level, std::move(loc), format<Mhidden>(fmt, args...).view());
+    Region_Scope;
+    output(level, std::move(loc), format<Mregion>(fmt, args...).view());
 }
 
 } // namespace Log

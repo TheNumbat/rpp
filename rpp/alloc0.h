@@ -21,6 +21,31 @@ struct Mallocator {
     static void free(void* mem);
 };
 
+#define Region_Scope Mregion::Scope region_scope__##__COUNTER__
+
+struct Mregion {
+    static constexpr Literal name = "Region";
+
+    static void* alloc(u64 size);
+    static void free(void* mem);
+
+    struct Scope {
+        Scope();
+        ~Scope();
+    };
+
+    static void begin();
+    static void end();
+
+    static constexpr u64 REGION_COUNT = 64;
+    static constexpr u64 REGION_STACK_SIZE = Math::MB(64);
+
+    static inline thread_local u64 current_region = 0;
+    static inline thread_local u64 current_offset = 0;
+    static inline thread_local u64 region_offsets[REGION_COUNT] = {};
+    static inline thread_local u8 stack_memory[REGION_STACK_SIZE] = {};
+};
+
 using Mdefault = Mallocator<"Default">;
 
 using Mhidden = Mallocator<"Hidden", false>;

@@ -303,7 +303,7 @@ concept Clone = Move_Constructable<T> && requires(T value) {
 namespace detail {
 
 struct Literal {
-    static constexpr u64 max_len = 32;
+    static constexpr u64 max_len = 16;
     template<size_t N>
     constexpr Literal(const char (&literal)[N]) {
         static_assert(N <= max_len);

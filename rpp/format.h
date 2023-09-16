@@ -5,6 +5,13 @@ namespace rpp {
 
 namespace formatting {
 
+template<Allocator A, Reflectable T>
+u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) {
+    char buffer[64] = {};
+    std::snprintf(buffer, 64, fmt, value);
+    return output.write(idx, String_View{buffer});
+}
+
 template<Reflectable T>
 u64 measure(const T& value);
 
@@ -196,13 +203,6 @@ u64 measure(const Map<K, V, A>& map) {
 }
 
 template<Allocator A, Reflectable T>
-u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) {
-    char buffer[64] = {};
-    std::snprintf(buffer, 64, fmt, value);
-    return output.write(idx, String_View{buffer});
-}
-
-template<Allocator A, Reflectable T>
 u64 write(String<A>& output, u64 idx, const T& value) {
     using R = Reflect<T>;
 
@@ -379,10 +379,11 @@ u64 write(String<O>& output, u64 idx, const Map<K, V, A>& map) {
 
 template<Allocator A, typename... Ts>
     requires(Reflectable<Ts> && ...)
-void write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx, Ts&&... args);
+u64 write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx,
+          const Ts&... args);
 
 template<Allocator A>
-void write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx) {
+u64 write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx) {
     for(; fmt_idx < fmt.length(); fmt_idx++) {
         if(fmt[fmt_idx] == '%') {
             assert(fmt_idx + 1 < fmt.length() && fmt[fmt_idx + 1] == '%');
@@ -392,12 +393,13 @@ void write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_id
         }
         output_idx = output.write(output_idx, fmt[fmt_idx]);
     }
+    return output_idx;
 }
 
 template<Allocator A, typename T, typename... Ts>
     requires(Reflectable<T> && (Reflectable<Ts> && ...))
-void write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx, T&& arg,
-           Ts&&... args) {
+u64 write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx, const T& arg,
+          const Ts&... args) {
     for(; fmt_idx < fmt.length(); fmt_idx++) {
         if(fmt[fmt_idx] == '%') {
             if(fmt_idx + 1 < fmt.length() && fmt[fmt_idx + 1] == '%') {
@@ -406,15 +408,14 @@ void write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_id
                 continue;
             }
             fmt_idx++;
-            output_idx = formatting::write(output, output_idx, std::forward<T>(arg));
-            formatting::write(fmt, fmt_idx, output, output_idx, std::forward<Ts>(args)...);
-            return;
+            output_idx = write(output, output_idx, arg);
+            output_idx = write(fmt, fmt_idx, output, output_idx, args...);
+            return output_idx;
         }
         output_idx = output.write(output_idx, fmt[fmt_idx]);
     }
+    return output_idx;
 }
-
-} // namespace formatting
 
 inline Pair<u64, u64> parse_fmt(const String_View& fmt) {
     u64 length = 0, args = 0;
@@ -434,17 +435,19 @@ inline Pair<u64, u64> parse_fmt(const String_View& fmt) {
     return Pair{length, args};
 }
 
+} // namespace formatting
+
 template<typename... Ts>
     requires(Reflectable<Ts> && ...)
 u64 format_length(const String_View& fmt, const Ts&... args) {
-    auto [fmt_length, n_args] = parse_fmt(fmt);
+    auto [fmt_length, n_args] = formatting::parse_fmt(fmt);
     assert(n_args == sizeof...(args));
-    return fmt_length + (formatting::measure<Ts>(args) + ...);
+    return fmt_length + (formatting::measure(args) + ...);
 }
 
 template<>
 inline u64 format_length(const String_View& fmt) {
-    return parse_fmt(fmt).first;
+    return formatting::parse_fmt(fmt).first;
 }
 
 template<Allocator A, typename... Ts>
@@ -453,7 +456,8 @@ String<A> format(const String_View& fmt, const Ts&... args) {
     u64 length = format_length(fmt, args...);
     String<A> output{length};
     output.set_length(length);
-    formatting::write(fmt, 0, output, 0, args...);
+    u64 idx = formatting::write(fmt, 0, output, 0, args...);
+    assert(idx == length);
     return output;
 }
 

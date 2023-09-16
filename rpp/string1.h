@@ -52,7 +52,7 @@ u64 String<A>::write(u64 i, char c) {
 template<Allocator A>
 template<Allocator B>
 u64 String<A>::write(u64 i, const String<B>& text) {
-    assert(i + text.length() < length_);
+    assert(i + text.length() <= length_);
     std::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
 }
