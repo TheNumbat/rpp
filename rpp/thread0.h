@@ -88,9 +88,20 @@ struct Atomic {
 
 private:
     i64 value_ = 0;
+
+    friend struct Reflect<Atomic>;
 };
 
 } // namespace Thread
+
+template<>
+struct Reflect<Thread::Atomic> {
+    using T = Thread::Atomic;
+    static constexpr Literal name = "Atomic";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(value_)>;
+    static_assert(Record<T>);
+};
 
 template<>
 struct Reflect<Thread::Priority> {
