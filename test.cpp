@@ -2,6 +2,9 @@
 #include <functional>
 
 #include "rpp/base.h"
+#include "rpp/files.h"
+#include "rpp/net.h"
+#include "rpp/range_allocator.h"
 
 using namespace rpp;
 

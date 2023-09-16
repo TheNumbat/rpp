@@ -32,10 +32,14 @@ set(SOURCES_RPP
     "profile.cpp"
     "profile.h"
     "rng.h"
+    "range_allocator.h"
+    "range_allocator.inl"
+    "files.h"
+    "net.h"
 )
 
 if(WIN32)
-    set(SOURCES_RPP ${SOURCES_RPP} "thread_w32.cpp")
+    set(SOURCES_RPP ${SOURCES_RPP} "thread_w32.cpp" "files_w32.cpp" "net_w32.cpp")
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -43,7 +47,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 if(APPLE OR LINUX)
-    set(SOURCES_RPP ${SOURCES_RPP} "thread_pos.cpp")
+    set(SOURCES_RPP ${SOURCES_RPP} "thread_pos.cpp" "files_pos.cpp" "net_pos.cpp")
 endif()
 
 add_library(rpp STATIC ${SOURCES_RPP})

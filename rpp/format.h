@@ -82,7 +82,7 @@ u64 measure(const T& value) {
         }
         return length;
     } else if constexpr(R::kind == Kind::pointer_) {
-        if(!value) return 6;
+        if(value == null) return 6;
         return 2 + std::snprintf(null, 0, "%p", value);
     } else if constexpr(R::kind == Kind::record_) {
         u64 name_len = String_View{R::name}.length();
@@ -244,7 +244,7 @@ u64 write(String<A>& output, u64 idx, const T& value) {
         }
         return output.write(idx, ']');
     } else if constexpr(R::kind == Kind::pointer_) {
-        if(!value) return output.write(idx, "(null)"_v);
+        if(value == null) return output.write(idx, "(null)"_v);
         idx = output.write(idx, '(');
         idx += std::snprintf(reinterpret_cast<char* const>(output.data()) + idx,
                              output.length() - idx, "%p", value);
