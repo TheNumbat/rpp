@@ -4,7 +4,9 @@
 #include "base.h"
 
 #ifdef OS_WINDOWS
+#define Arc Arc__w32
 #include <windows.h>
+#undef Arc
 #include <ws2def.h>
 #else
 #include <netinet/in.h>

@@ -62,6 +62,34 @@ private:
     Ref<Mutex> mutex_;
 };
 
+struct Atomic {
+
+    Atomic() = default;
+    ~Atomic() = default;
+
+    explicit Atomic(i64 value) : value_(value) {
+    }
+
+    Atomic(const Atomic&) = default;
+    Atomic(Atomic&&) = default;
+    Atomic& operator=(const Atomic&) = default;
+    Atomic& operator=(Atomic&&) = default;
+
+    i64 load() const;
+    i64 incr();
+    i64 decr();
+    void store(i64 value);
+    i64 compare_and_swap(i64 compare_with, i64 set_to);
+
+    template<Int I>
+    I load() const {
+        return static_cast<I>(load());
+    }
+
+private:
+    i64 value_ = 0;
+};
+
 } // namespace Thread
 
 template<>

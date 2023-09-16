@@ -36,6 +36,7 @@ set(SOURCES_RPP
     "range_allocator.inl"
     "files.h"
     "net.h"
+    "rc.h"
 )
 
 if(WIN32)

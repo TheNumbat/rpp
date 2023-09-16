@@ -157,6 +157,16 @@ u64 measure(const Box<T, A>& box) {
     return 9;
 }
 template<Reflectable T, Allocator A>
+u64 measure(const Rc<T, A>& rc) {
+    if(rc) return 6 + measure(*rc) + measure(rc.references());
+    return 8;
+}
+template<Reflectable T, Allocator A>
+u64 measure(const Arc<T, A>& arc) {
+    if(arc) return 7 + measure(*arc) + measure(arc.references());
+    return 9;
+}
+template<Reflectable T, Allocator A>
 u64 measure(const Stack<T, A>& stack) {
     u64 n = 0;
     u64 length = 7;
@@ -326,6 +336,24 @@ u64 write(String<O>& output, u64 idx, const Box<T, A>& box) {
     if(!box) return output.write(idx, "Box{null}"_v);
     idx = output.write(idx, "Box{"_v);
     idx = write(output, idx, *box);
+    return output.write(idx, '}');
+}
+template<Allocator O, Reflectable T, Allocator A>
+u64 write(String<O>& output, u64 idx, const Rc<T, A>& rc) {
+    if(!rc) return output.write(idx, "Rc{null}"_v);
+    idx = output.write(idx, "Rc["_v);
+    idx = write(output, idx, rc.references());
+    idx = output.write(idx, "]{"_v);
+    idx = write(output, idx, *rc);
+    return output.write(idx, '}');
+}
+template<Allocator O, Reflectable T, Allocator A>
+u64 write(String<O>& output, u64 idx, const Arc<T, A>& arc) {
+    if(!arc) return output.write(idx, "Arc{null}"_v);
+    idx = output.write(idx, "Arc["_v);
+    idx = write(output, idx, arc.references());
+    idx = output.write(idx, "]{"_v);
+    idx = write(output, idx, *arc);
     return output.write(idx, '}');
 }
 template<Allocator O, Reflectable T, Allocator A>

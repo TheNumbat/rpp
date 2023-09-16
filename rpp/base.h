@@ -11,10 +11,16 @@
 
 #ifdef _WIN64
 #define OS_WINDOWS
-#elif defined __linux__ && defined __x86_64__
+#elif defined __linux__
 #define OS_LINUX
 #else
 #error "Unsupported OS."
+#endif
+
+#if defined __x86_64__ || defined _M_X64
+#define ARCH_X64
+#else
+#error "Unsupported architecture."
 #endif
 
 #ifdef COMPILER_MSVC
@@ -120,5 +126,7 @@ static_assert(sizeof(char) == 1);
 #include "rng.h"
 
 #include "alloc1.h"
+
+#include "rc.h"
 
 #include "format.h"

@@ -6,12 +6,65 @@ namespace rpp {
 template<typename T>
 concept Key = Equality<T> && Hashable<T> && Movable<T>;
 
+namespace detail {
+
+template<Key K, Movable V>
+struct Map_Slot {
+    Map_Slot() = default;
+
+    explicit Map_Slot(K&& key, V&& value) : hash(hash_nonzero(key)) {
+        data.construct(std::move(key), std::move(value));
+    }
+    ~Map_Slot() {
+        if constexpr(Must_Destruct<Pair<K, V>>) {
+            if(hash != EMPTY) data.destruct();
+        }
+        hash = EMPTY;
+    }
+
+    Map_Slot(const Map_Slot&) = delete;
+    Map_Slot& operator=(const Map_Slot&) = delete;
+
+    Map_Slot(Map_Slot&& src) {
+        hash = src.hash;
+        src.hash = EMPTY;
+        if(hash != EMPTY) data.construct(std::move(*src.data));
+    }
+    Map_Slot& operator=(Map_Slot&& src) {
+        this->~Map_Slot();
+        hash = src.hash;
+        src.hash = EMPTY;
+        if(hash != EMPTY) data.construct(std::move(*src.data));
+        return *this;
+    }
+
+    Map_Slot clone() const
+        requires(Clone<K> || Trivial<K>) && (Clone<V> || Trivial<K>)
+    {
+        if(hash == EMPTY) return Map_Slot{};
+        if constexpr(Clone<K> && Clone<V>) {
+            return Map_Slot{data->first.clone(), data->second.clone()};
+        } else if constexpr(Clone<K> && Trivial<V>) {
+            return Map_Slot{data->first.clone(), data->second};
+        } else if constexpr(Trivial<K> && Clone<V>) {
+            return Map_Slot{data->first, data->second.clone()};
+        } else {
+            static_assert(Trivial<K> && Trivial<V>);
+            return Map_Slot{data->first, data->second};
+        }
+    }
+
+    static constexpr u64 EMPTY = 0;
+    u64 hash = EMPTY;
+    Storage<Pair<K, V>> data;
+};
+
+} // namespace detail
+
 template<Key K, Movable V, Allocator A = Mdefault>
 struct Map {
-private:
-    struct Slot;
+    using Slot = detail::Map_Slot<K, V>;
 
-public:
     Map() = default;
 
     explicit Map(u64 capacity) {
@@ -100,7 +153,7 @@ public:
         shift_ = Math::ctlz(capacity_) + 1;
 
         for(u64 i = 0; i < old_capacity; i++) {
-            if(old_data[i].hash != EMPTY_SLOT) insert_slot(std::move(old_data[i]));
+            if(old_data[i].hash != Slot::EMPTY) insert_slot(std::move(old_data[i]));
         }
         A::free(old_data);
     }
@@ -116,7 +169,7 @@ public:
                 data_[i].~Slot();
             }
         } else {
-            std::memset(data_, EMPTY_SLOT, capacity_ * sizeof(Slot));
+            std::memset(data_, Slot::EMPTY, capacity_ * sizeof(Slot));
         }
         length_ = 0;
     }
@@ -163,12 +216,12 @@ public:
 
     Opt<Ref<V>> try_get(const K& key) {
         if(empty()) return {};
-        u64 hash = hash_(key);
+        u64 hash = hash_nonzero(key);
         u64 idx = hash >> shift_;
         u64 dist = 0;
         for(;;) {
             u64 k = data_[idx].hash;
-            if(k == EMPTY_SLOT) return {};
+            if(k == Slot::EMPTY) return {};
             if(k == hash && data_[idx].data->first == key) {
                 return Opt{Ref{data_[idx].data->second}};
             }
@@ -182,12 +235,12 @@ public:
 
     Opt<Ref<const V>> try_get(const K& key) const {
         if(empty()) return {};
-        u64 hash = hash_(key);
+        u64 hash = hash_nonzero(key);
         u64 idx = hash >> shift_;
         u64 dist = 0;
         for(;;) {
             u64 k = data_[idx].hash;
-            if(k == EMPTY_SLOT) return {};
+            if(k == Slot::EMPTY) return {};
             if(k == hash && data_[idx].data->first == key) {
                 return Opt{Ref<const V>{data_[idx].data->second}};
             }
@@ -201,7 +254,7 @@ public:
 
     bool try_erase(const K& key) {
         if(empty()) return false;
-        u64 hash = hash_(key);
+        u64 hash = hash_nonzero(key);
         u64 idx = hash >> shift_;
         u64 dist = 0;
         for(;;) {
@@ -290,7 +343,7 @@ public:
 
     private:
         void skip() {
-            while(count_ < map_.capacity_ && map_.data_[count_].hash == EMPTY_SLOT) count_++;
+            while(count_ < map_.capacity_ && map_.data_[count_].hash == Slot::EMPTY) count_++;
         }
         Iterator(M& map, u64 count) : map_(map), count_(count) {
             skip();
@@ -318,19 +371,13 @@ public:
     }
 
 private:
-    static constexpr u64 EMPTY_SLOT = 0;
-
-    static u64 hash_(const K& k) {
-        return hash(k) | 1;
-    }
-
     Slot& insert_slot(Slot&& slot) {
         u64 idx = slot.hash >> shift_;
         Slot* placement = null;
         u64 dist = 0;
         for(;;) {
             u64 hash = data_[idx].hash;
-            if(hash == EMPTY_SLOT) {
+            if(hash == Slot::EMPTY) {
                 data_[idx] = std::move(slot);
                 return placement ? *placement : data_[idx];
             }
@@ -354,62 +401,13 @@ private:
         for(;;) {
             u64 next = idx == capacity_ - 1 ? 0 : idx + 1;
             u64 nexthash_ = data_[next].hash;
-            if(nexthash_ == EMPTY_SLOT) return;
+            if(nexthash_ == Slot::EMPTY) return;
             u64 next_ideal = nexthash_ >> shift_;
             if(next == next_ideal) return;
             data_[idx] = std::move(data_[next]);
             idx = next;
         }
     }
-
-    struct Slot {
-        Slot() = default;
-
-        explicit Slot(K&& key, V&& value) : hash(hash_(key)) {
-            data.construct(std::move(key), std::move(value));
-        }
-        ~Slot() {
-            if constexpr(Must_Destruct<Pair<K, V>>) {
-                if(hash != EMPTY_SLOT) data.destruct();
-            }
-            hash = EMPTY_SLOT;
-        }
-
-        Slot(const Slot&) = delete;
-        Slot& operator=(const Slot&) = delete;
-
-        Slot(Slot&& slot) {
-            hash = slot.hash;
-            slot.hash = EMPTY_SLOT;
-            if(hash != EMPTY_SLOT) data.construct(std::move(*slot.data));
-        }
-        Slot& operator=(Slot&& slot) {
-            this->~Slot();
-            hash = slot.hash;
-            slot.hash = EMPTY_SLOT;
-            if(hash != EMPTY_SLOT) data.construct(std::move(*slot.data));
-            return *this;
-        }
-
-        Slot clone() const
-            requires(Clone<K> || Trivial<K>) && (Clone<V> || Trivial<K>)
-        {
-            if(hash == EMPTY_SLOT) return Slot{};
-            if constexpr(Clone<K> && Clone<V>) {
-                return Slot{data->first.clone(), data->second.clone()};
-            } else if constexpr(Clone<K> && Trivial<V>) {
-                return Slot{data->first.clone(), data->second};
-            } else if constexpr(Trivial<K> && Clone<V>) {
-                return Slot{data->first, data->second.clone()};
-            } else {
-                static_assert(Trivial<K> && Trivial<V>);
-                return Slot{data->first, data->second};
-            }
-        }
-
-        u64 hash = EMPTY_SLOT;
-        Storage<Pair<K, V>> data;
-    };
 
     Slot* data_ = null;
     u64 capacity_ = 0;
@@ -418,9 +416,17 @@ private:
     u64 shift_ = 0;
 
     friend struct Reflect<Map>;
-    friend struct Reflect<Slot>;
     template<bool>
     friend struct Iterator;
+};
+
+template<Key K, typename V>
+struct Reflect<detail::Map_Slot<K, V>> {
+    using T = detail::Map_Slot<K, V>;
+    static constexpr Literal name = "Map_Slot";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(hash), FIELD(data)>;
+    static_assert(Record<T>);
 };
 
 template<Key K, typename V, Allocator A>
@@ -428,7 +434,8 @@ struct Reflect<Map<K, V, A>> {
     using T = Map<K, V, A>;
     static constexpr Literal name = "Map";
     static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(capacity_), FIELD(length_), FIELD(usable_), FIELD(shift_)>;
+    using members =
+        List<FIELD(data_), FIELD(capacity_), FIELD(length_), FIELD(usable_), FIELD(shift_)>;
     static_assert(Record<T>);
 };
 

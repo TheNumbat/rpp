@@ -82,4 +82,9 @@ u64 hash(T&& value) {
     return Hash::hash(std::forward<T>(value));
 }
 
+template<Hashable T>
+u64 hash_nonzero(T&& value) {
+    return Hash::hash(std::forward<T>(value)) | 1;
+}
+
 } // namespace rpp

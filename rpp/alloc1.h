@@ -26,6 +26,7 @@ inline void* Mregion::alloc(u64 size) {
     assert(current_offset + size < REGION_STACK_SIZE);
     void* ret = stack_memory + current_offset;
     current_offset += size;
+    std::memset(ret, 0, size);
     return ret;
 }
 

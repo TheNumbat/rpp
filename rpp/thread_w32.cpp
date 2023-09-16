@@ -87,4 +87,24 @@ bool Mutex::try_lock() {
     return TryAcquireSRWLockExclusive((PSRWLOCK)&lock_);
 }
 
+i64 Atomic::load() const {
+    return value_;
+}
+
+i64 Atomic::incr() {
+    return InterlockedIncrement64(&value_);
+}
+
+i64 Atomic::decr() {
+    return InterlockedDecrement64(&value_);
+}
+
+void Atomic::store(i64 value) {
+    InterlockedExchange64(&value_, value);
+}
+
+i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {
+    return InterlockedCompareExchange64(&value_, set_to, compare_with);
+}
+
 } // namespace rpp::Thread

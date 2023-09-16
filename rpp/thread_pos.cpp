@@ -137,4 +137,25 @@ bool Mutex::try_lock() {
     return true;
 }
 
+i64 Atomic::load() const {
+    return __atomic_load_n(&value_, __ATOMIC_SEQ_CST);
+}
+
+i64 Atomic::incr() {
+    return __atomic_fetch_add(&value_, 1, __ATOMIC_SEQ_CST) + 1;
+}
+
+i64 Atomic::decr() {
+    return __atomic_fetch_sub(&value_, 1, __ATOMIC_SEQ_CST) - 1;
+}
+
+void Atomic::store(i64 value) {
+    __atomic_store(&value_, &value, __ATOMIC_SEQ_CST);
+}
+
+i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {
+    return __atomic_compare_exchange(&value_, &compare_with, &set_to, false, __ATOMIC_SEQ_CST,
+                                     __ATOMIC_SEQ_CST);
+}
+
 } // namespace rpp::Thread
