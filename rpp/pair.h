@@ -10,6 +10,11 @@ struct Pair {
         requires Default_Constructable<A> && Default_Constructable<B>
     = default;
 
+    explicit Pair(const A& first, const B& second)
+        requires Trivial<A> && Trivial<B>
+        : first(A{first}), second(B{second}) {
+    }
+
     explicit Pair(A&& first, B&& second)
         requires Move_Constructable<A> && Move_Constructable<B>
         : first(std::move(first)), second(std::move(second)) {

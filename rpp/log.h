@@ -57,8 +57,8 @@ void debug_break();
 void output(Level level, const Location& loc, const String_View& msg);
 
 template<typename... Ts>
-void log(Level level, const Location& loc, const String_View& fmt, Ts&&... args) {
-    output(level, std::move(loc), format<Mdefault>(fmt, std::forward<Ts>(args)...).view());
+void log(Level level, const Location& loc, const String_View& fmt, const Ts&... args) {
+    output(level, std::move(loc), format<Mhidden>(fmt, args...).view());
 }
 
 } // namespace Log

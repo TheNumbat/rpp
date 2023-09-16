@@ -397,10 +397,26 @@ struct Iter<F, Cons<Head, Tail>> {
     }
 };
 
+template<List L>
+struct Length;
+
+template<>
+struct Length<Nil> {
+    static constexpr u64 value = 0;
+};
+
+template<typename Head, List Tail>
+struct Length<Cons<Head, Tail>> {
+    static constexpr u64 value = 1 + Length<Tail>::value;
+};
+
 } // namespace list
 
 template<typename... Ts>
 using List = typename list::Make<Ts...>::L;
+
+template<list::List L>
+constexpr u64 List_Length = list::Length<L>::value;
 
 template<typename T>
 concept Type_List = list::List<T>;
@@ -539,6 +555,9 @@ template<typename T>
 struct Reflect<T&> : Reflect<T> {};
 
 template<typename T>
+struct Reflect<const T&> : Reflect<T> {};
+
+template<typename T>
 struct Reflect<T&&> : Reflect<T> {};
 
 template<typename T>
@@ -548,8 +567,23 @@ struct Reflect<T*> {
     static constexpr Kind kind = Kind::pointer_;
 };
 
+template<typename T>
+struct Reflect<const T*> {
+    using underlying = T;
+    static constexpr Literal name = Reflect<T>::name;
+    static constexpr Kind kind = Kind::pointer_;
+};
+
 template<typename T, u64 N>
 struct Reflect<T[N]> {
+    using underlying = T;
+    static constexpr Literal name = Reflect<T>::name;
+    static constexpr u64 length = N;
+    static constexpr Kind kind = Kind::array_;
+};
+
+template<typename T, u64 N>
+struct Reflect<const T[N]> {
     using underlying = T;
     static constexpr Literal name = Reflect<T>::name;
     static constexpr u64 length = N;
@@ -567,6 +601,12 @@ struct Reflect<decltype(null)> {
     using underlying = void;
     static constexpr Literal name = "null";
     static constexpr Kind kind = Kind::pointer_;
+};
+
+template<>
+struct Reflect<char> {
+    static constexpr Literal name = "char";
+    static constexpr Kind kind = Kind::i8_;
 };
 
 template<>
@@ -651,6 +691,7 @@ struct Reflect<Kind> {
 
 using detail::Enum;
 using detail::Kind;
+using detail::List_Length;
 using detail::Literal;
 using detail::Record;
 using detail::Reflect;

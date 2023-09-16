@@ -80,7 +80,8 @@ template<Allocator A>
 struct String {
 
     String() = default;
-    explicit String(u64 capacity) : data_(A::alloc(capacity)), capacity_(capacity), length_(0) {
+    explicit String(u64 capacity)
+        : data_(reinterpret_cast<u8*>(A::alloc(capacity))), capacity_(capacity), length_(0) {
     }
 
     ~String() {
@@ -119,6 +120,8 @@ struct String {
         return ret;
     }
 
+    void set_length(u64 length);
+
     u8& operator[](u64 idx);
     const u8& operator[](u64 idx) const;
 
@@ -127,7 +130,8 @@ struct String {
     }
 
     u64 write(u64 i, char c);
-    u64 write(u64 i, const String& text);
+    template<Allocator B>
+    u64 write(u64 i, const String<B>& text);
     u64 write(u64 i, const String_View& text);
 
     u8* begin() {

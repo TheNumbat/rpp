@@ -173,7 +173,7 @@ void Profile::alloc(Alloc a) {
                 if(!sz) {
                     warn("Profile: % freed % with no entry!", a.name, a.address);
                 } else {
-                    i64 size = *sz;
+                    i64 size = **sz;
                     prof.current_set.erase(a.address);
                     prof.free_size += size;
                     prof.frees++;

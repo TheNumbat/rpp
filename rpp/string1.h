@@ -4,6 +4,12 @@
 namespace rpp {
 
 template<Allocator A>
+void String<A>::set_length(u64 length) {
+    assert(length <= capacity_);
+    length_ = length;
+}
+
+template<Allocator A>
 const u8& String<A>::operator[](u64 idx) const {
     assert(idx < length_);
     return data_[idx];
@@ -44,15 +50,16 @@ u64 String<A>::write(u64 i, char c) {
 }
 
 template<Allocator A>
-u64 String<A>::write(u64 i, const String& text) {
-    assert(i + text.length_ < length_);
-    std::memcpy(data_ + i, text.data_, text.length_);
-    return i + text.length_;
+template<Allocator B>
+u64 String<A>::write(u64 i, const String<B>& text) {
+    assert(i + text.length() < length_);
+    std::memcpy(data_ + i, text.data(), text.length());
+    return i + text.length();
 }
 
 template<Allocator A>
 u64 String<A>::write(u64 i, const String_View& text) {
-    assert(i + text.length() < length_);
+    assert(i + text.length() <= length_);
     std::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
 }

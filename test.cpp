@@ -543,16 +543,51 @@ i32 main() {
 
     // Format
     {
-        printf("Size: %zu\n", format_length("%"_v, true));
-        printf("Size: %zu\n", format_length("%"_v, false));
+        info("%%");
+
+        info("%", true);
+        info("%", false);
 
         i32 array[2] = {1, 2};
-        printf("Size: %zu\n", format_length("%"_v, array));
+        info("%", array);
 
-        printf("Size: %zu\n", format_length("%"_v, Ints{1, 2}));
-        // Ints{i : 1, u : 2}
+        info("%", Ints{10, 2});
+        // Ints{i : 10, u : 2}
 
-        printf("Size: %zu\n", format_length("%"_v, Kind::enum_));
+        info("%", Kind::enum_);
+
+        info("%", "Hello"_v);
+        info("%", "Hello"_v.string());
+
+        info("%", Ref<i32>{});
+
+        i32 i = 0;
+        info("%", Ref{i});
+
+        info("%", Pair{23, 13.0f});
+
+        info("%", Storage<Ints>{});
+
+        info("%", Opt<i32>{});
+        info("%", Opt<i32>{5});
+
+        info("%", Array<i32, 2>{1, 2});
+        info("%", Array<i32, 2>{});
+
+        info("%", Vec<i32>{1, 2});
+        info("%", Vec<i32>{});
+
+        info("%", Stack<i32>{1, 2});
+        info("%", Stack<i32>{});
+
+        info("%", Queue<i32>{1, 2});
+        info("%", Queue<i32>{});
+
+        info("%", Heap<i32>{1, 2});
+        info("%", Heap<i32>{});
+
+        info("%", Map<i32, i32>{Pair{1, 2}, Pair{3, 4}});
+        info("%", Map<i32, i32>{});
     }
 
     Profile::end_frame();

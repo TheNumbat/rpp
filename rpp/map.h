@@ -418,6 +418,7 @@ private:
     u64 shift_ = 0;
 
     friend struct Reflect<Map>;
+    friend struct Reflect<Slot>;
     template<bool>
     friend struct Iterator;
 };
@@ -427,8 +428,7 @@ struct Reflect<Map<K, V, A>> {
     using T = Map<K, V, A>;
     static constexpr Literal name = "Map";
     static constexpr Kind kind = Kind::record_;
-    using members =
-        List<FIELD(data_), FIELD(capacity_), FIELD(length_), FIELD(usable_), FIELD(shift_)>;
+    using members = List<FIELD(capacity_), FIELD(length_), FIELD(usable_), FIELD(shift_)>;
     static_assert(Record<T>);
 };
 
