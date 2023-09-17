@@ -25,7 +25,9 @@ template<typename T>
 struct Promise {
 
     Promise() = default;
-    ~Promise() = default;
+    ~Promise() {
+        wait();
+    }
 
     Promise(const Promise&) = delete;
     Promise(Promise&&) = delete;
@@ -62,7 +64,9 @@ template<>
 struct Promise<void> {
 
     Promise() = default;
-    ~Promise() = default;
+    ~Promise() {
+        wait();
+    }
 
     Promise(const Promise&) = delete;
     Promise(Promise&&) = delete;

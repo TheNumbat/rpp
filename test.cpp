@@ -12,11 +12,23 @@ struct Ints {
     i32 i;
     u16 u;
 };
+struct Vecs {
+    Vec<i32> i;
+    Vec<u32> u;
+};
 namespace rpp {
 template<>
 struct Reflect<Ints> {
     using T = Ints;
     static constexpr Literal name = "Ints";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(i), FIELD(u)>;
+    static_assert(Record<T>);
+};
+template<>
+struct Reflect<Vecs> {
+    using T = Vecs;
+    static constexpr Literal name = "Vecs";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
     static_assert(Record<T>);
@@ -642,6 +654,11 @@ i32 main() {
         info("%", Arc<i32>{});
         info("%", Arc<i32>{5});
 
+        info("%", Thread::Atomic{3});
+
+        info("%", Vecs{Vec<i32>{1, 2}, Vec<u32>{3u, 4u}});
+        info("%", Array<Vec<i32>, 2>{Vec<i32>{1, 2}, Vec<i32>{3, 4}});
+
         {
             Rc<i32> r{5};
             Rc<i32> r2 = r;
@@ -657,10 +674,13 @@ i32 main() {
     { // Thread
         auto value = Thread::spawn([]() {
             info("Hello from thread");
-            return 5;
+            return Vec<i32>{2, 3};
         });
 
         auto v = Thread::spawn([]() { info("Hello from thread2"); });
+
+        auto gone0 = Thread::spawn([]() { info("Hello from thread4"); });
+        (void)gone0;
 
         auto gone = Thread::Thread{[]() { info("Hello from thread3"); }};
         (void)gone;

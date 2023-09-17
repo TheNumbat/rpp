@@ -124,33 +124,6 @@ private:
 } // namespace Thread
 
 template<>
-struct Reflect<Thread::Mutex> {
-    using T = Thread::Mutex;
-    static constexpr Literal name = "Mutex";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(lock_)>;
-    static_assert(Record<T>);
-};
-
-template<>
-struct Reflect<Thread::Cond> {
-    using T = Thread::Cond;
-    static constexpr Literal name = "Cond";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(cond_)>;
-    static_assert(Record<T>);
-};
-
-template<>
-struct Reflect<Thread::Lock> {
-    using T = Thread::Lock;
-    static constexpr Literal name = "Lock";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(mutex_)>;
-    static_assert(Record<T>);
-};
-
-template<>
 struct Reflect<Thread::Atomic> {
     using T = Thread::Atomic;
     static constexpr Literal name = "Atomic";
