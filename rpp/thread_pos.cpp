@@ -1,5 +1,6 @@
 
 #include "base.h"
+#include "thread.h"
 
 #include <unistd.h>
 
