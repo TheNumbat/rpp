@@ -2,6 +2,9 @@
 
 Minimal Rust-inspired C++20 standard library replacement.
 
+- Optimizes for fast compile times.
+- Only includes code I'm actively using.
+
 Headers
 - base.h: always include
 - files.h: file IO
