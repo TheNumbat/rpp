@@ -5,6 +5,7 @@
 #include "rpp/files.h"
 #include "rpp/net.h"
 #include "rpp/range_allocator.h"
+#include "rpp/thread.h"
 
 using namespace rpp;
 
@@ -76,13 +77,11 @@ i32 main() {
         s[0] = 'h';
 
         for(char c : sv) {
-            printf("%c", c);
+            info("%", c);
         }
-        printf("\n");
         for(char c : s) {
-            printf("%c", c);
+            info("%", c);
         }
-        printf("\n");
 
         String_View sv2 = sv.clone();
         String_View sv3 = std::move(sv2);
@@ -195,23 +194,19 @@ i32 main() {
         assert(c[2] == 3);
 
         for(i32 i : c) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(i32& i : c) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         const Array<i32, 4>& cc = c;
         for(i32 i : cc) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(const i32& i : cc) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         Array<i32, 4> d = std::move(c);
         assert(d[2] == 3);
@@ -235,23 +230,19 @@ i32 main() {
         assert(v.length() == 3);
 
         for(i32 i : v) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(i32& i : v) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         const auto& constv = v;
         for(i32 i : constv) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(const i32& i : constv) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         v.pop();
         assert(v.length() == 2);
@@ -290,7 +281,7 @@ i32 main() {
 
         Vec<std::function<void()>> vf;
         for(i32 i = 0; i < 10; i++) {
-            vf.push([]() { printf("Hello\n"); });
+            vf.push([]() { info("Hello"); });
         }
     }
 
@@ -330,23 +321,19 @@ i32 main() {
         assert(v.length() == 3);
 
         for(i32 i : v) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(i32& i : v) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         const auto& constv = v;
         for(i32 i : constv) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(const i32& i : constv) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         v.pop();
         assert(v.length() == 2);
@@ -364,7 +351,7 @@ i32 main() {
 
         Stack<std::function<void()>> vf;
         for(i32 i = 0; i < 10; i++) {
-            vf.push([]() { printf("Hello\n"); });
+            vf.push([]() { info("Hello"); });
         }
     }
 
@@ -383,23 +370,19 @@ i32 main() {
         v.push(3);
 
         for(i32 i : v) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(i32& i : v) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         const auto& constv = v;
         for(i32 i : constv) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(const i32& i : constv) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         assert(v.length() == 3);
         assert(v.front() == 1);
@@ -421,7 +404,7 @@ i32 main() {
 
         Queue<std::function<void()>> vf;
         for(i32 i = 0; i < 10; i++) {
-            vf.push([]() { printf("Hello\n"); });
+            vf.push([]() { info("Hello"); });
         }
     }
 
@@ -441,23 +424,19 @@ i32 main() {
         v.push(0);
 
         for(i32 i : v) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(i32& i : v) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         const auto& constv = v;
         for(i32 i : constv) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
         for(const i32& i : constv) {
-            printf("%d ", i);
+            info("%", i);
         }
-        printf("\n");
 
         assert(v.length() == 4);
         assert(v.top() == 0);
@@ -491,7 +470,7 @@ i32 main() {
 
         Heap<F> vf;
         for(i32 i = 0; i < 10; i++) {
-            vf.push({[]() { printf("Hello\n"); }});
+            vf.push({[]() { info("Hello"); }});
         }
     }
 
@@ -511,21 +490,21 @@ i32 main() {
 
         for(auto [k, vv] : v) {
             vv = k;
-            printf("%d %d\n", k, vv);
+            info("% %", k, vv);
         }
         for(auto& [k, vv] : v) {
             vv = k;
-            printf("%d %d\n", k, vv);
+            info("% %", k, vv);
         }
 
         const auto& constv = v;
         for(auto [k, vv] : constv) {
             k = 0;
             vv = k;
-            printf("%d %d\n", k, vv);
+            info("% %", k, vv);
         }
         for(const auto& [k, vv] : constv) {
-            printf("%d %d\n", k, vv);
+            info("% %", k, vv);
         }
 
         assert(v.length() == 3);
@@ -552,7 +531,7 @@ i32 main() {
 
         Map<i32, std::function<void()>> ff;
         for(i32 i = 0; i < 40; i++) {
-            ff.insert(i, []() { printf("Hello\n"); });
+            ff.insert(i, []() { info("Hello"); });
         }
     }
 

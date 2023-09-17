@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "base.h"
+
 namespace rpp {
 namespace Thread {
 

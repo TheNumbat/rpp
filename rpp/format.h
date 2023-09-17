@@ -54,6 +54,8 @@ struct Measure {
 
         if constexpr(R::kind == Kind::void_) {
             return 4;
+        } else if constexpr(R::kind == Kind::char_) {
+            return 1;
         } else if constexpr(R::kind == Kind::i8_) {
             return std::snprintf(null, 0, "%hhd", value);
         } else if constexpr(R::kind == Kind::i16_) {
@@ -255,6 +257,8 @@ struct Write {
 
         if constexpr(R::kind == Kind::void_) {
             return output.write(idx, "void"_v);
+        } else if constexpr(R::kind == Kind::char_) {
+            return output.write(idx, value);
         } else if constexpr(R::kind == Kind::i8_) {
             return snprintf(output, idx, "%hhd", value);
         } else if constexpr(R::kind == Kind::i16_) {

@@ -426,6 +426,7 @@ concept Type_List_All = list::All<P, L>::value;
 
 enum class Kind : u8 {
     void_,
+    char_,
     i8_,
     i16_,
     i32_,
@@ -606,7 +607,7 @@ struct Reflect<decltype(null)> {
 template<>
 struct Reflect<char> {
     static constexpr Literal name = "char";
-    static constexpr Kind kind = Kind::i8_;
+    static constexpr Kind kind = Kind::char_;
 };
 
 template<>

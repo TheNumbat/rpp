@@ -129,6 +129,4 @@ static_assert(sizeof(char) == 1);
 
 #include "rc.h"
 
-#include "thread1.h"
-
 #include "format.h"
