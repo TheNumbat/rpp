@@ -67,8 +67,12 @@ void set_affinity(u64 core) {
     }
 }
 
+static_assert(sizeof(SRWLOCK) == sizeof(void*));
+static_assert(sizeof(CONDITION_VARIABLE) == sizeof(void*));
+static_assert(sizeof(HANDLE) == sizeof(OS_Thread));
+
 Mutex::Mutex() {
-    InitializeSRWLock((PSRWLOCK)&lock_);
+    InitializeSRWLock(reinterpret_cast<PSRWLOCK>(&lock_));
 }
 
 Mutex::~Mutex() {
@@ -76,15 +80,15 @@ Mutex::~Mutex() {
 }
 
 void Mutex::lock() {
-    AcquireSRWLockExclusive((PSRWLOCK)&lock_);
+    AcquireSRWLockExclusive(reinterpret_cast<PSRWLOCK>(&lock_));
 }
 
 void Mutex::unlock() {
-    ReleaseSRWLockExclusive((PSRWLOCK)&lock_);
+    ReleaseSRWLockExclusive(reinterpret_cast<PSRWLOCK>(&lock_));
 }
 
 bool Mutex::try_lock() {
-    return TryAcquireSRWLockExclusive((PSRWLOCK)&lock_);
+    return TryAcquireSRWLockExclusive(reinterpret_cast<PSRWLOCK>(&lock_));
 }
 
 i64 Atomic::load() const {
@@ -105,6 +109,70 @@ void Atomic::store(i64 value) {
 
 i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {
     return InterlockedCompareExchange64(&value_, set_to, compare_with);
+}
+
+Cond::Cond() {
+    InitializeConditionVariable(reinterpret_cast<PCONDITION_VARIABLE>(&cond_));
+}
+
+Cond::~Cond() {
+    cond_ = CONDITION_VARIABLE_INIT;
+}
+
+void Cond::wait(Mutex& mut) {
+    bool ret = SleepConditionVariableSRW(reinterpret_cast<PCONDITION_VARIABLE>(&cond_),
+                                         reinterpret_cast<PSRWLOCK>(&mut.lock_), INFINITE, 0);
+    if(!ret) {
+        die("Failed to wait on cond: %", Log::sys_error());
+    }
+}
+
+void Cond::signal() {
+    WakeConditionVariable(reinterpret_cast<PCONDITION_VARIABLE>(&cond_));
+}
+
+void Cond::broadcast() {
+    WakeAllConditionVariable(reinterpret_cast<PCONDITION_VARIABLE>(&cond_));
+}
+
+Id sys_id(OS_Thread thread_) {
+    HANDLE thread = reinterpret_cast<HANDLE>(thread_);
+    assert(thread != INVALID_HANDLE_VALUE);
+    return GetThreadId(thread);
+}
+
+void sys_join(OS_Thread thread_) {
+    Id id = sys_id(thread_);
+    assert(id != this_id());
+
+    HANDLE thread = reinterpret_cast<HANDLE>(thread_);
+    if(thread == INVALID_HANDLE_VALUE) return;
+
+    DWORD ret = WaitForSingleObjectEx(thread, INFINITE, false);
+    if(ret != WAIT_OBJECT_0) {
+        die("Unexpected wait return when joining thread %: %", id, Log::sys_error());
+    }
+
+    bool ok = CloseHandle(thread);
+    assert(ok);
+}
+
+void sys_detach(OS_Thread thread_) {
+    HANDLE thread = reinterpret_cast<HANDLE>(thread_);
+    if(thread == INVALID_HANDLE_VALUE) return;
+    bool ret = CloseHandle(thread);
+    assert(ret);
+    thread = INVALID_HANDLE_VALUE;
+}
+
+OS_Thread sys_start(OS_Thread_Ret (*f)(void*), void* data) {
+    HANDLE thread = INVALID_HANDLE_VALUE;
+    DWORD id = 0;
+    thread = CreateThread(null, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(f), data, 0, &id);
+    if(!thread) {
+        die("Failed to create thread: %", Log::sys_error());
+    }
+    return reinterpret_cast<void*>(thread);
 }
 
 } // namespace rpp::Thread

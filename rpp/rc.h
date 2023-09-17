@@ -118,6 +118,15 @@ struct Arc {
         new(data_) Data{T{std::forward<Args>(args)...}, Thread::Atomic{1}};
     }
 
+    static Arc make()
+        requires Default_Constructable<T>
+    {
+        Arc ret;
+        ret.data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
+        new(ret.data_) Data{T{}, Thread::Atomic{1}};
+        return ret;
+    }
+
     // NOTE(max): src will not be destroyed while in scope
     Arc(const Arc& src) {
         if(src.data_) {

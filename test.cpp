@@ -654,6 +654,21 @@ i32 main() {
         }
     }
 
+    { // Thread
+        auto value = Thread::spawn([]() {
+            info("Hello from thread");
+            return 5;
+        });
+
+        auto v = Thread::spawn([]() { info("Hello from thread2"); });
+
+        auto gone = Thread::Thread{[]() { info("Hello from thread3"); }};
+        (void)gone;
+
+        info("Thread 1 returned %", value->wait());
+        v->wait();
+    }
+
     Profile::end_frame();
     Profile::end_thread();
 

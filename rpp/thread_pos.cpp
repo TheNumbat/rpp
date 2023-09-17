@@ -158,4 +158,70 @@ i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {
                                      __ATOMIC_SEQ_CST);
 }
 
+Cond::Cond() {
+    int ret = pthread_cond_init(&cond_, null);
+    if(ret) {
+        die("Failed to create condvar: %", ret);
+    }
+}
+
+Cond::~Cond() {
+    int ret = pthread_cond_destroy(&cond_);
+    if(ret) {
+        die("Failed to destroy condvar: %", ret);
+    }
+}
+
+void Cond::wait(Mutex& mut) {
+    int ret = pthread_cond_wait(&cond_, &mut.lock_);
+    if(ret) {
+        die("Failed to wait on cond: %", ret);
+    }
+}
+
+void Cond::signal() {
+    int ret = pthread_cond_signal(&cond_);
+    if(ret) {
+        die("Failed to signal cond: %", ret);
+    }
+}
+
+void Cond::broadcast() {
+    int ret = pthread_cond_broadcast(&cond_);
+    if(ret) {
+        die("Failed to broadcast cond: %", ret);
+    }
+}
+
+Id sys_id(OS_Thread thread) {
+    return static_cast<Id>(thread);
+}
+
+void sys_join(OS_Thread thread) {
+    if(!thread) return;
+    assert(!pthread_equal(pthread_self(), thread));
+    int ret = pthread_join(thread, null);
+    if(ret) {
+        die("Failed to join thread: %", ret);
+    }
+}
+
+void sys_detach(OS_Thread thread) {
+    if(!thread) return;
+    int ret = pthread_detach(thread);
+    if(ret) {
+        die("Failed to detatch thread: %", ret);
+    }
+}
+
+OS_Thread sys_start(OS_Thread_Ret (*f)(void*), void* data) {
+    OS_Thread thread = OS_Thread_Null;
+    int ret = pthread_create(&thread, null, f, data);
+    if(ret) {
+        die("Failed to create thread: %", ret);
+    }
+    assert(thread);
+    return thread;
+}
+
 } // namespace rpp::Thread

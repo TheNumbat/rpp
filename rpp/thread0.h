@@ -36,11 +36,13 @@ struct Mutex {
 
 private:
 #ifdef OS_WINDOWS
-    void* lock_;
+    void* lock_ = null;
 #else
-    pthread_mutex_t lock_;
+    pthread_mutex_t lock_ = PTHREAD_MUTEX_INITIALIZER;
 #endif
+
     friend struct Cond;
+    friend struct Reflect<Mutex>;
 };
 
 struct Lock {
@@ -60,6 +62,8 @@ struct Lock {
 
 private:
     Ref<Mutex> mutex_;
+
+    friend struct Reflect<Lock>;
 };
 
 struct Atomic {
@@ -92,7 +96,59 @@ private:
     friend struct Reflect<Atomic>;
 };
 
+struct Cond {
+
+    Cond();
+    ~Cond();
+
+    Cond(Cond&&) = delete;
+    Cond(const Cond&) = delete;
+
+    Cond& operator=(Cond&&) = delete;
+    Cond& operator=(const Cond&) = delete;
+
+    void signal();
+    void broadcast();
+    void wait(Mutex& mut);
+
+private:
+#ifdef OS_WINDOWS
+    void* cond_ = null;
+#else
+    pthread_cond_t cond_ = PTHREAD_COND_INITIALIZER;
+#endif
+
+    friend struct Reflect<Cond>;
+};
+
 } // namespace Thread
+
+template<>
+struct Reflect<Thread::Mutex> {
+    using T = Thread::Mutex;
+    static constexpr Literal name = "Mutex";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(lock_)>;
+    static_assert(Record<T>);
+};
+
+template<>
+struct Reflect<Thread::Cond> {
+    using T = Thread::Cond;
+    static constexpr Literal name = "Cond";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(cond_)>;
+    static_assert(Record<T>);
+};
+
+template<>
+struct Reflect<Thread::Lock> {
+    using T = Thread::Lock;
+    static constexpr Literal name = "Lock";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(mutex_)>;
+    static_assert(Record<T>);
+};
 
 template<>
 struct Reflect<Thread::Atomic> {
