@@ -35,6 +35,7 @@ Containers
 - Storage: manual RAII wrapper
 
 Utilities
+- 3D vector and matrix math (SSE)
 - Type based allocator tracking
 - Thread local region based stack allocator
 - Timing and allocation profile tracking
