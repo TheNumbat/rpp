@@ -35,7 +35,8 @@ Containers
 - Heap: linear priority queue
 - Map: robin hood hash map
 - Pair
-- Storage: manual RAII wrapper
+- Storage: manual in-place RAII wrapper
+- Opt: in-place optional
 
 Utilities
 - 3D vector and matrix math (SSE)
