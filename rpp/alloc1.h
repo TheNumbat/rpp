@@ -53,4 +53,12 @@ inline Mregion::Scope::~Scope() {
     Mregion::end();
 }
 
+inline u64 Mregion::depth() {
+    return current_region;
+}
+
+inline u64 Mregion::size() {
+    return current_offset;
+}
+
 } // namespace rpp

@@ -206,6 +206,16 @@ void Profile::shutdown_stats() {
     } else {
         info("No memory leaked.");
     }
+    if(Mregion::size() != 0) {
+        warn("Unbalanced region size: %", Mregion::size());
+    } else {
+        info("No region memory leaked.");
+    }
+    if(Mregion::depth() != 0) {
+        warn("Unbalanced regions: %", Mregion::depth());
+    } else {
+        info("No regions leaked.");
+    }
 }
 
 void Profile::print_alloc_stats() {

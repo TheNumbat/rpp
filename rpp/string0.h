@@ -146,6 +146,10 @@ struct String {
         return capacity_;
     }
 
+    bool empty() const {
+        return length_ == 0;
+    }
+
 private:
     u8* data_ = null;
     u64 length_ = 0;

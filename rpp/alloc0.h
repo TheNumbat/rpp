@@ -34,6 +34,10 @@ struct Mregion {
         ~Scope();
     };
 
+    static u64 depth();
+    static u64 size();
+
+private:
     static void begin();
     static void end();
 

@@ -12,6 +12,7 @@ static wchar_t* utf8_to_ucs2(String_View utf8) {
 
     if(!MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<const char*>(utf8.data()),
                             static_cast<u32>(utf8.length()), wide_buf, buf_size)) {
+
         warn("Failed to convert utf8 to ucs2: %", Log::sys_error());
         return null;
     }
