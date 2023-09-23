@@ -104,6 +104,9 @@ private:
     T* data_ = null;
 
     friend struct Reflect<Box>;
+
+    template<typename B, Allocator BA>
+    friend struct Box;
 };
 
 template<typename B, Allocator A>

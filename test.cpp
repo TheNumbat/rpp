@@ -4,6 +4,7 @@
 #include "rpp/base.h"
 #include "rpp/files.h"
 #include "rpp/net.h"
+#include "rpp/pool.h"
 #include "rpp/range_allocator.h"
 #include "rpp/thread.h"
 
@@ -718,6 +719,20 @@ i32 main() {
         assert(data);
         assert(data->length == 5);
         info("%", String_View{packet.data(), data->length});
+    }
+
+    { // Thread pool
+
+        Thread::Pool pool;
+
+        Vec<Thread::Future<void>> tasks;
+        for(u64 i = 0; i < Thread::hardware_threads(); i++) {
+            tasks.push(pool.single([]() { info("Hello from thread pool"); }));
+        }
+
+        for(auto& task : tasks) {
+            task->wait();
+        }
     }
 
     Profile::end_frame();

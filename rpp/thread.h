@@ -27,9 +27,7 @@ template<typename T>
 struct Promise {
 
     Promise() = default;
-    ~Promise() {
-        wait();
-    }
+    ~Promise() = default;
 
     Promise(const Promise&) = delete;
     Promise(Promise&&) = delete;
@@ -66,9 +64,7 @@ template<>
 struct Promise<void> {
 
     Promise() = default;
-    ~Promise() {
-        wait();
-    }
+    ~Promise() = default;
 
     Promise(const Promise&) = delete;
     Promise(Promise&&) = delete;
@@ -100,7 +96,7 @@ private:
     friend struct Reflect<Promise<void>>;
 };
 
-template<typename T, Allocator A>
+template<typename T, Allocator A = Alloc>
 using Future = Arc<Promise<T>, A>;
 
 template<Allocator A = Alloc>

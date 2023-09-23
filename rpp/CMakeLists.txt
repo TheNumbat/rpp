@@ -37,6 +37,7 @@ set(SOURCES_RPP
     "files.h"
     "net.h"
     "rc.h"
+    "pool.h"
 )
 
 if(WIN32)
