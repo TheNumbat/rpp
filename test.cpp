@@ -1,6 +1,7 @@
 
 #include <functional>
 
+#include "rpp/async.h"
 #include "rpp/base.h"
 #include "rpp/files.h"
 #include "rpp/net.h"
@@ -557,7 +558,7 @@ i32 main() {
         assert(r1 && *r1 == 5);
         assert(r1.references() == 1);
 
-        Rc<i32> r2 = r1;
+        Rc<i32> r2 = r1.dup();
         assert(r1 && r2 && *r1 == 5 && *r2 == 5);
         assert(r1.references() == 2 && r2.references() == 2);
 
@@ -576,7 +577,7 @@ i32 main() {
         assert(r1 && *r1 == 5);
         assert(r1.references() == 1);
 
-        Arc<i32> r2 = r1;
+        Arc<i32> r2 = r1.dup();
         assert(r1 && r2 && *r1 == 5 && *r2 == 5);
         assert(r1.references() == 2 && r2.references() == 2);
 
@@ -653,12 +654,14 @@ i32 main() {
 
         {
             Rc<i32> r{5};
-            Rc<i32> r2 = r;
+            Rc<i32> r2 = r.dup();
+            assert(r2.references() == 2);
             info("%", r2);
         }
         {
             Arc<i32> r{5};
-            Arc<i32> r2 = r;
+            Arc<i32> r2 = r.dup();
+            assert(r2.references() == 2);
             info("%", r2);
         }
 
@@ -721,8 +724,39 @@ i32 main() {
         info("%", String_View{packet.data(), data->length});
     }
 
-    { // Thread pool
+    { // Coroutines
+        auto f = []() -> Async::Coroutine<void> {
+            info("Hello from coroutine 1");
+            co_return;
+        };
 
+        Async::Coroutine<void> c = f();
+        assert(!c.done());
+        c.resume();
+        assert(c.done());
+        c.wait();
+
+        Async::Coroutine<void> c2 = f();
+        assert(!c2.done());
+
+        auto g = [&]() -> Async::Coroutine<i32> {
+            info("Hello from coroutine 2");
+            co_await c2;
+            co_return 1;
+        };
+
+        Async::Coroutine<i32> d = g();
+        assert(!d.done());
+        d.resume();
+        assert(!d.done());
+        c2.resume();
+        assert(!d.done());
+        d.resume();
+        assert(d.done());
+        assert(d.wait() == 1);
+    }
+
+    { // Thread pool
         Thread::Pool pool;
 
         Vec<Thread::Future<void>> tasks;
@@ -733,6 +767,22 @@ i32 main() {
         for(auto& task : tasks) {
             task->wait();
         }
+
+        auto job1 = pool.async([]() -> Async::Coroutine<i32> {
+            info("Hello from coroutine 1 on thread pool");
+            co_return 1;
+        });
+        auto job = pool.async(
+            [](auto job1) -> Async::Coroutine<void> {
+                info("Hello from coroutine 2 on thread pool");
+                i32 i = co_await job1;
+                info("Coroutine 2 got %", i);
+                co_return;
+            },
+            job1.dup());
+
+        // job.wait();
+        // job1.wait();
     }
 
     Profile::end_frame();

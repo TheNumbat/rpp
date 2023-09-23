@@ -1,10 +1,13 @@
 
 #pragma once
 
+#include "async.h"
 #include "base.h"
 #include "thread.h"
 
 namespace rpp::Thread {
+
+using Async::Coroutine;
 
 struct Pool {
 
@@ -33,6 +36,16 @@ struct Pool {
         return enqueue(Priority::normal, std::forward<F>(f), std::forward<Args...>(args)...);
     }
 
+    template<typename F, typename... Args>
+        requires Invocable<F, Args...>
+    auto async(F&& f, Args&&... args) -> Invoke_Result<F, Args...> {
+        assert(!shutdown);
+        auto coroutine = f(std::forward<Args>(args)...);
+        assert(!coroutine.done());
+        co_enqueue(Priority::normal, coroutine.dup());
+        return coroutine;
+    }
+
 private:
     struct Job_Base {
         virtual ~Job_Base() {
@@ -40,42 +53,35 @@ private:
         virtual void operator()() = 0;
     };
 
-    template<typename F, typename... Args>
-        requires Invocable<F, Args...>
+    template<Invocable F>
     struct Job : public Job_Base {
-
-        using Ret = Invoke_Result<F, Args...>;
-        using Future = Future<Ret, Alloc>;
-        using Tuple = std::tuple<Args...>;
-
-        F func;
-        Tuple args;
-        Future result;
-
-        Job(const Future& fut, F&& f, Tuple&& args)
-            : result(fut), func(std::move(f)), args(std::move(args)) {
+        Job(F&& f) : func{std::move(f)} {
         }
-
         void operator()() {
-            if constexpr(Same<Ret, void>) {
-                std::apply(std::move(func), std::move(args));
-                result->fill();
-            } else {
-                result->fill(std::apply(std::move(func), std::move(args)));
-            }
+            func();
         }
+        F func;
     };
 
-    template<typename Job>
-    void push_job(Priority p, Box<Job, Alloc> job) {
+    template<typename T>
+    struct Co_Job : public Job_Base {
+        Co_Job(Coroutine<T> c) : coroutine{std::move(c)} {
+        }
+        void operator()() {
+            coroutine.resume();
+        }
+        Coroutine<T> coroutine;
+    };
+
+    void push_job(Priority p, Box<Job_Base, Alloc> job) {
         switch(p) {
         case Priority::critical:
         case Priority::high: {
-            important_jobs.push(Box<Job_Base, Alloc>(std::move(job)));
+            important_jobs.push(std::move(job));
         } break;
         case Priority::normal:
         case Priority::low: {
-            normal_jobs.push(Box<Job_Base, Alloc>(std::move(job)));
+            normal_jobs.push(std::move(job));
         } break;
         }
     }
@@ -84,16 +90,32 @@ private:
         requires Invocable<F, Args...>
     auto enqueue(Priority p, F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, Alloc> {
 
-        using Job = Job<F, Args...>;
-        auto fut = Job::Future::make();
+        using Ret = Invoke_Result<F, Args...>;
+        auto future = Future<Ret>::make();
 
-        std::tuple<Args...> args_tuple(std::forward<Args>(args)...);
-        Box<Job, Alloc> job(Job{fut, std::forward<F>(f), std::move(args_tuple)});
+        auto func = [future = future.dup(), f = std::move(f),
+                     ... args = std::forward<Args>(args)]() mutable {
+            if constexpr(Same<Ret, void>) {
+                f(std::forward<Args>(args)...);
+                future->fill();
+            } else {
+                future->fill(f(std::forward<Args>(args)...));
+            }
+        };
+        Box<Job<decltype(func)>, Alloc> job{std::move(func)};
 
         Lock lock(jobs_mut);
-        push_job(p, std::move(job));
+        push_job(p, Box<Job_Base, Alloc>{std::move(job)});
         jobs_cond.signal();
-        return fut;
+        return future;
+    }
+
+    template<typename T>
+    void co_enqueue(Priority p, Coroutine<T> coroutine) {
+        Box<Co_Job<T>, Alloc> job{std::move(coroutine)};
+        Lock lock(jobs_mut);
+        push_job(p, Box<Job_Base, Alloc>{std::move(job)});
+        jobs_cond.signal();
     }
 
     void do_work() {
@@ -122,7 +144,9 @@ private:
     bool shutdown = false;
     Mutex jobs_mut;
     Cond jobs_cond;
-    Queue<Box<Job_Base, Alloc>, Alloc> normal_jobs, important_jobs;
+
+    Queue<Box<Job_Base, Alloc>, Alloc> normal_jobs;
+    Queue<Box<Job_Base, Alloc>, Alloc> important_jobs;
     Vec<Thread<Alloc>, Alloc> threads;
 };
 

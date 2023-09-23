@@ -35,14 +35,14 @@ struct Rc {
         new(data_) Data{T{std::forward<Args>(args)...}, 1};
     }
 
-    Rc(const Rc& src) {
-        data_ = src.data_;
+    Rc(const Rc& src) = delete;
+    Rc& operator=(const Rc& src) = delete;
+
+    Rc dup() const {
+        Rc ret;
+        ret.data_ = data_;
         if(data_) data_->references++;
-    }
-    Rc& operator=(const Rc& src) {
-        drop();
-        data_ = src.data_;
-        if(data_) data_->references++;
+        return ret;
     }
 
     Rc(Rc&& src) {
@@ -127,19 +127,14 @@ struct Arc {
         return ret;
     }
 
-    // NOTE(max): src will not be destroyed while in scope
-    Arc(const Arc& src) {
-        if(src.data_) {
-            src.data_->references.incr();
-            data_ = src.data_;
-        }
-    }
-    Arc& operator=(const Arc& src) {
-        drop();
-        if(src.data_) {
-            src.data_->references.incr();
-            data_ = src.data_;
-        }
+    Arc(const Arc& src) = delete;
+    Arc& operator=(const Arc& src) = delete;
+
+    Arc dup() const {
+        Arc ret;
+        ret.data_ = data_;
+        if(data_) data_->references.incr();
+        return ret;
     }
 
     Arc(Arc&& src) {

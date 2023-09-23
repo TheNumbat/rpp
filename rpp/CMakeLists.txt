@@ -38,6 +38,7 @@ set(SOURCES_RPP
     "net.h"
     "rc.h"
     "pool.h"
+    "async.h"
 )
 
 if(WIN32)

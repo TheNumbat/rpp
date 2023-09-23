@@ -162,19 +162,20 @@ template<Allocator A = Alloc, typename F, typename... Args>
 auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
 
     using Result = Invoke_Result<F, Args...>;
-    auto fut = Future<Result, A>::make();
+    auto future = Future<Result, A>::make();
 
-    Thread thread{[fut, f = std::forward<F>(f), ... args = std::forward<Args>(args)]() mutable {
+    Thread thread{[future = future.dup(), f = std::forward<F>(f),
+                   ... args = std::forward<Args>(args)]() mutable {
         if constexpr(Same<Result, void>) {
             f(std::forward<Args>(args)...);
-            fut->fill();
+            future->fill();
         } else {
-            fut->fill(f(std::forward<Args>(args)...));
+            future->fill(f(std::forward<Args>(args)...));
         }
     }};
     thread.detach();
 
-    return fut;
+    return future;
 }
 
 } // namespace Thread
