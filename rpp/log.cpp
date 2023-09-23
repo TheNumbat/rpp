@@ -50,29 +50,38 @@ static String_View ucs2_to_utf8(const wchar_t* ucs2, int ucs2_len) {
     return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};
 }
 
+static String_View basic_win32_error(DWORD err) {
+
+    constexpr int buffer_size = 64;
+    static thread_local char buffer[buffer_size];
+
+    int written = std::snprintf(buffer, buffer_size, "Win32 Error: %d", err);
+    assert(written > 0 && written + 1 <= buffer_size);
+
+    return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};
+}
+
 String_View sys_error() {
 
     constexpr int buffer_size = 256;
-    static thread_local char buffer[buffer_size];
     static thread_local wchar_t wbuffer[buffer_size];
 
     DWORD err = GetLastError();
+    if(err == 0) {
+        return String_View{};
+    }
+
     u32 written = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, null,
                                  err, LANG_USER_DEFAULT, wbuffer, buffer_size, null);
     assert(written + 1 <= buffer_size);
 
     if(written <= 1) {
-        int written2 = std::snprintf(buffer, buffer_size, "Win32 Error: %d", err);
-        assert(written2 > 0 && written2 + 1 <= buffer_size);
-        return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written2)};
+        return basic_win32_error(err);
     }
 
     String_View utf8_msg = ucs2_to_utf8(wbuffer, written - 1);
-
     if(utf8_msg.empty()) {
-        int written2 = std::snprintf(buffer, buffer_size, "Win32 Error: %d", err);
-        assert(written2 > 0 && written2 + 1 <= buffer_size);
-        return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written2)};
+        return basic_win32_error(err);
     }
 
     return utf8_msg;

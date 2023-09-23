@@ -7,28 +7,36 @@
 
 namespace rpp::Net {
 
-static String_View wsa_error() {
+static String_View wsa_error_code(int err) {
 
     constexpr u64 buffer_size = 256;
     static thread_local char buffer[buffer_size] = {};
 
-    i32 err = WSAGetLastError();
+    u32 written = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, null,
+                                 err, LANG_USER_DEFAULT, buffer, buffer_size, null);
+    assert(written + 1 <= buffer_size);
 
-    u32 size = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, null, err,
-                              LANG_USER_DEFAULT, buffer, buffer_size, null);
-    if(!size) {
-        std::snprintf(buffer, buffer_size, "WinSock Error: %d", err);
-        return String_View{buffer};
+    if(written <= 1) {
+        int written2 = std::snprintf(buffer, buffer_size, "WinSock Error: %d", err);
+        assert(written2 > 0 && written2 + 1 <= buffer_size);
+        return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written2)};
     }
 
-    return String_View{buffer};
+    return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written - 1)};
+}
+
+static String_View wsa_error() {
+    int err = WSAGetLastError();
+    if(err == 0) return String_View{};
+    return wsa_error_code(err);
 }
 
 struct WSA_Startup {
     WSA_Startup() {
         WSADATA wsa;
-        if(WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-            die("Failed to startup winsock: %", wsa_error());
+        int err = WSAStartup(MAKEWORD(2, 2), &wsa);
+        if(err != 0) {
+            warn("Failed to startup winsock: %", wsa_error_code(err));
         }
     }
 };
@@ -41,9 +49,14 @@ Address::Address(String_View address, u16 port) {
     sockaddr_.sin_family = AF_INET;
     sockaddr_.sin_port = htons(port);
 
-    if(inet_pton(AF_INET, reinterpret_cast<const char*>(address.data()),
-                 &sockaddr_.sin_addr.s_addr) != 1) {
-        die("Failed to create address: %", wsa_error());
+    int ret = inet_pton(AF_INET, reinterpret_cast<const char*>(address.data()),
+                        &sockaddr_.sin_addr.s_addr);
+
+    if(ret == 0) {
+        warn("Failed to create address: Invalid address.");
+    }
+    if(ret == -1) {
+        warn("Failed to create address: %", wsa_error());
     }
 }
 
