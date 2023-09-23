@@ -7,9 +7,12 @@ namespace formatting {
 
 template<Allocator A, Reflectable T>
 u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) {
-    char buffer[64] = {};
-    std::snprintf(buffer, 64, fmt, value);
-    return output.write(idx, String_View{buffer});
+    Region_Scope;
+    u64 val_len = std::snprintf(null, 0, fmt, value);
+    String<Mregion> buffer{val_len + 1};
+    buffer.set_length(val_len + 1);
+    std::snprintf(reinterpret_cast<char* const>(buffer.data()), buffer.length(), fmt, value);
+    return output.write(idx, buffer.sub(0, val_len));
 }
 
 template<Reflectable T>
@@ -113,7 +116,7 @@ struct Measure {
 
 template<>
 struct Measure<String_View> {
-    inline static u64 measure(const String_View& string) {
+    inline static u64 measure(String_View string) {
         return string.length();
     }
 };
@@ -249,6 +252,70 @@ struct Measure<Map<K, V, A>> {
         return length;
     }
 };
+template<Float F, u64 N>
+struct Measure<Math::Vect<F, N>> {
+    static u64 measure(const Math::Vect<F, N>& vect) {
+        u64 length = 5;
+        length += Measure<u64>::measure(N);
+        for(u64 i = 0; i < N; i++) {
+            length += Measure<F>::measure(vect[i]);
+            if(i + 1 < N) length += 2;
+        }
+        return length;
+    }
+};
+template<Int I, u64 N>
+struct Measure<Math::Vect<I, N>> {
+    static u64 measure(const Math::Vect<I, N>& vect) {
+        u64 length = 6;
+        length += Measure<u64>::measure(N);
+        for(u64 i = 0; i < N; i++) {
+            length += Measure<I>::measure(vect[i]);
+            if(i + 1 < N) length += 2;
+        }
+        return length;
+    }
+};
+template<>
+struct Measure<Math::Quat> {
+    static u64 measure(const Math::Quat& quat) {
+        u64 length = 12;
+        length += Measure<f32>::measure(quat.x);
+        length += Measure<f32>::measure(quat.y);
+        length += Measure<f32>::measure(quat.z);
+        length += Measure<f32>::measure(quat.w);
+        return length;
+    }
+};
+template<>
+struct Measure<Math::Mat4> {
+    static u64 measure(const Math::Mat4& mat) {
+        u64 length = 6;
+        for(u64 i = 0; i < 4; i++) {
+            length += 1;
+            for(u64 j = 0; j < 4; j++) {
+                length += Measure<f32>::measure(mat[i][j]);
+                if(j + 1 < 4) length += 2;
+            }
+            length += 1;
+            if(i + 1 < 4) length += 2;
+        }
+        return length;
+    }
+};
+template<>
+struct Measure<Math::BBox> {
+    static u64 measure(const Math::BBox& bbox) {
+        u64 length = 20;
+        length += Measure<f32>::measure(bbox.min.x);
+        length += Measure<f32>::measure(bbox.min.y);
+        length += Measure<f32>::measure(bbox.min.z);
+        length += Measure<f32>::measure(bbox.max.x);
+        length += Measure<f32>::measure(bbox.max.y);
+        length += Measure<f32>::measure(bbox.max.z);
+        return length;
+    }
+};
 
 template<Allocator A, Reflectable T>
 struct Write {
@@ -321,7 +388,7 @@ struct Write {
 
 template<Allocator O>
 struct Write<O, String_View> {
-    static u64 write(String<O>& output, u64 idx, const String_View& value) {
+    static u64 write(String<O>& output, u64 idx, String_View value) {
         return output.write(idx, value);
     }
 };
@@ -476,14 +543,100 @@ struct Write<O, Map<K, V, A>> {
         return output.write(idx, ']');
     }
 };
+template<Allocator O, Float F, u64 N>
+struct Write<O, Math::Vect<F, N>> {
+    static u64 write(String<O>& output, u64 idx, const Math::Vect<F, N>& vect) {
+        idx = output.write(idx, "Vec"_v);
+        idx = Write<O, u64>::write(output, idx, N);
+        idx = output.write(idx, '{');
+        for(u64 i = 0; i < N; i++) {
+            idx = Write<O, F>::write(output, idx, vect[i]);
+            if(i + 1 < N) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O, Signed_Int I, u64 N>
+struct Write<O, Math::Vect<I, N>> {
+    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) {
+        idx = output.write(idx, "Vec"_v);
+        idx = Write<O, u64>::write(output, idx, N);
+        idx = output.write(idx, "i{"_v);
+        for(u64 i = 0; i < N; i++) {
+            idx = Write<O, I>::write(output, idx, vect[i]);
+            if(i + 1 < N) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O, Unsigned_Int I, u64 N>
+struct Write<O, Math::Vect<I, N>> {
+    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) {
+        idx = output.write(idx, "Vec"_v);
+        idx = Write<O, u64>::write(output, idx, N);
+        idx = output.write(idx, "u{"_v);
+        for(u64 i = 0; i < N; i++) {
+            idx = Write<O, I>::write(output, idx, vect[i]);
+            if(i + 1 < N) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O>
+struct Write<O, Math::Quat> {
+    static u64 write(String<O>& output, u64 idx, const Math::Quat& quat) {
+        idx = output.write(idx, "Quat{"_v);
+        idx = Write<O, f32>::write(output, idx, quat.x);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, quat.y);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, quat.z);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, quat.w);
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O>
+struct Write<O, Math::Mat4> {
+    static u64 write(String<O>& output, u64 idx, const Math::Mat4& mat) {
+        idx = output.write(idx, "Mat4{"_v);
+        for(u64 i = 0; i < 4; i++) {
+            idx = output.write(idx, '{');
+            for(u64 j = 0; j < 4; j++) {
+                idx = Write<O, f32>::write(output, idx, mat[i][j]);
+                if(j + 1 < 4) idx = output.write(idx, ", "_v);
+            }
+            idx = output.write(idx, '}');
+            if(i + 1 < 4) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O>
+struct Write<O, Math::BBox> {
+    static u64 write(String<O>& output, u64 idx, const Math::BBox& bbox) {
+        idx = output.write(idx, "BBox{{"_v);
+        idx = Write<O, f32>::write(output, idx, bbox.min.x);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, bbox.min.y);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, bbox.min.z);
+        idx = output.write(idx, "}, {"_v);
+        idx = Write<O, f32>::write(output, idx, bbox.max.x);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, bbox.max.y);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, bbox.max.z);
+        return output.write(idx, "}}"_v);
+    }
+};
 
 template<Allocator A, typename... Ts>
     requires(Reflectable<Ts> && ...)
-u64 write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx,
-          const Ts&... args);
+u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx, const Ts&... args);
 
 template<Allocator A>
-u64 write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx) {
+u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx) {
     for(; fmt_idx < fmt.length(); fmt_idx++) {
         if(fmt[fmt_idx] == '%') {
             assert(fmt_idx + 1 < fmt.length() && fmt[fmt_idx + 1] == '%');
@@ -498,7 +651,7 @@ u64 write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx
 
 template<Allocator A, typename T, typename... Ts>
     requires(Reflectable<T> && (Reflectable<Ts> && ...))
-u64 write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx, const T& arg,
+u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx, const T& arg,
           const Ts&... args) {
     for(; fmt_idx < fmt.length(); fmt_idx++) {
         if(fmt[fmt_idx] == '%') {
@@ -517,7 +670,7 @@ u64 write(const String_View& fmt, u64 fmt_idx, String<A>& output, u64 output_idx
     return output_idx;
 }
 
-inline Pair<u64, u64> parse_fmt(const String_View& fmt) {
+inline Pair<u64, u64> parse_fmt(String_View fmt) {
     u64 length = 0, args = 0;
     for(u64 i = 0; i < fmt.length(); i++) {
         if(fmt[i] == '%') {
@@ -539,20 +692,20 @@ inline Pair<u64, u64> parse_fmt(const String_View& fmt) {
 
 template<typename... Ts>
     requires(Reflectable<Ts> && ...)
-u64 format_length(const String_View& fmt, const Ts&... args) {
+u64 format_length(String_View fmt, const Ts&... args) {
     auto [fmt_length, n_args] = formatting::parse_fmt(fmt);
     assert(n_args == sizeof...(args));
     return fmt_length + (formatting::Measure<Ts>::measure(args) + ...);
 }
 
 template<>
-inline u64 format_length(const String_View& fmt) {
+inline u64 format_length(String_View fmt) {
     return formatting::parse_fmt(fmt).first;
 }
 
 template<Allocator A, typename... Ts>
     requires(Reflectable<Ts> && ...)
-String<A> format(const String_View& fmt, const Ts&... args) {
+String<A> format(String_View fmt, const Ts&... args) {
     u64 length = format_length(fmt, args...);
     String<A> output{length};
     output.set_length(length);

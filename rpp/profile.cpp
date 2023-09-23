@@ -153,7 +153,7 @@ void Profile::alloc(Alloc a) {
     if constexpr(DO_PROFILE) {
         {
             Thread::Lock lock(allocs_lock);
-            Alloc_Profile& prof = allocs.get_or_insert(a.name.clone());
+            Alloc_Profile& prof = allocs.get_or_insert(a.name);
 
             if(a.size) {
 

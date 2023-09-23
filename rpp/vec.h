@@ -248,8 +248,8 @@ struct Slice {
         length_ = a.length();
     }
 
-    Slice(const Slice& src) = delete;
-    Slice& operator=(const Slice& src) = delete;
+    Slice(const Slice& src) = default;
+    Slice& operator=(const Slice& src) = default;
 
     Slice(Slice&& src) = default;
     Slice& operator=(Slice&& src) = default;
@@ -259,17 +259,7 @@ struct Slice {
         length_ = static_cast<u64>(init.size());
     }
 
-    Slice clone() const {
-        Slice ret;
-        ret.data_ = data_;
-        ret.length_ = length_;
-        return ret;
-    }
-
-    ~Slice() {
-        data_ = null;
-        length_ = 0;
-    }
+    ~Slice() = default;
 
     bool empty() const {
         return length_ == 0;
@@ -306,6 +296,7 @@ struct Slice {
     u64 bytes() const {
         return length_ * sizeof(T);
     }
+
     Slice<u8> to_bytes() {
         Slice<u8> ret;
         ret.data_ = reinterpret_cast<const u8*>(data_);
@@ -314,10 +305,12 @@ struct Slice {
     }
 
 private:
-    const T* data_ = null;
-    u64 length_ = 0;
+    const T* data_;
+    u64 length_;
     friend struct Reflect<Slice<T>>;
 };
+
+static_assert(Trivial<Slice<u8>>);
 
 template<typename V, Allocator A>
 struct Reflect<Vec<V, A>> {

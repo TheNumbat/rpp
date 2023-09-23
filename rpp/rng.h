@@ -43,7 +43,7 @@ struct Stream {
     template<Movable T>
     void shuffle(Slice<T> arr) {
         for(u64 i = 0; i < arr.size() - 1; i++) {
-            u64 j = range(i, arr.size());
+            u64 j = range(i, arr.length());
             std::swap(arr[i], arr[j]);
         }
     }

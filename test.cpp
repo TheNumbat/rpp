@@ -83,13 +83,16 @@ i32 main() {
             info("%", c);
         }
 
-        String_View sv2 = sv.clone();
+        String_View sv2 = sv;
         String_View sv3 = std::move(sv2);
         String_View sv4 = s.view();
         String s2 = sv3.string();
 
         String s3 = s.clone();
         String s4 = std::move(s3);
+
+        (void)s4;
+        (void)sv4;
     }
 
     // Thread0
@@ -124,6 +127,8 @@ i32 main() {
         Pair<SV, SV> e{"Hello"_v, "World"_v};
         Pair<SV, SV> e2 = std::move(e);
         Pair<SV, SV> p2 = p1.clone();
+        (void)e2;
+        (void)p2;
 
         Pair<i32, i32> p3 = std::move(p);
         assert(p3.first == 1 && p3.second == 2);
@@ -216,6 +221,8 @@ i32 main() {
         Array<SV, 3> f = e.clone();
 
         Array<M, 2> m;
+
+        (void)f;
     }
 
     // Vec
@@ -261,12 +268,12 @@ i32 main() {
         Slice<i32> s{v3};
         assert(s.length() == 2);
 
-        Slice<i32> s2 = s.clone();
+        Slice<i32> s2 = s;
         Slice<i32> s3 = std::move(s2);
 
         Slice<SV> s4{sv3};
         assert(s4.length() == 2);
-        Slice<SV> s5 = s4.clone();
+        Slice<SV> s5 = s4;
 
         Slice<i32> s6 = {1, 2, 3};
         assert(s6.length() == 3);
@@ -275,6 +282,7 @@ i32 main() {
         assert(s7.length() == 2);
 
         Slice<M> smm;
+        (void)smm;
         Slice<M> sm = {M{}};
 
         Slice<M> m2{};
@@ -283,6 +291,10 @@ i32 main() {
         for(i32 i = 0; i < 10; i++) {
             vf.push([]() { info("Hello"); });
         }
+
+        (void)m2;
+        (void)s3;
+        (void)s5;
     }
 
     // Box
@@ -648,6 +660,26 @@ i32 main() {
             Arc<i32> r2 = r;
             info("%", r2);
         }
+
+        info("%", Vec2{1.0f, 2.0f});
+        info("%", Vec3{1.0f, 2.0f, 3.0f});
+        info("%", Vec4{1.0f, 2.0f, 3.0f, 4.0f});
+        info("%", VecN<5>{1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
+        info("%", Vec2i{1, 2});
+        info("%", Vec3i{1, 2, 3});
+        info("%", Vec4i{1, 2, 3, 4});
+        info("%", VecNi<5>{1, 2, 3, 4, 5});
+        info("%", Vec2u{1u, 2u});
+        info("%", Vec3u{1u, 2u, 3u});
+        info("%", Vec4u{1u, 2u, 3u, 4u});
+        info("%", VecNu<5>{1u, 2u, 3u, 4u, 5u});
+
+        info("%", Quat{1.0f, 2.0f, 3.0f, 4.0f});
+        info("%", BBox{Vec3{1.0f, 2.0f, 3.0f}, Vec3{4.0f, 5.0f, 6.0f}});
+        info("%", Mat4{1.0f, 2.0f, 3.0f, 4.0f,    //
+                       5.0f, 6.0f, 7.0f, 8.0f,    //
+                       9.0f, 10.0f, 11.0f, 12.0f, //
+                       13.0f, 14.0f, 15.0f, 16.0f});
     }
 
     { // Thread
@@ -667,6 +699,8 @@ i32 main() {
         info("Thread 1 returned %", value->wait());
         v->wait();
     }
+
+    { Files::read("unknown"_v); }
 
     Profile::end_frame();
     Profile::end_thread();

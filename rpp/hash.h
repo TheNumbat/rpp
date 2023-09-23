@@ -53,7 +53,7 @@ u64 hash(const String<A>& string) {
     return h;
 }
 
-inline u64 hash(const String_View& string) {
+inline u64 hash(String_View string) {
     u64 h = 0;
     for(u8 c : string) h = combine(h, hash(static_cast<u64>(c)));
     return h;

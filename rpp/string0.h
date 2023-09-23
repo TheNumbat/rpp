@@ -19,26 +19,13 @@ struct String_View {
     explicit String_View(const u8* data, u64 length) : data_(data), length_(length) {
     }
 
-    ~String_View() {
-        data_ = null;
-        length_ = 0;
-    }
+    ~String_View() = default;
 
-    String_View(const String_View& src) = delete;
-    String_View& operator=(const String_View& src) = delete;
+    String_View(const String_View& src) = default;
+    String_View& operator=(const String_View& src) = default;
 
-    String_View(String_View&& src) : data_(src.data_), length_(src.length_) {
-        src.data_ = null;
-        src.length_ = 0;
-    }
-    String_View& operator=(String_View&& src) {
-        this->~String_View();
-        data_ = src.data_;
-        length_ = src.length_;
-        src.data_ = null;
-        src.length_ = 0;
-        return *this;
-    }
+    String_View(String_View&& src) = default;
+    String_View& operator=(String_View&& src) = default;
 
     const u8& operator[](u64 idx) const;
 
@@ -46,10 +33,6 @@ struct String_View {
 
     template<Allocator A = Mdefault>
     String<A> string() const;
-
-    String_View clone() const {
-        return String_View{data_, length_};
-    }
 
     const u8* begin() const {
         return data_;
@@ -70,11 +53,13 @@ struct String_View {
     }
 
 private:
-    const u8* data_ = null;
-    u64 length_ = 0;
+    const u8* data_;
+    u64 length_;
 
     friend struct Reflect<String_View>;
 };
+
+static_assert(Trivial<String_View>);
 
 template<Allocator A>
 struct String {
@@ -128,11 +113,12 @@ struct String {
     String_View view() const {
         return String_View{data_, length_};
     }
+    String_View sub(u64 start, u64 end) const;
 
     u64 write(u64 i, char c);
     template<Allocator B>
     u64 write(u64 i, const String<B>& text);
-    u64 write(u64 i, const String_View& text);
+    u64 write(u64 i, String_View text);
 
     u8* begin() {
         return data_;
@@ -183,13 +169,13 @@ inline String_View operator""_v(const char* c_string, size_t length) {
     return String_View{reinterpret_cast<const u8*>(c_string), length};
 }
 
-inline bool operator==(const String_View& l, const String_View& r) {
+inline bool operator==(String_View l, String_View r) {
     if(l.length() != r.length()) return false;
     return std::strncmp(reinterpret_cast<const char*>(l.data()),
                         reinterpret_cast<const char*>(r.data()), l.length()) == 0;
 }
 
-inline bool operator<(const String_View& l, const String_View& r) {
+inline bool operator<(String_View l, String_View r) {
     u64 length = l.length() < r.length() ? l.length() : r.length();
     for(u64 i = 0; i < length; i++) {
         if(l[i] < r[i]) return true;

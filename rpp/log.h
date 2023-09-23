@@ -52,12 +52,11 @@ struct Scope {
 };
 
 String_View sys_error();
-String_View time_string(std::time_t timestamp);
 void debug_break();
-void output(Level level, const Location& loc, const String_View& msg);
+void output(Level level, const Location& loc, String_View msg);
 
 template<typename... Ts>
-void log(Level level, const Location& loc, const String_View& fmt, const Ts&... args) {
+void log(Level level, const Location& loc, String_View fmt, const Ts&... args) {
     Region_Scope;
     output(level, std::move(loc), format<Mregion>(fmt, args...).view());
 }

@@ -35,22 +35,22 @@ struct Vect : Vect_Base<T, N> {
 
     template<typename S = T>
         requires is_simd && Same<S, T>
-    constexpr Vect(__m128 p) : Base{} {
+    constexpr explicit Vect(__m128 p) : Base{} {
         this->pack = p;
     }
 
-    constexpr Vect(T x) : Base{} {
+    constexpr explicit Vect(T x) : Base{} {
         for(u64 i = 0; i < N; i++) this->data[i] = x;
     }
 
-    constexpr Vect(Vect<T, N - 1> f, T s) : Base{} {
+    constexpr explicit Vect(Vect<T, N - 1> f, T s) : Base{} {
         for(u64 i = 0; i < N - 1; i++) this->data[i] = f[i];
         this->data[N - 1] = s;
     }
 
     template<typename S, typename... Ss>
         requires All<T, S, Ss...> && Length<N - 1, Ss...>
-    constexpr Vect(S first, Ss... rest) : Base{first, rest...} {
+    constexpr explicit Vect(S first, Ss... rest) : Base{first, rest...} {
     }
 
     T& operator[](u64 idx) {
@@ -525,7 +525,12 @@ struct Mat4 {
         : columns{Vec4{1.0f, 0.0f, 0.0f, 0.0f}, Vec4{0.0f, 1.0f, 0.0f, 0.0f},
                   Vec4{0.0f, 0.0f, 1.0f, 0.0f}, Vec4{0.0f, 0.0f, 0.0f, 1.0f}} {
     }
-    Mat4(Vec4 x, Vec4 y, Vec4 z, Vec4 w) : columns{x, y, z, w} {
+    explicit Mat4(Vec4 x, Vec4 y, Vec4 z, Vec4 w) : columns{x, y, z, w} {
+    }
+
+    template<typename... Ts>
+        requires Length<16, Ts...> && All<f32, Ts...>
+    explicit Mat4(Ts... args) : data{args...} {
     }
 
     static Mat4 look_at(Vec3 pos, Vec3 at, Vec3 up);
@@ -636,10 +641,10 @@ struct Mat4 {
     }
 
     Vec4 operator*(Vec4 v) const {
-        return _mm_add_ps(_mm_add_ps(_mm_mul_ps(pack[0], _mm_set1_ps(v.x)),
-                                     _mm_mul_ps(pack[1], _mm_set1_ps(v.y))),
-                          _mm_add_ps(_mm_mul_ps(pack[2], _mm_set1_ps(v.z)),
-                                     _mm_mul_ps(pack[3], _mm_set1_ps(v.w))));
+        return Vec4{_mm_add_ps(_mm_add_ps(_mm_mul_ps(pack[0], _mm_set1_ps(v.x)),
+                                          _mm_mul_ps(pack[1], _mm_set1_ps(v.y))),
+                               _mm_add_ps(_mm_mul_ps(pack[2], _mm_set1_ps(v.z)),
+                                          _mm_mul_ps(pack[3], _mm_set1_ps(v.w))))};
     }
 
     Vec3 operator*(Vec3 v) const {
@@ -709,18 +714,12 @@ struct Mat4 {
     static Mat4 I, zero, swap_x_z;
 };
 
-inline Mat4 Mat4::I = {{1.0f, 0.0f, 0.0f, 0.0f},
-                       {0.0f, 1.0f, 0.0f, 0.0f},
-                       {0.0f, 0.0f, 1.0f, 0.0f},
-                       {0.0f, 0.0f, 0.0f, 1.0f}};
-inline Mat4 Mat4::zero = {{0.0f, 0.0f, 0.0f, 0.0f},
-                          {0.0f, 0.0f, 0.0f, 0.0f},
-                          {0.0f, 0.0f, 0.0f, 0.0f},
-                          {0.0f, 0.0f, 0.0f, 0.0f}};
-inline Mat4 Mat4::swap_x_z = {{0.0f, 0.0f, 1.0f, 0.0f},
-                              {0.0f, 1.0f, 0.0f, 0.0f},
-                              {1.0f, 0.0f, 0.0f, 0.0f},
-                              {0.0f, 0.0f, 0.0f, 1.0f}};
+inline Mat4 Mat4::I = Mat4{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                           0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+inline Mat4 Mat4::zero = Mat4{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                              0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+inline Mat4 Mat4::swap_x_z = Mat4{0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+                                  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
 
 #define MakeShuffleMask(x, y, z, w) (x | (y << 2) | (z << 4) | (w << 6))
 #define VecSwizzleMask(vec, mask) _mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(vec), mask))

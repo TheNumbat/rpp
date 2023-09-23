@@ -6,7 +6,7 @@
 
 namespace rpp::Net {
 
-Address::Address(const String_View& address, u16 port) {
+Address::Address(String_View address, u16 port) {
 
     sockaddr_ = {};
     sockaddr_.sin_family = AF_INET;

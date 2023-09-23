@@ -65,10 +65,13 @@ struct Opt {
     }
 
     Opt clone() const
-        requires Clone<T>
+        requires Clone<T> || Trivial<T>
     {
         if(!ok_) return Opt{};
-        return Opt{value_->clone()};
+        if constexpr(Clone<T>)
+            return Opt{value_.clone()};
+        else
+            return Opt{*value_};
     }
 
     T& operator*() {

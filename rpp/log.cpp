@@ -35,46 +35,44 @@ static thread_local u64 g_log_indent = 0;
 
 #ifdef OS_WINDOWS
 
-static String_View ucs2_to_utf8(wchar_t* ucs2, int ucs2_len) {
+static String_View ucs2_to_utf8(const wchar_t* ucs2, int ucs2_len) {
 
-    constexpr int buf_size = 256;
-    static thread_local char buf[buf_size];
+    constexpr int buffer_size = 256;
+    static thread_local char buffer[buffer_size];
 
-    int written = WideCharToMultiByte(CP_UTF8, 0, ucs2, ucs2_len, buf, buf_size, null, null);
-    if(!written) {
+    int written = WideCharToMultiByte(CP_UTF8, 0, ucs2, ucs2_len, buffer, buffer_size, null, null);
+    if(written == 0) {
         warn("Failed to convert ucs2 to utf8: %", sys_error());
         return String_View{};
     }
-    assert(written > 0 && written + 1 <= buf_size);
+    assert(written <= buffer_size);
 
-    return String_View{reinterpret_cast<const u8*>(buf), static_cast<u64>(written + 1)};
+    return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};
 }
 
 String_View sys_error() {
 
-    constexpr int buf_size = 64;
-    static thread_local char buf[buf_size];
-
-    constexpr int wbuf_size = 256;
-    static thread_local wchar_t wbuf[buf_size];
+    constexpr int buffer_size = 256;
+    static thread_local char buffer[buffer_size];
+    static thread_local wchar_t wbuffer[buffer_size];
 
     DWORD err = GetLastError();
-    u32 size = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, null, err,
-                              LANG_USER_DEFAULT, wbuf, wbuf_size, null);
+    u32 written = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, null,
+                                 err, LANG_USER_DEFAULT, wbuffer, buffer_size, null);
+    assert(written + 1 <= buffer_size);
 
-    if(!size) {
-        int written = std::snprintf(buf, buf_size, "Win32 Error: %d", err);
-        assert(written > 0 && written + 1 <= buf_size);
-        return String_View{reinterpret_cast<const u8*>(buf), static_cast<u64>(written + 1)};
+    if(written <= 1) {
+        int written2 = std::snprintf(buffer, buffer_size, "Win32 Error: %d", err);
+        assert(written2 > 0 && written2 + 1 <= buffer_size);
+        return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written2)};
     }
 
-    wbuf[size - 2] = '\0';
-    String_View utf8_msg = ucs2_to_utf8(wbuf, size - 1);
+    String_View utf8_msg = ucs2_to_utf8(wbuffer, written - 1);
 
     if(utf8_msg.empty()) {
-        int written = std::snprintf(buf, buf_size, "Win32 Error: %d", err);
-        assert(written > 0 && written + 1 <= buf_size);
-        return String_View{reinterpret_cast<const u8*>(buf), static_cast<u64>(written + 1)};
+        int written2 = std::snprintf(buffer, buffer_size, "Win32 Error: %d", err);
+        assert(written2 > 0 && written2 + 1 <= buffer_size);
+        return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written2)};
     }
 
     return utf8_msg;
@@ -89,9 +87,9 @@ void debug_break() {
 #else
 
 String_View sys_error() {
-    constexpr int buf_size = 256;
-    static thread_local char buf[buf_size];
-    return String_View{strerror_r(errno, buf, buf_size)};
+    constexpr int buffer_size = 256;
+    static thread_local char buffer[buffer_size];
+    return String_View{strerror_r(errno, buffer, buffer_size)};
 }
 
 void debug_break() {
@@ -100,7 +98,25 @@ void debug_break() {
 
 #endif
 
-void output(Level level, const Location& loc, const String_View& msg) {
+static String_View time_string(std::time_t timestamp) {
+
+    constexpr u64 buffer_size = 64;
+    static thread_local char buffer[buffer_size];
+
+    std::tm tm_info;
+#ifdef OS_WINDOWS
+    localtime_s(&tm_info, &timestamp);
+#else
+    localtime_r(&timestamp, &tm_info);
+#endif
+
+    size_t written = std::strftime(buffer, buffer_size, "[%H:%M:%S]", &tm_info);
+    assert(written > 0 && written + 1 <= buffer_size);
+
+    return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};
+}
+
+void output(Level level, const Location& loc, String_View msg) {
 
     const char* level_str;
     const char* format_str;
@@ -139,24 +155,6 @@ void output(Level level, const Location& loc, const String_View& msg) {
                 g_log_indent * INDENT_SIZE, "", msg.length(), msg.data());
         fflush(g_log_data.file);
     }
-}
-
-String_View time_string(std::time_t timestamp) {
-
-    constexpr u64 buf_size = 64;
-    static thread_local char buf[buf_size];
-
-    std::tm tm_info;
-#ifdef OS_WINDOWS
-    localtime_s(&tm_info, &timestamp);
-#else
-    localtime_r(&timestamp, &tm_info);
-#endif
-
-    size_t written = std::strftime(buf, buf_size, "[%H:%M:%S]", &tm_info);
-    assert(written > 0 && written + 1 <= buf_size);
-
-    return String_View{reinterpret_cast<const u8*>(buf), static_cast<u64>(written + 1)};
 }
 
 Scope::Scope() {

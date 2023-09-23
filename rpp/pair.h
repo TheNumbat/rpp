@@ -20,6 +20,16 @@ struct Pair {
         : first(std::move(first)), second(std::move(second)) {
     }
 
+    explicit Pair(const A& first, B&& second)
+        requires Trivial<A> && Move_Constructable<B>
+        : first(A{first}), second(std::move(second)) {
+    }
+
+    explicit Pair(A&& first, const B& second)
+        requires Move_Constructable<A> && Trivial<B>
+        : first(std::move(first)), second(B{second}) {
+    }
+
     ~Pair() = default;
 
     Pair(const Pair& src)
@@ -33,9 +43,16 @@ struct Pair {
     Pair& operator=(Pair&& src) = default;
 
     Pair<A, B> clone() const
-        requires Clone<A> && Clone<B>
+        requires(Clone<A> || Trivial<A>) && (Clone<B> || Trivial<B>)
     {
-        return Pair<A, B>{first.clone(), second.clone()};
+        if constexpr(Clone<A> && Clone<B>)
+            return Pair<A, B>{first.clone(), second.clone()};
+        else if constexpr(Clone<A> && Trivial<B>)
+            return Pair<A, B>{first.clone(), second};
+        else if constexpr(Trivial<A> && Clone<B>)
+            return Pair<A, B>{first, second.clone()};
+        else
+            return Pair<A, B>{first, second};
     }
 
     template<u64 Index>

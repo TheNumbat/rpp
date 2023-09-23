@@ -5,7 +5,7 @@
 
 namespace rpp::Files {
 
-static wchar_t* utf8_to_ucs2(const String_View& utf8) {
+static wchar_t* utf8_to_ucs2(String_View utf8) {
 
     constexpr u64 buf_size = 256;
     static thread_local wchar_t wide_buf[buf_size];
@@ -19,7 +19,7 @@ static wchar_t* utf8_to_ucs2(const String_View& utf8) {
     return wide_buf;
 }
 
-Opt<File_Time> last_write_time(const String_View& path) {
+Opt<File_Time> last_write_time(String_View path) {
 
     WIN32_FILE_ATTRIBUTE_DATA attrib = {};
 
@@ -47,7 +47,7 @@ bool before(const File_Time& first, const File_Time& second) {
     return CompareFileTime(&f, &s) == -1;
 }
 
-Opt<Vec<u8, Alloc>> read(const String_View& path) {
+Opt<Vec<u8, Alloc>> read(String_View path) {
 
     wchar_t* wide_path = utf8_to_ucs2(path);
     if(!wide_path) {
@@ -83,7 +83,7 @@ Opt<Vec<u8, Alloc>> read(const String_View& path) {
     return Opt{std::move(data)};
 }
 
-bool write(const String_View& path, Slice<u8> data) {
+bool write(String_View path, Slice<u8> data) {
 
     wchar_t* wide_path = utf8_to_ucs2(path);
     if(!wide_path) {

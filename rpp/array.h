@@ -30,11 +30,15 @@ struct Array {
     Array& operator=(Array&& src) = default;
 
     Array clone() const
-        requires Clone<T> && Default_Constructable<T>
+        requires (Clone<T> || Trivial<T>) && Default_Constructable<T>
     {
         Array result;
-        for(u64 i = 0; i < N; i++) {
-            result[i] = data_[i].clone();
+        if constexpr(Clone<T>) {
+            for(u64 i = 0; i < N; i++) {
+                result[i] = data_[i].clone();
+            }
+        } else {
+            std::memcpy(result.data_, data_, sizeof(T) * N);
         }
         return result;
     }

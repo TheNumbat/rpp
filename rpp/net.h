@@ -26,7 +26,7 @@ struct Address {
 
     explicit Address(sockaddr_in sockaddr);
     explicit Address(u16 port);
-    explicit Address(const String_View& address, u16 port);
+    explicit Address(String_View address, u16 port);
 
     const sockaddr_in& sockaddr() const {
         return sockaddr_;

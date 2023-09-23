@@ -293,6 +293,16 @@ struct Map {
         if(!try_erase(key)) die("Failed to erase key %!", key);
     }
 
+    V& get_or_insert(const K& key)
+        requires Trivial<K> && Default_Constructable<V>
+    {
+        Opt<Ref<V>> entry = try_get(key);
+        if(entry) {
+            return **entry;
+        }
+        return insert(K{key}, V{});
+    }
+
     V& get_or_insert(K&& key)
         requires Default_Constructable<V>
     {

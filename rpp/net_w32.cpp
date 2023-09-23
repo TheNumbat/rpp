@@ -9,8 +9,8 @@ namespace rpp::Net {
 
 static String_View wsa_error() {
 
-    constexpr u64 buffer_size = 64;
-    char buffer[buffer_size] = {};
+    constexpr u64 buffer_size = 256;
+    static thread_local char buffer[buffer_size] = {};
 
     i32 err = WSAGetLastError();
 
@@ -35,7 +35,7 @@ struct WSA_Startup {
 
 static WSA_Startup g_wsa_startup;
 
-Address::Address(const String_View& address, u16 port) {
+Address::Address(String_View address, u16 port) {
 
     sockaddr_ = {};
     sockaddr_.sin_family = AF_INET;

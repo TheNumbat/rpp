@@ -274,6 +274,62 @@ template<typename I>
 concept Int = Is_Int<I>::value;
 
 template<typename T>
+struct Is_Unsigned_Int {
+    static constexpr bool value = false;
+};
+
+template<>
+struct Is_Unsigned_Int<u8> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct Is_Unsigned_Int<u16> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct Is_Unsigned_Int<u32> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct Is_Unsigned_Int<u64> {
+    static constexpr bool value = true;
+};
+
+template<typename I>
+concept Unsigned_Int = Is_Unsigned_Int<I>::value;
+
+template<typename T>
+struct Is_Signed_Int {
+    static constexpr bool value = false;
+};
+
+template<>
+struct Is_Signed_Int<i8> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct Is_Signed_Int<i16> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct Is_Signed_Int<i32> {
+    static constexpr bool value = true;
+};
+
+template<>
+struct Is_Signed_Int<i64> {
+    static constexpr bool value = true;
+};
+
+template<typename I>
+concept Signed_Int = Is_Signed_Int<I>::value;
+
+template<typename T>
 concept Equality = requires(T l, T r) {
     { l == r } -> Same<bool>;
 };

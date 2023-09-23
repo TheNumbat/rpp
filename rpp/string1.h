@@ -21,6 +21,13 @@ u8& String<A>::operator[](u64 idx) {
     return data_[idx];
 }
 
+template<Allocator A>
+String_View String<A>::sub(u64 start, u64 end) const {
+    assert(start <= end);
+    assert(end <= length_);
+    return String_View{data_ + start, end - start};
+}
+
 inline const u8& String_View::operator[](u64 idx) const {
     assert(idx < length_);
     return data_[idx];
@@ -58,7 +65,7 @@ u64 String<A>::write(u64 i, const String<B>& text) {
 }
 
 template<Allocator A>
-u64 String<A>::write(u64 i, const String_View& text) {
+u64 String<A>::write(u64 i, String_View text) {
     assert(i + text.length() <= length_);
     std::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
