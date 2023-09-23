@@ -43,7 +43,10 @@ struct WSA_Startup {
 
 static WSA_Startup g_wsa_startup;
 
-Address::Address(String_View address, u16 port) {
+Address::Address(String_View address_, u16 port) {
+
+    Region_Scope;
+    auto address = address_.terminate<Mregion>();
 
     sockaddr_ = {};
     sockaddr_.sin_family = AF_INET;

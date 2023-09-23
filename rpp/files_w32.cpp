@@ -5,27 +5,31 @@
 
 namespace rpp::Files {
 
-static wchar_t* utf8_to_ucs2(String_View utf8) {
+static Pair<wchar_t*, int> utf8_to_ucs2(String_View utf8_) {
 
-    constexpr u64 buf_size = 256;
-    static thread_local wchar_t wide_buf[buf_size];
+    Region_Scope;
+    auto utf8 = utf8_.terminate<Mregion>();
 
-    if(!MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<const char*>(utf8.data()),
-                            static_cast<u32>(utf8.length()), wide_buf, buf_size)) {
+    constexpr int buffer_size = MAX_PATH;
+    static thread_local wchar_t wbuffer[buffer_size];
 
+    int written = MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<const char*>(utf8.data()),
+                                      static_cast<u32>(utf8.length()), wbuffer, buffer_size);
+    if(written == 0) {
         warn("Failed to convert utf8 to ucs2: %", Log::sys_error());
-        return null;
+        return Pair{static_cast<wchar_t*>(null), 0};
     }
+    assert(written <= buffer_size);
 
-    return wide_buf;
+    return Pair{static_cast<wchar_t*>(wbuffer), written};
 }
 
 Opt<File_Time> last_write_time(String_View path) {
 
     WIN32_FILE_ATTRIBUTE_DATA attrib = {};
 
-    wchar_t* ucs2_path = utf8_to_ucs2(path);
-    if(!ucs2_path) {
+    auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
+    if(ucs2_path_len == 0) {
         warn("Failed to convert file path %!", path);
         return {};
     }
@@ -50,14 +54,14 @@ bool before(const File_Time& first, const File_Time& second) {
 
 Opt<Vec<u8, Alloc>> read(String_View path) {
 
-    wchar_t* wide_path = utf8_to_ucs2(path);
-    if(!wide_path) {
+    auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
+    if(ucs2_path_len == 0) {
         warn("Failed to convert file path %!", path);
         return {};
     }
 
     HANDLE handle =
-        CreateFileW(wide_path, GENERIC_READ, 0, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null);
+        CreateFileW(ucs2_path, GENERIC_READ, 0, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null);
     if(handle == INVALID_HANDLE_VALUE) {
         warn("Failed to create file %: %", path, Log::sys_error());
         return {};
@@ -86,14 +90,14 @@ Opt<Vec<u8, Alloc>> read(String_View path) {
 
 bool write(String_View path, Slice<u8> data) {
 
-    wchar_t* wide_path = utf8_to_ucs2(path);
-    if(!wide_path) {
+    auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
+    if(ucs2_path_len == 0) {
         warn("Failed to convert file path %!", path);
         return false;
     }
 
     HANDLE handle =
-        CreateFileW(wide_path, GENERIC_WRITE, 0, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null);
+        CreateFileW(ucs2_path, GENERIC_WRITE, 0, null, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, null);
     if(handle == INVALID_HANDLE_VALUE) {
         warn("Failed to create file %: %", path, Log::sys_error());
         return false;

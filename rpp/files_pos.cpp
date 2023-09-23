@@ -8,7 +8,10 @@
 
 namespace rpp::Files {
 
-Opt<Vec<u8, Alloc>> read(String_View path) {
+Opt<Vec<u8, Alloc>> read(String_View path_) {
+
+    Region_Scope;
+    auto path = path_.terminate<Mregion>();
 
     int fd = open(reinterpret_cast<const char*>(path.data()), O_RDONLY);
     if(fd == -1) {
@@ -33,7 +36,10 @@ Opt<Vec<u8, Alloc>> read(String_View path) {
     return Opt{std::move(data)};
 }
 
-bool write(String_View path, Slice<u8> data) {
+bool write(String_View path_, Slice<u8> data) {
+
+    Region_Scope;
+    auto path = path_.terminate<Mregion>();
 
     int fd = open(reinterpret_cast<const char*>(path.data()), O_WRONLY | O_CREAT | O_TRUNC);
     if(fd == -1) {
@@ -50,7 +56,10 @@ bool write(String_View path, Slice<u8> data) {
     return true;
 }
 
-Opt<File_Time> last_write_time(String_View path) {
+Opt<File_Time> last_write_time(String_View path_) {
+
+    Region_Scope;
+    auto path = path_.terminate<Mregion>();
 
     struct stat info;
     if(stat(reinterpret_cast<const char*>(path.data()), &info)) {

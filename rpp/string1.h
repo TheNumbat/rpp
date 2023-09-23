@@ -28,6 +28,15 @@ String_View String<A>::sub(u64 start, u64 end) const {
     return String_View{data_ + start, end - start};
 }
 
+template<Allocator A>
+String<A> String_View::terminate() const {
+    String<A> ret{length_ + 1};
+    ret.set_length(length_ + 1);
+    std::memcpy(ret.data(), data_, length_);
+    ret[length_] = '\0';
+    return ret;
+}
+
 inline const u8& String_View::operator[](u64 idx) const {
     assert(idx < length_);
     return data_[idx];
