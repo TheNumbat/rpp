@@ -731,13 +731,11 @@ i32 main() {
         };
 
         Async::Coroutine<void> c = f();
-        assert(!c.done());
-        c.resume();
         assert(c.done());
         c.wait();
 
         Async::Coroutine<void> c2 = f();
-        assert(!c2.done());
+        assert(c2.done());
 
         auto g = [&]() -> Async::Coroutine<i32> {
             info("Hello from coroutine 2");
@@ -746,12 +744,6 @@ i32 main() {
         };
 
         Async::Coroutine<i32> d = g();
-        assert(!d.done());
-        d.resume();
-        assert(!d.done());
-        c2.resume();
-        assert(!d.done());
-        d.resume();
         assert(d.done());
         assert(d.wait() == 1);
     }
@@ -768,20 +760,24 @@ i32 main() {
             task->wait();
         }
 
-        auto job1 = pool.async([]() -> Async::Coroutine<i32> {
+        auto job1 = [&pool]() -> Async::Coroutine<i32> {
+            co_await pool.suspend();
             info("Hello from coroutine 1 on thread pool");
             co_return 1;
-        });
-        auto job = pool.async(
-            [](auto job1) -> Async::Coroutine<void> {
-                info("Hello from coroutine 2 on thread pool");
-                i32 i = co_await job1;
-                info("Coroutine 2 got %", i);
-                co_return;
-            },
-            job1.dup());
+        }();
+
+        info("Job returned %", job1.wait());
+
+        // auto job = pool.async(
+        //     [](auto job1) -> Async::Coroutine<void> {
+        //         info("Hello from coroutine 2 on thread pool");
+        //         i32 i = co_await job1;
+        //         info("Coroutine 2 got %", i);
+        //     },
+        //     job1.dup());
 
         // job.wait();
+
         // job1.wait();
     }
 

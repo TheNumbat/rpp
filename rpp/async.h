@@ -10,23 +10,24 @@ namespace rpp::Async {
 
 using Alloc = Mallocator<"Async">;
 
-template<typename T>
+template<typename T, Allocator A>
 struct Promise;
 
-template<typename T>
+template<typename T, Allocator A>
 struct Coroutine;
 
-template<typename T>
+template<typename T, Allocator A = Alloc>
 struct Coroutine {
 
-    using promise_type = Promise<T>;
+    using return_type = T;
+    using promise_type = Promise<T, A>;
 
-    explicit Coroutine(std::coroutine_handle<Promise<T>> handle_) {
+    explicit Coroutine(std::coroutine_handle<Promise<T, A>> handle_) {
         handle = handle_;
         handle.promise().reference();
     }
-    explicit Coroutine(Promise<T>& promise) {
-        handle = std::coroutine_handle<Promise<T>>::from_promise(promise);
+    explicit Coroutine(Promise<T, A>& promise) {
+        handle = std::coroutine_handle<Promise<T, A>>::from_promise(promise);
         handle.promise().reference();
     }
     ~Coroutine() {
@@ -62,11 +63,13 @@ struct Coroutine {
         return await_ready();
     }
 
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> cont) {
+        // this is what we're waiting on, next is the suspension of the current job
+        return handle;
+    }
     void resume() {
         assert(handle);
         handle.resume();
-    }
-    void await_suspend(std::coroutine_handle<> self) {
     }
     T& await_resume() {
         assert(handle);
@@ -78,13 +81,13 @@ struct Coroutine {
     }
 
 private:
-    std::coroutine_handle<Promise<T>> handle;
+    std::coroutine_handle<Promise<T, A>> handle;
 
-    template<typename U>
+    template<typename U, Allocator B>
     friend struct Promise;
 };
 
-template<typename T>
+template<typename T, Allocator A = Alloc>
 struct Promise {
     Promise() = default;
     ~Promise() = default;
@@ -99,7 +102,7 @@ struct Promise {
         return Coroutine{*this};
     }
 
-    std::suspend_always initial_suspend() noexcept {
+    std::suspend_never initial_suspend() noexcept {
         return {};
     }
     std::suspend_always final_suspend() noexcept {
@@ -115,11 +118,11 @@ struct Promise {
     }
 
     void* operator new(std::size_t size) noexcept {
-        return Alloc::alloc(size);
+        return A::alloc(size);
     }
 
     void operator delete(void* ptr, std::size_t size) noexcept {
-        Alloc::free(ptr);
+        A::free(ptr);
     }
 
     T& await_resume() noexcept {
@@ -140,18 +143,31 @@ private:
     Thread::Promise<T> promise;
     Thread::Atomic references;
 
-    template<typename U>
+    template<typename U, Allocator B>
     friend struct Coroutine;
 };
 
-template<>
-struct Coroutine<void> {
+template<Allocator A>
+struct Coroutine<void, A> {
 
-    using promise_type = Promise<void>;
+    using return_type = void;
+    using promise_type = Promise<void, A>;
 
-    explicit Coroutine(std::coroutine_handle<Promise<void>> promise);
-    explicit Coroutine(Promise<void>& promise);
-    ~Coroutine();
+    explicit Coroutine(std::coroutine_handle<Promise<void, A>> promise) {
+        handle = promise;
+        handle.promise().reference();
+    }
+    explicit Coroutine(Promise<void, A>& promise) {
+        handle = std::coroutine_handle<Promise<void, A>>::from_promise(promise);
+        handle.promise().reference();
+    }
+    ~Coroutine() {
+        if(handle) {
+            if(handle.promise().unreference()) {
+                handle.destroy();
+            }
+        }
+    }
 
     Coroutine(const Coroutine& src) = delete;
     Coroutine& operator=(const Coroutine& src) = delete;
@@ -178,21 +194,32 @@ struct Coroutine<void> {
         return await_ready();
     }
 
-    void await_suspend(std::coroutine_handle<> self) {
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<> next) {
+        // suspend this with dependency on next
+        return handle;
     }
-    void resume();
-    void await_resume();
-    bool await_ready();
+    void resume() {
+        assert(handle);
+        handle.resume();
+    }
+    void await_resume() {
+        assert(handle);
+        handle.promise().await_resume();
+    }
+    bool await_ready() {
+        assert(handle);
+        return handle.promise().await_ready();
+    }
 
 private:
-    std::coroutine_handle<Promise<void>> handle;
+    std::coroutine_handle<Promise<void, A>> handle;
 
-    template<typename U>
+    template<typename U, Allocator B>
     friend struct Promise;
 };
 
-template<>
-struct Promise<void> {
+template<Allocator A>
+struct Promise<void, A> {
     Promise() = default;
     ~Promise() = default;
 
@@ -206,7 +233,7 @@ struct Promise<void> {
         return Coroutine{*this};
     }
 
-    std::suspend_always initial_suspend() noexcept {
+    std::suspend_never initial_suspend() noexcept {
         return {};
     }
     std::suspend_always final_suspend() noexcept {
@@ -222,11 +249,11 @@ struct Promise<void> {
     }
 
     void* operator new(std::size_t size) noexcept {
-        return Alloc::alloc(size);
+        return A::alloc(size);
     }
 
     void operator delete(void* ptr, std::size_t size) noexcept {
-        Alloc::free(ptr);
+        A::free(ptr);
     }
 
     void await_resume() noexcept {
@@ -247,36 +274,8 @@ private:
     Thread::Promise<void> promise;
     Thread::Atomic references;
 
-    template<typename U>
+    template<typename U, Allocator B>
     friend struct Coroutine;
 };
-
-inline Coroutine<void>::Coroutine(std::coroutine_handle<Promise<void>> handle_) {
-    handle = handle_;
-    handle.promise().reference();
-}
-inline Coroutine<void>::Coroutine(Promise<void>& promise) {
-    handle = std::coroutine_handle<Promise<void>>::from_promise(promise);
-    handle.promise().reference();
-}
-inline Coroutine<void>::~Coroutine() {
-    if(handle) {
-        if(handle.promise().unreference()) {
-            handle.destroy();
-        }
-    }
-}
-inline void Coroutine<void>::await_resume() {
-    assert(handle);
-    handle.promise().await_resume();
-}
-inline bool Coroutine<void>::await_ready() {
-    assert(handle);
-    return handle.promise().await_ready();
-}
-inline void Coroutine<void>::resume() {
-    assert(handle);
-    handle.resume();
-}
 
 } // namespace rpp::Async

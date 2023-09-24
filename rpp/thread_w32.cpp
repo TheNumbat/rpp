@@ -10,6 +10,10 @@ u64 id_len() {
     return 5;
 }
 
+void sleep(u64 ms) {
+    Sleep(static_cast<DWORD>(ms));
+}
+
 Id this_id() {
     static thread_local Id cache = (Id)GetCurrentThreadId();
     return cache;

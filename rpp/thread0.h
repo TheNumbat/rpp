@@ -14,6 +14,7 @@ Id this_id();
 u64 id_len();
 void set_priority(Priority p);
 void set_affinity(u64 core);
+void sleep(u64 ms);
 
 u64 perf_counter();
 u64 perf_frequency();

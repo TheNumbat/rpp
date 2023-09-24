@@ -8,6 +8,10 @@ namespace rpp::Thread {
 
 static_assert(sizeof(Id) == sizeof(pthread_t), "Id != pthread_t");
 
+void sleep(u64 ms) {
+    usleep(ms * 1000);
+}
+
 u64 id_len() {
     return 15;
 }
