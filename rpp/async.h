@@ -8,6 +8,8 @@
 
 namespace rpp::Async {
 
+using Suspend = std::suspend_always;
+
 using Alloc = Mallocator<"Async">;
 
 template<typename T, Allocator A>

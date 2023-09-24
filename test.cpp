@@ -746,6 +746,18 @@ i32 main() {
         Async::Coroutine<i32> d = g();
         assert(d.done());
         assert(d.wait() == 1);
+
+        auto h = []() -> Async::Coroutine<void> {
+            co_await Async::Suspend{};
+            info("Hello from coroutine 3");
+            co_return;
+        };
+
+        auto c4 = h();
+        assert(!c4.done());
+        c4.resume();
+        assert(c4.done());
+        c4.wait();
     }
 
     { // Thread pool
