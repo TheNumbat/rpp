@@ -76,7 +76,7 @@ struct Promise_Base {
         die("Unhandled exception in coroutine.");
     }
 
-    void wait() {
+    void block() {
         Thread::Lock lock{mutex};
         while(!done) cond.wait(mutex);
     }
@@ -182,8 +182,8 @@ struct Task {
     bool done() {
         return await_ready();
     }
-    auto wait() {
-        handle.promise().wait();
+    auto block() {
+        handle.promise().block();
         return await_resume();
     }
 

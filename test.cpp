@@ -700,8 +700,8 @@ i32 main() {
         auto gone = Thread::Thread{[]() { info("Hello from thread3"); }};
         (void)gone;
 
-        info("Thread 1 returned %", value->wait());
-        v->wait();
+        info("Thread 1 returned %", value->block());
+        v->block();
     }
 
     { Files::read("unknown"_v); }
@@ -736,7 +736,7 @@ i32 main() {
             };
             Async::Task<void> task = co();
             assert(task.done());
-            task.wait();
+            task.block();
         }
         {
             auto co = []() -> Async::Task<void> {
@@ -746,7 +746,7 @@ i32 main() {
             };
             Async::Task<void> task = co();
             assert(task.done());
-            task.wait();
+            task.block();
         }
         {
             auto co = []() -> Async::Task<void> {
@@ -758,7 +758,7 @@ i32 main() {
             assert(!task.done());
             task.resume();
             assert(task.done());
-            task.wait();
+            task.block();
         }
         {
             auto co = []() -> Async::Task<void> {
@@ -783,7 +783,7 @@ i32 main() {
 
             Async::Task<i32> task = co2();
             assert(task.done());
-            assert(task.wait() == 1);
+            assert(task.block() == 1);
         }
         {
             auto co1 = []() -> Async::Task<i32> {
@@ -802,7 +802,7 @@ i32 main() {
             assert(!task.done());
             co1.resume();
             assert(task.done());
-            assert(task.wait() == 1);
+            assert(task.block() == 1);
         }
         {
             auto co1 = []() -> Async::Task<i32> {
@@ -826,7 +826,7 @@ i32 main() {
             job.resume();
             job.resume();
             assert(task.done());
-            assert(task.wait() == 1);
+            assert(task.block() == 1);
         }
     }
 
@@ -840,7 +840,7 @@ i32 main() {
         }
 
         for(auto& task : tasks) {
-            task->wait();
+            task->block();
         }
 
         {
@@ -850,7 +850,7 @@ i32 main() {
                 co_return 1;
             }();
 
-            info("Job returned %", job.wait());
+            info("Job returned %", job.block());
         }
         {
             auto job = [&pool]() -> Async::Task<i32> {
@@ -872,7 +872,7 @@ i32 main() {
                 info("Hello from coroutine 4.3 on thread pool");
                 co_return 1;
             };
-            job().wait();
+            job().block();
         }
         {
             auto job = [&pool]() -> Async::Task<i32> {
@@ -907,7 +907,7 @@ i32 main() {
                 co_await pool.suspend();
                 info("5.1 on thread");
                 info("5.1: wait on 0.99s job");
-                i32 i = job(99).wait(); // has to run on another thread, blocks this thread
+                i32 i = job(99).block(); // has to run on another thread, blocks this thread
                 // continue on same thread, wait does not swap out
                 info("5.1: co_await 1ms job");
                 auto j = co_await job(1); // likely runs on this thread as we yield immediately
@@ -926,7 +926,7 @@ i32 main() {
                 co_return i + j + k + l;
             };
 
-            assert(job2().wait() == 4);
+            assert(job2().block() == 4);
             // cannot start and drop another job2 because it blocks on another job -
             // if all but one thread shut down it deadlocks itself
         }

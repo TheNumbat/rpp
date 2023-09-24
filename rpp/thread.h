@@ -41,7 +41,7 @@ struct Promise {
         cond.broadcast();
     }
 
-    T& wait() {
+    T& block() {
         Lock lock(mut);
         while(!value) cond.wait(mut);
         return *value;
@@ -78,7 +78,7 @@ struct Promise<void> {
         cond.broadcast();
     }
 
-    void wait() {
+    void block() {
         Lock lock(mut);
         while(!done) cond.wait(mut);
     }
