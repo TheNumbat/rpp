@@ -724,40 +724,110 @@ i32 main() {
         info("%", String_View{packet.data(), data->length});
     }
 
-    { // Coroutines
-        auto f = []() -> Async::Coroutine<void> {
-            info("Hello from coroutine 1");
-            co_return;
-        };
+    // Coroutines
+    {
+        int wtf_clang_format = 0;
+        (void)wtf_clang_format;
 
-        Async::Coroutine<void> c = f();
-        assert(c.done());
-        c.wait();
+        {
+            auto co = []() -> Async::Task<void> {
+                info("Hello from coroutine 1");
+                co_return;
+            };
+            Async::Task<void> task = co();
+            assert(task.done());
+            task.wait();
+        }
+        {
+            auto co = []() -> Async::Task<void> {
+                co_await Async::Continue{};
+                info("Hello from coroutine 2");
+                co_return;
+            };
+            Async::Task<void> task = co();
+            assert(task.done());
+            task.wait();
+        }
+        {
+            auto co = []() -> Async::Task<void> {
+                co_await Async::Suspend{};
+                info("Hello from coroutine 3");
+                co_return;
+            };
+            Async::Task<void> task = co();
+            assert(!task.done());
+            task.resume();
+            assert(task.done());
+            task.wait();
+        }
+        {
+            auto co = []() -> Async::Task<void> {
+                co_await Async::Suspend{};
+                info("Hello from coroutine 3");
+                co_return;
+            };
+            Async::Task<void> task = co();
+            assert(!task.done());
+        }
+        {
+            auto co1 = []() -> Async::Task<i32> {
+                info("Hello from coroutine 4");
+                co_return 1;
+            };
+            auto co2 = [&co1]() -> Async::Task<i32> {
+                info("Hello from coroutine 5");
+                i32 i = co_await co1();
+                info("Coroutine 5 got %", i);
+                co_return i;
+            };
 
-        Async::Coroutine<void> c2 = f();
-        assert(c2.done());
+            Async::Task<i32> task = co2();
+            assert(task.done());
+            assert(task.wait() == 1);
+        }
+        {
+            auto co1 = []() -> Async::Task<i32> {
+                info("Hello from coroutine 6");
+                co_await Async::Suspend{};
+                co_return 1;
+            }();
+            auto co2 = [&co1]() -> Async::Task<i32> {
+                info("Hello from coroutine 7");
+                i32 i = co_await co1;
+                info("Coroutine 7 got %", i);
+                co_return i;
+            };
 
-        auto g = [&]() -> Async::Coroutine<i32> {
-            info("Hello from coroutine 2");
-            co_await c2;
-            co_return 1;
-        };
+            Async::Task<i32> task = co2();
+            assert(!task.done());
+            co1.resume();
+            assert(task.done());
+            assert(task.wait() == 1);
+        }
+        {
+            auto co1 = []() -> Async::Task<i32> {
+                info("Hello from coroutine 8");
+                co_await Async::Suspend{};
+                co_await Async::Suspend{};
+                co_return 1;
+            };
 
-        Async::Coroutine<i32> d = g();
-        assert(d.done());
-        assert(d.wait() == 1);
+            auto job = co1();
 
-        auto h = []() -> Async::Coroutine<void> {
-            co_await Async::Suspend{};
-            info("Hello from coroutine 3");
-            co_return;
-        };
+            auto co2 = [&job]() -> Async::Task<i32> {
+                info("Hello from coroutine 9");
+                i32 i = co_await job;
+                info("Coroutine 9 got %", i);
+                co_return i;
+            };
 
-        auto c4 = h();
-        assert(!c4.done());
-        c4.resume();
-        assert(c4.done());
-        c4.wait();
+            Async::Task<i32> task = co2();
+            assert(!task.done());
+            job.resume();
+            job.resume();
+            assert(task.done());
+            assert(task.wait() == 1);
+        }
     }
 
     { // Thread pool
@@ -765,32 +835,101 @@ i32 main() {
 
         Vec<Thread::Future<void>> tasks;
         for(u64 i = 0; i < Thread::hardware_threads(); i++) {
-            tasks.push(pool.single([]() { info("Hello from thread pool"); }));
+            tasks.push(
+                pool.single(Thread::Priority::normal, []() { info("Hello from thread pool"); }));
         }
 
         for(auto& task : tasks) {
             task->wait();
         }
 
-        auto job1 = [&pool]() -> Async::Coroutine<i32> {
-            co_await pool.suspend();
-            info("Hello from coroutine 1 on thread pool");
-            co_return 1;
-        }();
+        {
+            auto job = [&pool]() -> Async::Task<i32> {
+                co_await pool.suspend();
+                info("Hello from coroutine 1 on thread pool");
+                co_return 1;
+            }();
 
-        info("Job returned %", job1.wait());
+            info("Job returned %", job.wait());
+        }
+        {
+            auto job = [&pool]() -> Async::Task<i32> {
+                co_await pool.suspend();
+                info("Hello from coroutine 2 on thread pool");
+                co_return 1;
+            };
+            job();
+            job();
+            job();
+        }
+        {
+            auto job = [&pool]() -> Async::Task<i32> {
+                co_await pool.suspend();
+                info("Hello from coroutine 4.1 on thread pool");
+                co_await pool.suspend();
+                info("Hello from coroutine 4.2 on thread pool");
+                co_await pool.suspend();
+                info("Hello from coroutine 4.3 on thread pool");
+                co_return 1;
+            };
+            job().wait();
+        }
+        {
+            auto job = [&pool]() -> Async::Task<i32> {
+                co_await pool.suspend();
+                info("Hello from coroutine 3.1 on thread pool");
+                co_await pool.suspend();
+                info("Hello from coroutine 3.2 on thread pool");
+                co_await pool.suspend();
+                info("Hello from coroutine 3.3 on thread pool");
+                co_return 1;
+            };
+            job();
+            job();
+            job();
+            // These are OK to drop because the promises are refcounted and
+            // no job can deadlock itself
+        }
+    }
+    {
+        Thread::Pool pool;
+        {
+            auto job = [&pool](i32 ms) -> Async::Task<i32> {
+                info("5.2 begin %", ms);
+                co_await pool.suspend();
+                info("5.2 on thread %", ms);
+                Thread::sleep(ms);
+                info("5.2 done %", ms);
+                co_return 1;
+            };
+            auto job2 = [&pool, &job]() -> Async::Task<i32> {
+                info("5.1 begin");
+                co_await pool.suspend();
+                info("5.1 on thread");
+                info("5.1: wait on 0.99s job");
+                i32 i = job(99).wait(); // has to run on another thread, blocks this thread
+                // continue on same thread, wait does not swap out
+                info("5.1: co_await 1ms job");
+                auto j = co_await job(1); // likely runs on this thread as we yield immediately
+                // should continue on same thread because we had time to install the continuation
+                info("5.1: launch 0s job");
+                auto wait =
+                    job(0); // should run on another thread, we don't yield until the next await
+                info("5.1: co_await 100ms job");
+                i32 k =
+                    co_await job(100); // same thread should pick up the job as we wait immediately
+                // continues on the same thread via continuation
+                info("5.1: co_await 0s job");
+                i32 l = co_await wait;
+                // does not wait or use continuation because already done
+                info("5.1 done: % % % %", i, j, k, l);
+                co_return i + j + k + l;
+            };
 
-        // auto job = pool.async(
-        //     [](auto job1) -> Async::Coroutine<void> {
-        //         info("Hello from coroutine 2 on thread pool");
-        //         i32 i = co_await job1;
-        //         info("Coroutine 2 got %", i);
-        //     },
-        //     job1.dup());
-
-        // job.wait();
-
-        // job1.wait();
+            assert(job2().wait() == 4);
+            // cannot start and drop another job2 because it blocks on another job -
+            // if all but one thread shut down it deadlocks itself
+        }
     }
 
     Profile::end_frame();

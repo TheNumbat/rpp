@@ -7,18 +7,17 @@
 
 namespace rpp::Thread {
 
-using Async::Coroutine;
-
 template<Allocator A>
 struct Pool;
 
-template<Allocator A>
+template<Allocator A = Alloc>
 struct Schedule {
 
     explicit Schedule(Priority priority_, Pool<A>& pool_) : priority{priority_}, pool{pool_} {
     }
-    void await_suspend(std::coroutine_handle<> cont) {
-        pool.co_enqueue(priority, cont);
+    template<typename R, typename RA>
+    void await_suspend(std::coroutine_handle<Async::Promise<R, RA>> task) {
+        pool.co_enqueue(priority, task);
     }
     void await_resume() {
     }
@@ -54,13 +53,13 @@ struct Pool {
 
     template<typename F, typename... Args>
         requires Invocable<F, Args...>
-    auto single(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, Alloc> {
+    auto single(Priority p, F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, Alloc> {
         assert(!shutdown);
-        return enqueue(Priority::normal, std::forward<F>(f), std::forward<Args>(args)...);
+        return enqueue(p, std::forward<F>(f), std::forward<Args>(args)...);
     }
 
-    Schedule<A> suspend() {
-        return Schedule{Priority::normal, *this};
+    Schedule<A> suspend(Priority p = Priority::normal) {
+        return Schedule<A>{p, *this};
     }
 
 private:
@@ -80,13 +79,21 @@ private:
         F func;
     };
 
+    template<typename R, typename RA>
     struct Co_Job : public Job_Base {
-        Co_Job(std::coroutine_handle<> c) : coroutine{std::move(c)} {
+        Co_Job(std::coroutine_handle<Async::Promise<R, RA>> coroutine_)
+            : coroutine{std::move(coroutine_)} {
+            coroutine.promise().reference();
+        }
+        ~Co_Job() {
+            if(coroutine.promise().unreference()) {
+                coroutine.destroy();
+            }
         }
         void operator()() {
             coroutine.resume();
         }
-        std::coroutine_handle<> coroutine;
+        std::coroutine_handle<Async::Promise<R, RA>> coroutine;
     };
 
     void push_job(Priority p, Box<Job_Base, Alloc> job) {
@@ -126,8 +133,9 @@ private:
         return future;
     }
 
-    void co_enqueue(Priority p, std::coroutine_handle<> coroutine) {
-        Box<Co_Job, Alloc> job{coroutine};
+    template<typename R, typename RA>
+    void co_enqueue(Priority p, std::coroutine_handle<Async::Promise<R, RA>> coroutine) {
+        Box<Co_Job<R, RA>, Alloc> job{coroutine};
         Lock lock(jobs_mut);
         push_job(p, Box<Job_Base, Alloc>{std::move(job)});
         jobs_cond.signal();
@@ -164,7 +172,7 @@ private:
     Queue<Box<Job_Base, A>, A> important_jobs;
     Vec<Thread<A>, A> threads;
 
-    template<Allocator B>
+    template<Allocator>
     friend struct Schedule;
 };
 

@@ -107,8 +107,8 @@ i64 Atomic::decr() {
     return InterlockedDecrement64(&value_);
 }
 
-void Atomic::store(i64 value) {
-    InterlockedExchange64(&value_, value);
+i64 Atomic::exchange(i64 value) {
+    return InterlockedExchange64(&value_, value);
 }
 
 i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {

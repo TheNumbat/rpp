@@ -154,8 +154,8 @@ i64 Atomic::decr() {
     return __atomic_fetch_sub(&value_, 1, __ATOMIC_SEQ_CST) - 1;
 }
 
-void Atomic::store(i64 value) {
-    __atomic_store(&value_, &value, __ATOMIC_SEQ_CST);
+i64 Atomic::exchange(i64 value) {
+    return __atomic_exchange_n(&value_, value, __ATOMIC_SEQ_CST);
 }
 
 i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {

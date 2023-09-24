@@ -83,7 +83,7 @@ struct Atomic {
     i64 load() const;
     i64 incr();
     i64 decr();
-    void store(i64 value);
+    i64 exchange(i64 value);
     i64 compare_and_swap(i64 compare_with, i64 set_to);
 
     template<Int I>
