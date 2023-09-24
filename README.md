@@ -9,7 +9,9 @@ Headers
 - base.h: always include
 - files.h: file IO
 - net.h: network IO
-- thread.h: threading and coroutine pool
+- thread.h: threading primitives
+- async.h: thread-safe coroutine primitives
+- pool.h: thread pool and coroutine scheduler
 - range_allocator.h: generic general purpose allocator
 
 Supported configurations
@@ -50,8 +52,9 @@ Utilities
 - Generic sprintf
 - Hashing and PRNG
 - Logging macros
+- Custom coroutine wrappers
+- Thread pool that can run blocking jobs and coroutines with two priority levels
 
 To-Do:
-- Finish coroutine scheduler
 - Tuple replacement
-- Variant replacement 
+- Variant replacement
