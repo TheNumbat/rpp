@@ -1,6 +1,6 @@
 # rpp
 
-Minimal Rust-inspired C++20 standard library replacement.
+Minimal Rust-inspired C++20 standard library (mostly) replacement.
 
 - Optimizes for fast compile times.
 - Only includes code I'm actively using.
