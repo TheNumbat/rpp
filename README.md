@@ -59,3 +59,11 @@ To-Do:
 - Tuple replacement
 - Variant replacement
 - Thread pool upgrades
+    - Async IO events
+    - Affinity per task
+    - Lock-free queue
+    - Thread local queues
+    - Work stealing
+- Range allocator upgrades
+    - Second level of linear buckets
+    - Reduce memory overhead
