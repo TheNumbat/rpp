@@ -132,19 +132,18 @@ private:
         using Data = typename If<Const, const u8, u8>::type;
 
         template<typename F>
-        static auto apply(F&& f, Data* data, u8 index) -> decltype(auto) {
+        static auto apply(F&& f, Data* data, u8 index) {
             return apply_(std::forward<F>(f), data, index, std::index_sequence_for<Ts...>{});
         }
 
     private:
         template<typename F, u64 I>
-        static auto apply_one(F&& f, Data* data) -> decltype(auto) {
+        static auto apply_one(F&& f, Data* data) {
             using T = Index<I, Ts...>;
             return std::forward<F>(f)(reinterpret_cast<Ref<T>>(*data));
         }
         template<typename F, u64... Is>
-        static auto apply_(F&& f, Data* data, u8 index, std::index_sequence<Is...>)
-            -> decltype(auto) {
+        static auto apply_(F&& f, Data* data, u8 index, std::index_sequence<Is...>) {
             using T = Index<0, Ts...>;
             using R = Invoke_Result<F, Ref<T>>;
             using Apply = R (*)(F&&, Data*);

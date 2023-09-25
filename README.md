@@ -57,6 +57,7 @@ Utilities
 - Thread pool that can run blocking jobs and coroutines with two priority levels
 
 To-Do:
+- Variant formatting
 - Function replacement
 - Thread pool upgrades
     - Async IO events
