@@ -57,7 +57,7 @@ struct Storage {
     }
 
 protected:
-    alignas(alignof(T)) char value_[sizeof(T)] = {};
+    alignas(alignof(T)) u8 value_[sizeof(T)] = {};
 
     friend struct Reflect<Storage>;
 };

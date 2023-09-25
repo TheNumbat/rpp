@@ -75,8 +75,39 @@ struct Is_Reference<T&&> {
 };
 
 template<typename T>
-struct Add_Reference {
+struct Is_Lvalue_Reference {
+    static constexpr bool value = false;
+};
+
+template<typename T>
+struct Is_Lvalue_Reference<T&> {
+    static constexpr bool value = true;
+};
+
+template<typename T>
+concept Lvalue_Reference = Is_Lvalue_Reference<T>::value;
+
+template<typename T>
+struct Is_Rvalue_Reference {
+    static constexpr bool value = false;
+};
+
+template<typename T>
+struct Is_Rvalue_Reference<T&&> {
+    static constexpr bool value = true;
+};
+
+template<typename T>
+concept Rvalue_Reference = Is_Rvalue_Reference<T>::value;
+
+template<typename T>
+struct Add_Lvalue_Reference {
     using type = T&;
+};
+
+template<typename T>
+struct Add_Rvalue_Reference {
+    using type = T&&;
 };
 
 template<typename T>
@@ -141,6 +172,44 @@ struct Is_Same<T, T> {
 template<typename L, typename R>
 concept Same = Is_Same<L, R>::value;
 
+template<typename... Ts>
+struct Are_Same;
+
+template<>
+struct Are_Same<> {
+    static constexpr bool value = true;
+};
+
+template<typename T>
+struct Are_Same<T> {
+    static constexpr bool value = true;
+};
+
+template<typename L, typename R, typename... Ts>
+struct Are_Same<L, R, Ts...> {
+    static constexpr bool value = Is_Same<L, R>::value && Are_Same<R, Ts...>::value;
+};
+
+template<typename... Ts>
+concept All_Same = Are_Same<Ts...>::value;
+
+template<u64 I, typename... Ts>
+    requires(I < sizeof...(Ts))
+struct At_Index;
+
+template<typename T, typename... Ts>
+struct At_Index<0, T, Ts...> {
+    using type = T;
+};
+
+template<u64 I, typename T, typename... Ts>
+struct At_Index<I, T, Ts...> {
+    using type = typename At_Index<I - 1, Ts...>::type;
+};
+
+template<u64 I, typename... Ts>
+using Index = typename At_Index<I, Ts...>::type;
+
 template<typename F, typename... Args>
 using Invoke_Result = std::invoke_result_t<F, Args...>;
 
@@ -165,8 +234,22 @@ struct One_Is<Q, T> {
     static constexpr bool value = Is_Same<Q, T>::value;
 };
 
-template<typename Q, typename T, typename... Ts>
-concept One = One_Is<Q, T, Ts...>::value;
+template<typename Q, typename... Ts>
+concept One = One_Is<Q, Ts...>::value;
+
+template<typename T, typename... Ts>
+    requires One<T, Ts...>
+struct Index_Of;
+
+template<typename T, typename... Ts>
+struct Index_Of<T, T, Ts...> {
+    static constexpr u64 value = 0;
+};
+
+template<typename T, typename H, typename... Ts>
+struct Index_Of<T, H, Ts...> {
+    static constexpr u64 value = 1 + Index_Of<T, Ts...>::value;
+};
 
 template<typename B, typename D>
 concept Base_Of = std::is_base_of_v<B, D>;
@@ -206,6 +289,31 @@ concept Must_Destruct = !std::is_trivially_destructible_v<T>;
 
 template<typename F, typename... Args>
 concept Invocable = std::is_invocable_v<F, Args...>;
+
+template<typename T>
+struct Empty {};
+
+template<typename... Ts>
+struct All_Distinct;
+
+template<>
+struct All_Distinct<> {
+    static constexpr bool value = true;
+};
+
+template<typename T>
+struct All_Distinct<T> {
+    static constexpr bool value = true;
+};
+
+template<typename L, typename R, typename... Ts>
+struct All_Distinct<L, R, Ts...> {
+    // Quadratic
+    static constexpr bool value = !One<L, R, Ts...> && All_Distinct<R, Ts...>::value;
+};
+
+template<typename... Ts>
+concept Distinct = All_Distinct<Ts...>::value;
 
 template<typename T>
 struct Is_Float {
@@ -357,7 +465,6 @@ concept Clone = Move_Constructable<T> && requires(T value) {
 #define FIELD(field) Field<decltype(T::field), offsetof(T, field), #field>
 
 namespace detail {
-
 struct Literal {
     static constexpr u64 max_len = 16;
     template<size_t N>

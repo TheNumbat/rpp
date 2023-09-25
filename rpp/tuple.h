@@ -74,21 +74,14 @@ struct Tuple<T, Ts...> {
     }
 
     template<u64 Index>
-    auto& get() & {
+    auto& get() {
         if constexpr(Index == 0)
             return first;
         else
             return rest.template get<Index - 1>();
     }
     template<u64 Index>
-    auto&& get() && {
-        if constexpr(Index == 0)
-            return std::move(first);
-        else
-            return rest.template get<Index - 1>();
-    }
-    template<u64 Index>
-    const auto& get() const& {
+    const auto& get() const {
         if constexpr(Index == 0)
             return first;
         else

@@ -77,11 +77,13 @@ i32 main() {
 
         s[0] = 'h';
 
+        u64 i = 0;
         for(char c : sv) {
-            info("%", c);
+            assert(sv[i++] == c);
         }
+        i = 0;
         for(char c : s) {
-            info("%", c);
+            assert(s[i++] == c);
         }
 
         String_View sv2 = sv;
@@ -204,6 +206,53 @@ i32 main() {
         Tuple<M, M> t10;
     }
 
+    // Variant
+    { //
+        static_assert(alignof(i32) == 4);
+        Variant<i32> v{1};
+        info("sizeof variant %", sizeof(v));
+
+        v.match([](i32 i) { info("variant has %", i); });
+        v.match([](i32& i) { info("variant has %", i); });
+
+        Variant<i32, SV> v2{"Hello"_v};
+
+        v2.match(Overload{[](i32 i) { info("variant has int %", i); },
+                          [](SV s) { info("variant has string view %", s); }});
+
+        String<> i = v2.match(Overload{[](i32 i) {
+                                           info("variant has int %", i);
+                                           return "int"_v.string();
+                                       },
+                                       [](SV s) {
+                                           info("variant has string view %", s);
+                                           return "string"_v.string();
+                                       }});
+
+        info("returned % from match", i);
+
+        Variant<i32, SV> v3 = v2.clone();
+        assert(v3.index() == 1);
+        Variant<i32, SV> v4 = std::move(v3);
+        assert(v3.index() == 1);
+
+        { //
+            Variant<i32, String<>> v5{"Hello"_v.string()};
+            Variant<i32, String<>> v6 = v5.clone();
+            Variant<i32, String<>> v7 = std::move(v6);
+
+            Variant<i32, String<>> v8{1};
+            Variant<i32, String<>> v9 = v8.clone();
+            Variant<i32, String<>> v10 = std::move(v9);
+        }
+
+        Variant<Named<"1", i32>, Named<"2", i32>> v11{Named<"1", i32>{1}};
+
+        v11.match([](const auto& i) {
+            info("variant has %: %", String_View{Decay<decltype(i)>::type::name}, i);
+        });
+    }
+
     // Storage
     {
         Prof_Scope("Storage");
@@ -263,19 +312,24 @@ i32 main() {
 
         assert(c[2] == 3);
 
+        u64 id = 0;
         for(i32 i : c) {
-            info("%", i);
+            assert(i == c[id++]);
         }
+        id = 0;
         for(i32& i : c) {
-            info("%", i);
+            assert(i == c[id++]);
         }
 
         const Array<i32, 4>& cc = c;
+
+        id = 0;
         for(i32 i : cc) {
-            info("%", i);
+            assert(i == cc[id++]);
         }
+        id = 0;
         for(const i32& i : cc) {
-            info("%", i);
+            assert(i == cc[id++]);
         }
 
         Array<i32, 4> d = std::move(c);
@@ -301,19 +355,23 @@ i32 main() {
 
         assert(v.length() == 3);
 
+        u64 id = 0;
         for(i32 i : v) {
-            info("%", i);
+            assert(i == v[id++]);
         }
+        id = 0;
         for(i32& i : v) {
-            info("%", i);
+            assert(i == v[id++]);
         }
 
         const auto& constv = v;
+        id = 0;
         for(i32 i : constv) {
-            info("%", i);
+            assert(i == constv[id++]);
         }
+        id = 0;
         for(const i32& i : constv) {
-            info("%", i);
+            assert(i == constv[id++]);
         }
 
         v.pop();
@@ -397,20 +455,30 @@ i32 main() {
 
         assert(v.length() == 3);
 
+        i32 sum = 0;
         for(i32 i : v) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
+
+        sum = 0;
         for(i32& i : v) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
 
         const auto& constv = v;
+
+        sum = 0;
         for(i32 i : constv) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
+        sum = 0;
         for(const i32& i : constv) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
 
         v.pop();
         assert(v.length() == 2);
@@ -446,20 +514,28 @@ i32 main() {
         v.push(2);
         v.push(3);
 
+        i32 sum = 0;
         for(i32 i : v) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
+        sum = 0;
         for(i32& i : v) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
 
         const auto& constv = v;
+        sum = 0;
         for(i32 i : constv) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
+        sum = 0;
         for(const i32& i : constv) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
 
         assert(v.length() == 3);
         assert(v.front() == 1);
@@ -500,20 +576,28 @@ i32 main() {
         v.push(3);
         v.push(0);
 
+        i32 sum = 0;
         for(i32 i : v) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
+        sum = 0;
         for(i32& i : v) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
 
         const auto& constv = v;
+        sum = 0;
         for(i32 i : constv) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
+        sum = 0;
         for(const i32& i : constv) {
-            info("%", i);
+            sum += i;
         }
+        assert(sum == 6);
 
         assert(v.length() == 4);
         assert(v.top() == 0);

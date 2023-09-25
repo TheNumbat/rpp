@@ -102,6 +102,8 @@ static_assert(sizeof(void*) == 8);
 
 #include "tuple.h"
 
+#include "variant.h"
+
 #include "storage.h"
 
 #include "opt.h"

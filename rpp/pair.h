@@ -56,17 +56,12 @@ struct Pair {
     }
 
     template<u64 Index>
-    auto& get() & {
+    auto& get() {
         if constexpr(Index == 0) return first;
         if constexpr(Index == 1) return second;
     }
     template<u64 Index>
-    auto&& get() && {
-        if constexpr(Index == 0) return std::move(first);
-        if constexpr(Index == 1) return std::move(second);
-    }
-    template<u64 Index>
-    const auto& get() const& {
+    const auto& get() const {
         if constexpr(Index == 0) return first;
         if constexpr(Index == 1) return second;
     }

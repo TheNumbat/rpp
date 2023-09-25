@@ -17,6 +17,24 @@ constexpr T max(T a, T b) {
     return a > b ? a : b;
 }
 
+template<typename T>
+constexpr T min(std::initializer_list<T> list) {
+    T result = std::numeric_limits<T>::max();
+    for(T v : list) {
+        result = min(result, v);
+    }
+    return result;
+}
+
+template<typename T>
+constexpr T max(std::initializer_list<T> list) {
+    T result = std::numeric_limits<T>::min();
+    for(T v : list) {
+        result = max(result, v);
+    }
+    return result;
+}
+
 constexpr u64 KB(u64 n) {
     return n * 1024;
 }
