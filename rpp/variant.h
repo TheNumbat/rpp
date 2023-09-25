@@ -52,7 +52,7 @@ struct Variant {
             index_ = src.index_;
             std::memcpy(data_, src.data_, size);
         } else {
-            std::move(src).match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
+            src.match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
         };
     }
 
@@ -64,7 +64,7 @@ struct Variant {
             index_ = src.index_;
             std::memcpy(data_, src.data_, size);
         } else {
-            std::move(src).match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
+            src.match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
         }
         return *this;
     }
