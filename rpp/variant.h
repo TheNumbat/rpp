@@ -130,24 +130,108 @@ private:
         template<typename T>
         using Ref = typename If<Const, const T&, T&>::type;
         using Data = typename If<Const, const u8, u8>::type;
+        static constexpr u64 N = sizeof...(Ts);
+
+        // For variants with up to 8 cases, we branch on the index.
+        // Larger variants will use a table of function pointers.
+
+#define INDEX(n)                                                                                   \
+    if(index == n) return apply_one<F, Index<n, Ts...>>(std::forward<F>(f), data)
+
+        template<typename F>
+            requires(N == 1)
+        static auto apply(F&& f, Data* data, u8 index) {
+            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
+        }
+
+        template<typename F>
+            requires(N == 2)
+        static auto apply(F&& f, Data* data, u8 index) {
+            INDEX(1);
+            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
+        }
+
+        template<typename F>
+            requires(N == 3)
+        static auto apply(F&& f, Data* data, u8 index) {
+            INDEX(2);
+            INDEX(1);
+            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
+        }
+
+        template<typename F>
+            requires(N == 4)
+        static auto apply(F&& f, Data* data, u8 index) {
+            INDEX(3);
+            INDEX(2);
+            INDEX(1);
+            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
+        }
+
+        template<typename F>
+            requires(N == 5)
+        static auto apply(F&& f, Data* data, u8 index) {
+            INDEX(4);
+            INDEX(3);
+            INDEX(2);
+            INDEX(1);
+            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
+        }
+
+        template<typename F>
+            requires(N == 6)
+        static auto apply(F&& f, Data* data, u8 index) {
+            INDEX(5);
+            INDEX(4);
+            INDEX(3);
+            INDEX(2);
+            INDEX(1);
+            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
+        }
+
+        template<typename F>
+            requires(N == 7)
+        static auto apply(F&& f, Data* data, u8 index) {
+            INDEX(6);
+            INDEX(5);
+            INDEX(4);
+            INDEX(3);
+            INDEX(2);
+            INDEX(1);
+            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
+        }
+
+        template<typename F>
+            requires(N == 8)
+        static auto apply(F&& f, Data* data, u8 index) {
+            INDEX(7);
+            INDEX(6);
+            INDEX(5);
+            INDEX(4);
+            INDEX(3);
+            INDEX(2);
+            INDEX(1);
+            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
+        }
+
+#undef INDEX
 
         template<typename F>
         static auto apply(F&& f, Data* data, u8 index) {
-            return apply_(std::forward<F>(f), data, index, std::index_sequence_for<Ts...>{});
+            return apply_n(std::forward<F>(f), data, index, std::index_sequence_for<Ts...>{});
         }
 
     private:
-        template<typename F, u64 I>
+        template<typename F, typename T>
         static auto apply_one(F&& f, Data* data) {
-            using T = Index<I, Ts...>;
             return std::forward<F>(f)(reinterpret_cast<Ref<T>>(*data));
         }
         template<typename F, u64... Is>
-        static auto apply_(F&& f, Data* data, u8 index, std::index_sequence<Is...>) {
+        static auto apply_n(F&& f, Data* data, u8 index, std::index_sequence<Is...>) {
             using T = Index<0, Ts...>;
             using R = Invoke_Result<F, Ref<T>>;
             using Apply = R (*)(F&&, Data*);
-            static constexpr Apply table[] = {&apply_one<F, Is>...};
+            static constexpr Apply table[] = {&apply_one<F, Index<Is, Ts...>>...};
             return table[index](std::forward<F>(f), data);
         }
     };

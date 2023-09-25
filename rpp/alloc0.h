@@ -47,10 +47,10 @@ private:
     static constexpr u64 REGION_COUNT = 64;
     static constexpr u64 REGION_STACK_SIZE = Math::MB(8);
 
-    static inline thread_local u64 current_region = 0;
-    static inline thread_local u64 current_offset = 0;
-    static inline thread_local u64 region_offsets[REGION_COUNT] = {};
-    static inline thread_local u8* stack_memory = {};
+    static thread_local u64 current_region;
+    static thread_local u64 current_offset;
+    static thread_local u64 region_offsets[REGION_COUNT];
+    static thread_local u8* stack_memory;
 };
 
 using Mdefault = Mallocator<"Default">;

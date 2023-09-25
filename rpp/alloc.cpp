@@ -5,14 +5,19 @@ namespace rpp {
 
 static Thread::Atomic g_net_allocs;
 
+thread_local u64 Mregion::current_region = 0;
+thread_local u64 Mregion::current_offset = 0;
+thread_local u64 Mregion::region_offsets[REGION_COUNT] = {};
+thread_local u8* Mregion::stack_memory = null;
+
 void Mregion::create() {
     assert(!stack_memory);
-    stack_memory = static_cast<u8*>(calloc(REGION_STACK_SIZE, 1));
+    stack_memory = reinterpret_cast<u8*>(calloc(REGION_STACK_SIZE, 1));
 }
 
 void Mregion::destroy() {
     assert(stack_memory);
-    free(stack_memory);
+    ::free(stack_memory);
     stack_memory = null;
 }
 
