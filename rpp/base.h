@@ -48,7 +48,6 @@
 #include <ctime>
 #include <limits>
 #include <source_location>
-
 #include <utility>
 
 #define null nullptr
@@ -77,6 +76,8 @@ static_assert(sizeof(u64) == 8);
 static_assert(sizeof(f32) == 4);
 static_assert(sizeof(f64) == 8);
 static_assert(sizeof(char) == 1);
+static_assert(sizeof(bool) == 1);
+static_assert(sizeof(void*) == 8);
 } // namespace rpp
 
 #include "reflect.h"
