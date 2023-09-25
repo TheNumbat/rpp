@@ -146,11 +146,13 @@ private:
     template<Invocable F>
     static OS_Thread_Ret invoke(void* _f) {
         F* f = static_cast<F*>(_f);
+        Mregion::create();
         Profile::start_thread();
         (*f)();
         f->~F();
         A::free(f);
         Profile::end_thread();
+        Mregion::destroy();
         return OS_Thread_Ret_Null;
     }
 

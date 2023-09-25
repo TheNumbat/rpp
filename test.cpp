@@ -40,10 +40,9 @@ struct Reflect<Vecs> {
 
 i32 main() {
 
-    Profile::track_alloc_stats();
     Thread::set_priority(Thread::Priority::high);
+    Mregion::create();
     Profile::start_thread();
-
     Profile::begin_frame();
 
     // Alloc0
@@ -683,7 +682,7 @@ i32 main() {
         info("%", Pair{23, 13.0f});
 
         info("%", Tuple<>{});
-        info("%", Tuple<f32,i32,String_View>{1.0f, 2, "Hello"_v});
+        info("%", Tuple<f32, i32, String_View>{1.0f, 2, "Hello"_v});
 
         info("%", Storage<Ints>{});
 
@@ -1001,6 +1000,8 @@ i32 main() {
 
     Profile::end_frame();
     Profile::end_thread();
+    Profile::finalize();
+    Mregion::destroy();
 
     return 0;
 }

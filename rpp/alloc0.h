@@ -37,17 +37,20 @@ struct Mregion {
     static u64 depth();
     static u64 size();
 
+    static void create();
+    static void destroy();
+
 private:
     static void begin();
     static void end();
 
     static constexpr u64 REGION_COUNT = 64;
-    static constexpr u64 REGION_STACK_SIZE = Math::MB(64);
+    static constexpr u64 REGION_STACK_SIZE = Math::MB(8);
 
     static inline thread_local u64 current_region = 0;
     static inline thread_local u64 current_offset = 0;
     static inline thread_local u64 region_offsets[REGION_COUNT] = {};
-    static inline thread_local u8 stack_memory[REGION_STACK_SIZE] = {};
+    static inline thread_local u8* stack_memory = {};
 };
 
 using Mdefault = Mallocator<"Default">;

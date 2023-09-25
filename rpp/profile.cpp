@@ -190,14 +190,22 @@ void Profile::alloc(Alloc a) {
     }
 }
 
-void Profile::track_alloc_stats() {
-#ifndef RELEASE_BUILD
-    atexit(shutdown_stats);
-#endif
-}
-
-void Profile::shutdown_stats() {
-    print_alloc_stats();
+void Profile::finalize() {
+    {
+        Thread::Lock alock(allocs_lock);
+        Thread::Lock tlock(threads_lock);
+        for(auto& prof : allocs) {
+            info("Allocation stats for [%]:", prof.first);
+            info("\tAllocs: %", prof.second.allocates);
+            info("\tFrees: %", prof.second.frees);
+            info("\tHigh water: %", prof.second.high_water);
+            info("\tAlloc size: %", prof.second.allocate_size);
+            info("\tFree size: %", prof.second.free_size);
+            if(prof.second.current_set_size != 0) {
+                warn("\tUnbalanced size: %", prof.second.current_set_size);
+            }
+        }
+    }
     threads.~Map();
     allocs.~Map();
     i64 net = sys_net_allocs();
@@ -215,22 +223,6 @@ void Profile::shutdown_stats() {
         warn("Unbalanced regions: %", Mregion::depth());
     } else {
         info("No regions leaked.");
-    }
-}
-
-void Profile::print_alloc_stats() {
-    Thread::Lock alock(allocs_lock);
-    Thread::Lock tlock(threads_lock);
-    for(auto& prof : allocs) {
-        info("Allocation stats for [%]:", prof.first);
-        info("\tAllocs: %", prof.second.allocates);
-        info("\tFrees: %", prof.second.frees);
-        info("\tHigh water: %", prof.second.high_water);
-        info("\tAlloc size: %", prof.second.allocate_size);
-        info("\tFree size: %", prof.second.free_size);
-        if(prof.second.current_set_size != 0) {
-            warn("\tUnbalanced size: %", prof.second.current_set_size);
-        }
     }
 }
 

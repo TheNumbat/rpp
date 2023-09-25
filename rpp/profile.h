@@ -36,7 +36,6 @@ struct Profile {
         u64 size = 0; // 0 means free
     };
     static void alloc(Alloc a);
-    static void track_alloc_stats();
 
     static Time_Point timestamp();
     static f32 ms(Time_Point duration);
@@ -96,7 +95,7 @@ struct Profile {
         }
     }
 
-    static void print_alloc_stats();
+    static void finalize();
 
 private:
     struct Alloc_Profile {
@@ -130,8 +129,6 @@ private:
         Thread::Mutex frames_lock;
         Queue<Frame_Profile, Mhidden> frames;
     };
-
-    static void shutdown_stats();
 
     static inline Thread::Mutex threads_lock;
     static inline Thread::Mutex allocs_lock;
