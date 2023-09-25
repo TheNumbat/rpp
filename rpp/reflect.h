@@ -440,16 +440,18 @@ struct Iter;
 
 template<typename F>
 struct Iter<F, Nil> {
-    static void apply(F&& f) {
+    template<typename G>
+    static void apply(G&& f) {
     }
 };
 
 template<typename F, typename Head, List Tail>
     requires Apply<F, Head>
 struct Iter<F, Cons<Head, Tail>> {
-    static void apply(F&& f) {
+    template<typename G>
+    static void apply(G&& f) {
         f.template apply<Head>();
-        Iter<F, Tail>::apply(std::forward<F>(f));
+        Iter<F, Tail>::apply(std::forward<G>(f));
     }
 };
 
@@ -466,6 +468,22 @@ struct Length<Cons<Head, Tail>> {
     static constexpr u64 value = 1 + Length<Tail>::value;
 };
 
+template<List L, List Acc>
+struct Reverse_Acc;
+
+template<List Acc>
+struct Reverse_Acc<Nil, Acc> {
+    using type = Acc;
+};
+
+template<typename Head, List Tail, List Acc>
+struct Reverse_Acc<Cons<Head, Tail>, Acc> {
+    using type = typename Reverse_Acc<Tail, Cons<Head, Acc>>::type;
+};
+
+template<List L>
+using Reversed = typename Reverse_Acc<L, Nil>::type;
+
 } // namespace list
 
 template<typename... Ts>
@@ -479,6 +497,27 @@ concept Type_List = list::List<T>;
 
 template<typename P, typename L>
 concept Type_List_All = list::All<P, L>::value;
+
+template<u64 N>
+struct Constant {
+    static constexpr u64 value = N;
+};
+
+template<typename... Ts>
+struct Index_List_R;
+
+template<>
+struct Index_List_R<> {
+    using type = list::Nil;
+};
+
+template<typename T, typename... Ts>
+struct Index_List_R<T, Ts...> {
+    using type = list::Cons<Constant<sizeof...(Ts)>, typename Index_List_R<Ts...>::type>;
+};
+
+template<typename... Ts>
+using Index_List = list::Reversed<typename Index_List_R<Ts...>::type>;
 
 enum class Kind : u8 {
     void_,
@@ -747,7 +786,9 @@ struct Reflect<Kind> {
 } // namespace detail
 
 using detail::Enum;
+using detail::Index_List;
 using detail::Kind;
+using detail::List;
 using detail::List_Length;
 using detail::Literal;
 using detail::Record;

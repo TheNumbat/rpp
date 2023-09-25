@@ -36,9 +36,10 @@ Containers
 - Queue: ring buffer
 - Heap: linear priority queue
 - Map: robin hood hash map
-- Pair
-- Storage: manual in-place RAII wrapper
 - Opt: in-place optional
+- Storage: manual in-place RAII wrapper
+- Pair: two values with heterogeneous types
+- Tuple: N values with heterogeneous types
 
 Utilities
 - 3D vector and matrix math (SSE)
@@ -56,7 +57,6 @@ Utilities
 - Thread pool that can run blocking jobs and coroutines with two priority levels
 
 To-Do:
-- Tuple replacement
 - Variant replacement
 - Thread pool upgrades
     - Async IO events

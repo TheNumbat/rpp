@@ -56,12 +56,17 @@ struct Pair {
     }
 
     template<u64 Index>
-    auto& get() {
+    auto& get() & {
         if constexpr(Index == 0) return first;
         if constexpr(Index == 1) return second;
     }
     template<u64 Index>
-    const auto& get() const {
+    auto&& get() && {
+        if constexpr(Index == 0) return std::move(first);
+        if constexpr(Index == 1) return std::move(second);
+    }
+    template<u64 Index>
+    const auto& get() const& {
         if constexpr(Index == 0) return first;
         if constexpr(Index == 1) return second;
     }
@@ -80,3 +85,21 @@ struct Reflect<Pair<A, B>> {
 };
 
 } // namespace rpp
+
+namespace std {
+
+using rpp::Pair;
+
+template<typename L, typename R>
+struct tuple_size<Pair<L, R>> : std::integral_constant<size_t, 2> {};
+
+template<typename L, typename R>
+struct tuple_element<0, Pair<L, R>> {
+    using type = L;
+};
+template<typename L, typename R>
+struct tuple_element<1, Pair<L, R>> {
+    using type = R;
+};
+
+} // namespace std
