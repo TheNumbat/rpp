@@ -682,6 +682,7 @@ i32 main() {
 
         info("%", Pair{23, 13.0f});
 
+        info("%", Tuple<>{});
         info("%", Tuple<f32,i32,String_View>{1.0f, 2, "Hello"_v});
 
         info("%", Storage<Ints>{});
