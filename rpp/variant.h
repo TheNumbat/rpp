@@ -136,73 +136,11 @@ private:
         // Larger variants will use a table of function pointers.
 
 #define INDEX(n)                                                                                   \
-    if(index == n) return apply_one<F, Index<n, Ts...>>(std::forward<F>(f), data)
+    if constexpr(N > n)                                                                            \
+        if(index == n) return apply_one<F, Index<n, Ts...>>(std::forward<F>(f), data)
 
         template<typename F>
-            requires(N == 1)
-        static auto apply(F&& f, Data* data, u8 index) {
-            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
-        }
-
-        template<typename F>
-            requires(N == 2)
-        static auto apply(F&& f, Data* data, u8 index) {
-            INDEX(1);
-            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
-        }
-
-        template<typename F>
-            requires(N == 3)
-        static auto apply(F&& f, Data* data, u8 index) {
-            INDEX(2);
-            INDEX(1);
-            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
-        }
-
-        template<typename F>
-            requires(N == 4)
-        static auto apply(F&& f, Data* data, u8 index) {
-            INDEX(3);
-            INDEX(2);
-            INDEX(1);
-            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
-        }
-
-        template<typename F>
-            requires(N == 5)
-        static auto apply(F&& f, Data* data, u8 index) {
-            INDEX(4);
-            INDEX(3);
-            INDEX(2);
-            INDEX(1);
-            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
-        }
-
-        template<typename F>
-            requires(N == 6)
-        static auto apply(F&& f, Data* data, u8 index) {
-            INDEX(5);
-            INDEX(4);
-            INDEX(3);
-            INDEX(2);
-            INDEX(1);
-            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
-        }
-
-        template<typename F>
-            requires(N == 7)
-        static auto apply(F&& f, Data* data, u8 index) {
-            INDEX(6);
-            INDEX(5);
-            INDEX(4);
-            INDEX(3);
-            INDEX(2);
-            INDEX(1);
-            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
-        }
-
-        template<typename F>
-            requires(N == 8)
+            requires(N <= 8)
         static auto apply(F&& f, Data* data, u8 index) {
             INDEX(7);
             INDEX(6);
