@@ -1,6 +1,4 @@
 
-#include <functional>
-
 #include "rpp/async.h"
 #include "rpp/base.h"
 #include "rpp/files.h"
@@ -410,7 +408,7 @@ i32 main() {
 
         Slice<M> m2{};
 
-        Vec<std::function<void()>> vf;
+        Vec<Function<void()>> vf;
         for(i32 i = 0; i < 10; i++) {
             vf.push([]() { info("Hello"); });
         }
@@ -494,7 +492,7 @@ i32 main() {
 
         assert(sv3.length() == 2);
 
-        Stack<std::function<void()>> vf;
+        Stack<Function<void()>> vf;
         for(i32 i = 0; i < 10; i++) {
             vf.push([]() { info("Hello"); });
         }
@@ -555,7 +553,7 @@ i32 main() {
 
         assert(sv3.length() == 2);
 
-        Queue<std::function<void()>> vf;
+        Queue<Function<void()>> vf;
         for(i32 i = 0; i < 10; i++) {
             vf.push([]() { info("Hello"); });
         }
@@ -623,7 +621,7 @@ i32 main() {
         }
 
         struct F {
-            std::function<void()> f;
+            Function<void()> f;
             bool operator<(const F& other) const {
                 return true;
             }
@@ -690,7 +688,7 @@ i32 main() {
 
         assert(sv3.length() == 1);
 
-        Map<i32, std::function<void()>> ff;
+        Map<i32, Function<void()>> ff;
         for(i32 i = 0; i < 40; i++) {
             ff.insert(i, []() { info("Hello"); });
         }
