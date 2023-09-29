@@ -41,6 +41,7 @@ set(SOURCES_RPP
     "async.h"
     "tuple.h"
     "variant.h"
+    "function.h"
 )
 
 if(WIN32)

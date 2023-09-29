@@ -70,6 +70,12 @@
         "xmemory": "cpp",
         "xtree": "cpp",
         "functional": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "deque": "cpp",
+        "ranges": "cpp",
+        "span": "cpp",
+        "queue": "cpp",
+        "random": "cpp",
+        "stack": "cpp"
     }
 }

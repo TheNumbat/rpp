@@ -317,6 +317,7 @@ struct Measure<Math::BBox> {
     }
 };
 template<typename... Ts>
+    requires(Reflectable<Ts> && ...)
 struct Tuple_Length {
     template<typename Index>
     void apply() {
@@ -328,6 +329,7 @@ struct Tuple_Length {
     u64 length = 0;
 };
 template<typename... Ts>
+    requires(Reflectable<Ts> && ...)
 struct Measure<Tuple<Ts...>> {
     static u64 measure(const Tuple<Ts...>& tuple) {
         u64 length = 7;
@@ -337,6 +339,41 @@ struct Measure<Tuple<Ts...>> {
         Tuple_Length<Ts...> iterator{tuple, 0};
         rpp::detail::list::Iter<Tuple_Length<Ts...>, Indices>::apply(iterator);
         return length + iterator.length;
+    }
+};
+template<typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Measure<Variant<Ts...>> {
+    static u64 measure(const Variant<Ts...>& variant) {
+        u64 length = 9;
+        length +=
+            variant.match(Overload{[](const Ts& value) { return Measure<Ts>::measure(value); }...});
+        return length;
+    }
+};
+template<Literal N, Reflectable T>
+struct Measure<Named<N, T>> {
+    static u64 measure(const Named<N, T>& named) {
+        u64 length = String_View{N}.length() + 2;
+        return length + Measure<T>::measure(named.value);
+    }
+};
+template<Reflectable R, typename... Args>
+    requires(Reflectable<Args> && ...)
+struct Measure<Function<R(Args...)>> {
+    using Fn = R(Args...);
+    static u64 measure(const Function<Fn>& function) {
+        u64 length = 10;
+        if(function) {
+            length += String_View{Reflect<R>::name}.length();
+            length += 2;
+            if constexpr(sizeof...(Args) > 0)
+                length += (String_View{Reflect<Args>::name}.length() + ...);
+            if constexpr(sizeof...(Args) > 1) length += 2 * (sizeof...(Args) - 1);
+        } else {
+            length += 4;
+        }
+        return length;
     }
 };
 
@@ -654,6 +691,7 @@ struct Write<O, Math::BBox> {
     }
 };
 template<Allocator O, typename... Ts>
+    requires(Reflectable<Ts> && ...)
 struct Tuple_Write {
     template<typename Index>
     void apply() {
@@ -667,6 +705,7 @@ struct Tuple_Write {
     u64 idx = 0;
 };
 template<Allocator O, typename... Ts>
+    requires(Reflectable<Ts> && ...)
 struct Write<O, Tuple<Ts...>> {
     static u64 write(String<O>& output, u64 idx, const Tuple<Ts...>& tuple) {
         idx = output.write(idx, "Tuple{"_v);
@@ -674,6 +713,59 @@ struct Write<O, Tuple<Ts...>> {
         Tuple_Write<O, Ts...> iterator{tuple, output, idx};
         rpp::detail::list::Iter<Tuple_Write<O, Ts...>, Indices>::apply(iterator);
         return output.write(iterator.idx, '}');
+    }
+};
+template<Allocator O, typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Write<O, Variant<Ts...>> {
+    static u64 write(String<O>& output, u64 idx, const Variant<Ts...>& variant) {
+        idx = output.write(idx, "Variant{"_v);
+        idx = variant.match(Overload{[&output, idx](const Ts& value) {
+            return Write<O, Ts>::write(output, idx, value);
+        }...});
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O, Literal N, Reflectable T>
+struct Write<O, Named<N, T>> {
+    static u64 write(String<O>& output, u64 idx, const Named<N, T>& named) {
+        idx = output.write(idx, String_View{N});
+        idx = output.write(idx, '{');
+        idx = Write<O, T>::write(output, idx, named.value);
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O, typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Type_Write {
+    template<typename I>
+    void apply() {
+        using T = Index<I::value, Ts...>;
+        idx = output.write(idx, String_View{Reflect<T>::name});
+        if constexpr(I::value + 1 < sizeof...(Ts)) idx = output.write(idx, ", "_v);
+    }
+    String<O>& output;
+    u64 idx = 0;
+};
+template<Allocator O, Reflectable R, typename... Args>
+    requires(Reflectable<Args> && ...)
+struct Write<O, Function<R(Args...)>> {
+
+    using Fn = R(Args...);
+    using Indices = rpp::Index_List<Args...>;
+
+    static u64 write(String<O>& output, u64 idx, const Function<Fn>& function) {
+        idx = output.write(idx, "Function{"_v);
+        if(function) {
+            idx = output.write(idx, String_View{Reflect<R>::name});
+            idx = output.write(idx, '(');
+            Type_Write<O, Args...> iterator{output, idx};
+            rpp::detail::list::Iter<Type_Write<O, Args...>, Indices>::apply(iterator);
+            idx = output.write(iterator.idx, ')');
+        } else {
+            idx = output.write(idx, "null"_v);
+        }
+        return output.write(idx, '}');
     }
 };
 

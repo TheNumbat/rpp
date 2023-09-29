@@ -734,6 +734,69 @@ i32 main() {
         assert(!r2 && r2.references() == 0);
     }
 
+    // Function
+    {
+        Function<void()> f{
+            []() { info("Hello function"); },
+        };
+
+        f();
+
+        Function<void()> f2 = std::move(f);
+
+        f2();
+
+        String<> test = "Hello"_v.string();
+
+        Function<void()> f3{
+            [&test]() { info("Hello function 2: %", test); },
+        };
+
+        f3();
+
+        Function<void()> f4{
+            [test = std::move(test)]() { info("Hello function 2: %", test); },
+        };
+
+        f4();
+
+        Function<void()> f5 = std::move(f4);
+
+        f5();
+
+        Function<i32(i32, i32)> f6{
+            [](i32 a, i32 b) { return a + b; },
+        };
+
+        assert(f6(1, 2) == 3);
+
+        Function<i32(i32, i32&, const i32&, i32&&)> f7{
+            [](i32 a, i32& b, const i32& c, i32&& d) { return a + b + c + d; },
+        };
+
+        i32 i = 2;
+        assert(f7(1, i, 3, 4) == 10);
+
+        Function<void(String_View, String_View&, const String_View&, String_View&&)> f8{
+            [](String_View a, String_View& b, const String_View& c, String_View&& d) {
+                info("% % % %", a, b, c, d);
+            },
+        };
+
+        String_View s = "Hello"_v;
+        String_View s2 = "World"_v;
+        f8(s, s, s, std::move(s2));
+
+        struct Large {
+            char data[32];
+        };
+        Large large;
+
+        Function<void()> f9{
+            [large]() { info("Hello function 3"); },
+        };
+    }
+
     // Format
     {
         info("%%");
@@ -767,6 +830,23 @@ i32 main() {
 
         info("%", Tuple<>{});
         info("%", Tuple<f32, i32, String_View>{1.0f, 2, "Hello"_v});
+
+        info("%", Variant<i32, f32>{1});
+        info("%", Variant<i32, f32>{1.0f});
+        info("%", Variant<Named<"One", i32>, Named<"Two", i32>>{Named<"One", i32>{1}});
+        info("%", Variant<Named<"One", i32>, Named<"Two", i32>>{Named<"Two", i32>{2}});
+
+        info("%", Function<void()>{});
+        info("%", Function<void()>{[]() {}});
+        info("%", Function<void(i32)>{[](i32 i) {}});
+        info("%", Function<void(i32, i32)>{[](i32 i, i32 j) {}});
+        info("%", Function<i32(i32, i32)>{[](i32 i, i32 j) { return i + j; }});
+        // Only prints "Function" as the argument type, seems fine for now
+        info("%",
+             Function<i32(Function<Function<void()>(f32)>)>{[](Function<Function<void()>(f32)> f) {
+                 f(1.0f)();
+                 return 0;
+             }});
 
         info("%", Storage<Ints>{});
 

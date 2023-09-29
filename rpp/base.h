@@ -104,6 +104,8 @@ static_assert(sizeof(void*) == 8);
 
 #include "variant.h"
 
+#include "function.h"
+
 #include "storage.h"
 
 #include "opt.h"

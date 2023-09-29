@@ -40,6 +40,8 @@ Containers
 - Storage: manual in-place RAII wrapper
 - Pair: two values with heterogeneous types
 - Tuple: N values with heterogeneous types
+- Variant: sum type (only unique types) with scuffed pattern matching
+- Function: fixed-size type-erased closure
 
 Utilities
 - 3D vector and matrix math (SSE)
@@ -57,8 +59,6 @@ Utilities
 - Thread pool that can run blocking jobs and coroutines with two priority levels
 
 To-Do:
-- Variant formatting
-- Function replacement
 - Thread pool upgrades
     - Async IO events
     - Affinity per task
