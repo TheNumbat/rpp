@@ -790,8 +790,23 @@ i32 main() {
         };
         Large large;
 
+        struct Larger {
+            char data[64];
+        };
+        Larger larger;
+
         Function<void()> f9{
-            [large]() { info("Hello function 3"); },
+            [large]() {
+                (void)large;
+                info("Hello function 3");
+            },
+        };
+
+        FunctionN<8, void()> f10{
+            [larger]() {
+                (void)larger;
+                info("Hello function 3");
+            },
         };
     }
 

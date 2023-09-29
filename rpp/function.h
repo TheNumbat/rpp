@@ -110,6 +110,9 @@ private:
 template<typename F>
 using Function = detail::Function<4, F>;
 
+template<u64 Words, typename F>
+using FunctionN = detail::Function<Words, F>;
+
 template<u64 Words, typename Fn>
 struct Reflect<detail::Function<Words, Fn>> {
     using T = detail::Function<Words, Fn>;
