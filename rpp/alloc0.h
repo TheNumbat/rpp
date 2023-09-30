@@ -1,10 +1,12 @@
 
 #pragma once
 
+#ifdef COMPILER_MSVC
 void* operator new(std::size_t, std::align_val_t, void* ptr) noexcept;
 void* operator new[](std::size_t, std::align_val_t, void* ptr) noexcept;
 void operator delete(void*, std::align_val_t, void*) noexcept;
 void operator delete[](void*, std::align_val_t, void*) noexcept;
+#endif
 
 namespace rpp {
 

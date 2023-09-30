@@ -1,6 +1,7 @@
 
 #include "base.h"
 
+#ifdef COMPILER_MSVC
 void* operator new(std::size_t, std::align_val_t, void* ptr) noexcept {
     return ptr;
 }
@@ -11,6 +12,7 @@ void operator delete(void*, std::align_val_t, void*) noexcept {
 }
 void operator delete[](void*, std::align_val_t, void*) noexcept {
 }
+#endif
 
 namespace rpp {
 
