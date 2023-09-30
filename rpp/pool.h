@@ -9,9 +9,8 @@ namespace rpp::Thread {
 
 // TOD(max):
 //      asynchronous IO events (win32, io_uring)
-//      queue per thread
+//      queue per thread & work stealing
 //      set CPU affinity for individual jobs
-//      work stealing
 
 template<Allocator A>
 struct Pool;

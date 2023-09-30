@@ -61,10 +61,8 @@ Utilities
 To-Do:
 - Thread pool upgrades
     - Async IO events
-    - Thread local queues
+    - Thread local queues & work stealing
     - Affinity per task
-    - Lock-free queue
-    - Work stealing
 - Range allocator upgrades
     - Second level of linear buckets
     - Reduce memory overhead
