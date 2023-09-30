@@ -1,6 +1,8 @@
 
 #include "base.h"
 
+#include <ctime>
+
 #ifdef OS_WINDOWS
 #include <windows.h>
 #endif
@@ -106,6 +108,10 @@ void debug_break() {
 }
 
 #endif
+
+u64 sys_time() {
+    return std::time(null);
+}
 
 static String_View time_string(std::time_t timestamp) {
 

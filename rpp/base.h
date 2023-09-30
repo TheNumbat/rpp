@@ -30,23 +30,22 @@
 #ifdef COMPILER_CLANG
 #define FORCE_INLINE __attribute__((always_inline))
 #include <new>
+#include <stddef.h>
 #include <utility>
 #endif
 
 #ifdef OS_LINUX
+#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #endif
 
 #include <cstdio>
 #include <cstring>
-#include <ctime>
-#include <errno.h>
 #include <float.h>
 #include <initializer_list>
 #include <smmintrin.h>
 #include <source_location>
-#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <type_traits>
