@@ -25,12 +25,12 @@
 
 #ifdef COMPILER_MSVC
 #define FORCE_INLINE __forceinline
-#include <intrin.h>
 #endif
 
 #ifdef COMPILER_CLANG
 #define FORCE_INLINE __attribute__((always_inline))
-#include <x86intrin.h>
+#include <new>
+#include <utility>
 #endif
 
 #ifdef OS_LINUX
@@ -38,17 +38,18 @@
 #include <signal.h>
 #endif
 
-#include <cerrno>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
 #include <cstdio>
-#include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <limits>
+#include <errno.h>
+#include <float.h>
+#include <initializer_list>
+#include <smmintrin.h>
 #include <source_location>
-#include <utility>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <type_traits>
 
 #define null nullptr
 

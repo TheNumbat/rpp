@@ -76,7 +76,6 @@ struct Reflect<Pair<A, B>> {
     static constexpr Literal name = "Pair";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(first), FIELD(second)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp
@@ -84,6 +83,12 @@ struct Reflect<Pair<A, B>> {
 namespace std {
 
 using rpp::Pair;
+
+template<typename T>
+struct tuple_size;
+
+template<size_t I, typename T>
+struct tuple_element;
 
 template<typename L, typename R>
 struct tuple_size<Pair<L, R>> : std::integral_constant<size_t, 2> {};

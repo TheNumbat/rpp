@@ -82,7 +82,6 @@ struct Reflect<Log::Location> {
     static constexpr char name[] = "Location";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(function), FIELD(file), FIELD(line), FIELD(column)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

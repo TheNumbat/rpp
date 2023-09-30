@@ -25,7 +25,7 @@ target_compile_definitions(rpp_test
 
 if(MSVC)
     target_compile_definitions(rpp_test PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
-    target_compile_options(rpp_test PRIVATE /MP /W4 /WX /GS- /wd4201 /wd4840 /wd4100 /arch:AVX2)
+    target_compile_options(rpp_test PRIVATE /MP /W4 /WX /wd4201 /wd4840 /wd4100 /arch:AVX2)
 else()
     target_compile_options(rpp_test PRIVATE -mavx2 -Wall -Wextra -Werror -Wno-reorder -Wno-missing-braces -Wno-unused-parameter)
 endif()

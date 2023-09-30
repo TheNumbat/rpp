@@ -115,7 +115,6 @@ struct Reflect<Box<B, A>> {
     static constexpr Literal name = "Box";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

@@ -188,7 +188,6 @@ struct Reflect<Thread::Promise<P>> {
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(mut), FIELD(cond), FIELD(value)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -197,7 +196,6 @@ struct Reflect<Thread::Promise<void>> {
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(mut), FIELD(cond), FIELD(done)>;
-    static_assert(Record<T>);
 };
 
 template<Allocator A>
@@ -206,7 +204,6 @@ struct Reflect<Thread::Thread<A>> {
     static constexpr Literal name = "Thread";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(thread)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

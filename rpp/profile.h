@@ -143,7 +143,6 @@ struct Reflect<Profile::Alloc> {
     static constexpr Literal name = "Alloc";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(name), FIELD(address), FIELD(size)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

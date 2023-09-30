@@ -46,7 +46,6 @@ struct Reflect<Ref<R>> {
     static constexpr Literal name = "Ref";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

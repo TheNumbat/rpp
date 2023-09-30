@@ -438,6 +438,121 @@ template<typename I>
 concept Signed_Int = Is_Signed_Int<I>::value;
 
 template<typename T>
+struct Limits;
+
+template<>
+struct Limits<u8> {
+    static constexpr u8 max() {
+        return UINT8_MAX;
+    }
+    static constexpr u8 min() {
+        return 0;
+    }
+};
+
+template<>
+struct Limits<u16> {
+    static constexpr u16 max() {
+        return UINT16_MAX;
+    }
+    static constexpr u16 min() {
+        return 0;
+    }
+};
+
+template<>
+struct Limits<u32> {
+    static constexpr u32 max() {
+        return UINT32_MAX;
+    }
+    static constexpr u32 min() {
+        return 0;
+    }
+};
+
+template<>
+struct Limits<u64> {
+    static constexpr u64 max() {
+        return UINT64_MAX;
+    }
+    static constexpr u64 min() {
+        return 0;
+    }
+};
+
+template<>
+struct Limits<i8> {
+    static constexpr i8 max() {
+        return INT8_MAX;
+    }
+    static constexpr i8 min() {
+        return INT8_MIN;
+    }
+};
+
+template<>
+struct Limits<i16> {
+    static constexpr i16 max() {
+        return INT16_MAX;
+    }
+    static constexpr i16 min() {
+        return INT16_MIN;
+    }
+};
+
+template<>
+struct Limits<i32> {
+    static constexpr i32 max() {
+        return INT32_MAX;
+    }
+    static constexpr i32 min() {
+        return INT32_MIN;
+    }
+};
+
+template<>
+struct Limits<i64> {
+    static constexpr i64 max() {
+        return INT64_MAX;
+    }
+    static constexpr i64 min() {
+        return INT64_MIN;
+    }
+};
+
+template<>
+struct Limits<f32> {
+    static constexpr f32 max() {
+        return FLT_MAX;
+    }
+    static constexpr f32 min() {
+        return -FLT_MAX;
+    }
+    static constexpr f32 smallest() {
+        return FLT_MIN;
+    }
+    static constexpr f32 epsilon() {
+        return FLT_EPSILON;
+    }
+};
+
+template<>
+struct Limits<f64> {
+    static constexpr f64 max() {
+        return DBL_MAX;
+    }
+    static constexpr f64 min() {
+        return -DBL_MAX;
+    }
+    static constexpr f64 smallest() {
+        return DBL_MIN;
+    }
+    static constexpr f64 epsilon() {
+        return DBL_EPSILON;
+    }
+};
+
+template<typename T>
 concept Equality = requires(T l, T r) {
     { l == r } -> Same<bool>;
 };

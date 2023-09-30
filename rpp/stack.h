@@ -100,7 +100,6 @@ struct Reflect<Stack<S, A>> {
     static constexpr Literal name = "Stack";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

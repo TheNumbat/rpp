@@ -230,7 +230,6 @@ struct Reflect<String_View> {
     static constexpr Literal name = "String_View";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_)>;
-    static_assert(Record<T>);
 };
 
 template<Allocator A>
@@ -239,7 +238,6 @@ struct Reflect<String<A>> {
     static constexpr Literal name = "String";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

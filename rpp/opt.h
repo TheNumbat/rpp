@@ -109,7 +109,6 @@ struct Reflect<Opt<O>> {
     static constexpr Literal name = "Opt";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(ok_), FIELD(value_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

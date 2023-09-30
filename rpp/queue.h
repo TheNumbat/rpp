@@ -345,7 +345,6 @@ struct Reflect<Queue<Q, A>> {
     static constexpr Literal name = "Queue";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(last_), FIELD(capacity_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

@@ -3,7 +3,7 @@
 
 namespace rpp::Math {
 
-constexpr f32 EPS_F = (16.0f * std::numeric_limits<f32>::epsilon());
+constexpr f32 EPS_F = (16.0f * Limits<f32>::epsilon());
 constexpr f32 PI32 = 3.14159265358979323846264338327950288f;
 constexpr f64 PI64 = 3.14159265358979323846264338327950288;
 
@@ -19,7 +19,7 @@ constexpr T max(T a, T b) {
 
 template<typename T>
 constexpr T min(std::initializer_list<T> list) {
-    T result = std::numeric_limits<T>::max();
+    T result = Limits<T>::max();
     for(T v : list) {
         result = min(result, v);
     }
@@ -28,7 +28,7 @@ constexpr T min(std::initializer_list<T> list) {
 
 template<typename T>
 constexpr T max(std::initializer_list<T> list) {
-    T result = std::numeric_limits<T>::min();
+    T result = Limits<T>::min();
     for(T v : list) {
         result = max(result, v);
     }
@@ -54,127 +54,41 @@ constexpr T degrees(T v) {
     return v * T{180.0f / PI32};
 }
 
-inline f32 cos(f32 v) {
-    return ::cosf(v);
-}
-inline f64 cos(f64 v) {
-    return ::cos(v);
-}
-inline f32 sin(f32 v) {
-    return ::sinf(v);
-}
-inline f64 sin(f64 v) {
-    return ::sin(v);
-}
-inline f32 tan(f32 v) {
-    return ::tanf(v);
-}
-inline f64 tan(f64 v) {
-    return ::tan(v);
-}
-inline f32 acos(f32 v) {
-    return ::acosf(v);
-}
-inline f64 acos(f64 v) {
-    return ::acos(v);
-}
-inline f32 asin(f32 v) {
-    return ::asinf(v);
-}
-inline f64 asin(f64 v) {
-    return ::asin(v);
-}
-inline f32 atan(f32 v) {
-    return ::atanf(v);
-}
-inline f64 atan(f64 v) {
-    return ::atan(v);
-}
-inline f32 atan2(f32 y, f32 x) {
-    return ::atan2f(y, x);
-}
-inline f64 atan2(f64 y, f64 x) {
-    return ::atan2(y, x);
-}
-inline f32 hypot(f32 x, f32 y) {
-    return ::hypotf(x, y);
-}
-inline f64 hypot(f64 x, f64 y) {
-    return ::hypot(x, y);
-}
-inline f32 floor(f32 v) {
-    return ::floorf(v);
-}
-inline f64 floor(f64 v) {
-    return ::floor(v);
-}
-inline f32 ceil(f32 v) {
-    return ::ceilf(v);
-}
-inline f64 ceil(f64 v) {
-    return ::ceil(v);
-}
-inline f32 abs(f32 v) {
-    return ::fabsf(v);
-}
-inline f64 abs(f64 v) {
-    return ::fabs(v);
-}
-inline f32 sqrt(f32 v) {
-    return ::sqrtf(v);
-}
-inline f64 sqrt(f64 v) {
-    return ::sqrt(v);
-}
-inline i32 abs(i32 v) {
-    return ::abs(v);
-}
-inline i64 abs(i64 v) {
-    return ::abs(v);
-}
+f32 cos(f32 v);
+f64 cos(f64 v);
+f32 sin(f32 v);
+f64 sin(f64 v);
+f32 tan(f32 v);
+f64 tan(f64 v);
+f32 acos(f32 v);
+f64 acos(f64 v);
+f32 asin(f32 v);
+f64 asin(f64 v);
+f32 atan(f32 v);
+f64 atan(f64 v);
+f32 atan2(f32 y, f32 x);
+f64 atan2(f64 y, f64 x);
+f32 hypot(f32 x, f32 y);
+f64 hypot(f64 x, f64 y);
+f32 floor(f32 v);
+f64 floor(f64 v);
+f32 ceil(f32 v);
+f64 ceil(f64 v);
+f32 abs(f32 v);
+f64 abs(f64 v);
+f32 sqrt(f32 v);
+f64 sqrt(f64 v);
+i32 abs(i32 v);
+i64 abs(i64 v);
 
-inline u32 ctlz(u32 val) {
-#ifdef COMPILER_MSVC
-    return __lzcnt(val);
-#else
-    if(val == 0) return 32;
-    return __builtin_clz(val);
-#endif
-}
-
-inline u64 ctlz(u64 val) {
-#ifdef COMPILER_MSVC
-    return __lzcnt64(val);
-#else
-    if(val == 0) return 64;
-    return __builtin_clzll(val);
-#endif
-}
-
-inline u32 log2(u32 val) {
-    return 31u - ctlz(val);
-}
-inline u64 log2(u64 val) {
-    return 63ull - ctlz(val);
-}
-
-inline u32 prev_pow2(u32 val) {
-    if(val == 0) return 0;
-    return 1u << log2(val);
-}
-inline u64 prev_pow2(u64 val) {
-    if(val == 0) return 0;
-    return 1ull << log2(val);
-}
-
-inline u32 next_pow2(u32 x) {
-    u32 prev = prev_pow2(x);
-    return x == prev ? x : prev << 1u;
-}
-inline u64 next_pow2(u64 x) {
-    u64 prev = prev_pow2(x);
-    return x == prev ? x : prev << 1ull;
-}
+u32 ctlz(u32 val);
+u64 ctlz(u64 val);
+u32 log2(u32 val);
+u64 log2(u64 val);
+u32 prev_pow2(u32 val);
+u64 prev_pow2(u64 val);
+u32 next_pow2(u32 x);
+u64 next_pow2(u64 x);
 
 template<typename T>
 constexpr T lerp(T start, T end, T t) {

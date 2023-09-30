@@ -68,7 +68,6 @@ struct Reflect<Storage<S>> {
     static constexpr Literal name = "Storage";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

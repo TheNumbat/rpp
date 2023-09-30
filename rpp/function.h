@@ -119,7 +119,6 @@ struct Reflect<detail::Function<Words, Fn>> {
     static constexpr Literal name = "Function";
     static constexpr Kind kind = Kind::record_;
     using members = List<>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

@@ -249,7 +249,6 @@ struct Reflect<Heap<H, A>> {
     static constexpr Literal name = "Heap";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

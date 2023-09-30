@@ -318,7 +318,6 @@ struct Reflect<Vec<V, A>> {
     static constexpr Literal name = "Vec";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
-    static_assert(Record<T>);
 };
 
 template<typename T>

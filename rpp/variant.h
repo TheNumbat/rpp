@@ -183,7 +183,6 @@ struct Reflect<Named<N, NT>> {
     static constexpr Literal name = N;
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value)>;
-    static_assert(Record<T>);
 };
 
 template<typename... Ts>
@@ -192,7 +191,6 @@ struct Reflect<Variant<Ts...>> {
     static constexpr Literal name = "Variant";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(index_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

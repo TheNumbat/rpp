@@ -14,6 +14,7 @@ set(SOURCES_RPP
     "log.cpp"
     "log.h"
     "math.h"
+    "math.cpp"
     "opt.h"
     "pair.h"
     "ref0.h"
@@ -68,10 +69,11 @@ target_compile_definitions(rpp
 )
 
 if(MSVC)
-    target_compile_definitions(rpp PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)
-    target_compile_options(rpp PRIVATE /MP /W4 /WX /GS- /wd4201 /wd4840 /wd4100 /arch:AVX2)
+    string(REPLACE "/GR" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    target_compile_definitions(rpp PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX _HAS_EXCEPTIONS=0)
+    target_compile_options(rpp PRIVATE /MP /W4 /WX /GR- /GS- /EHa- /wd4201 /wd4840 /wd4100 /arch:AVX2)
 else()
-    target_compile_options(rpp PRIVATE -mavx2 -Wall -Wextra -Werror -Wno-reorder -Wno-missing-braces -Wno-unused-parameter)
+    target_compile_options(rpp PRIVATE -mavx2 -Wall -Wextra -Werror -Wno-reorder -Wno-missing-braces -Wno-unused-parameter -fno-exceptions -fno-rtti)
 endif()
 
 if(WIN32)

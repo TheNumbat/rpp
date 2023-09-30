@@ -105,7 +105,6 @@ struct Reflect<Tuple<>> {
     static constexpr Literal name = "Tuple";
     static constexpr Kind kind = Kind::record_;
     using members = List<>;
-    static_assert(Record<T>);
 };
 
 template<typename F, typename... Ts>
@@ -114,7 +113,6 @@ struct Reflect<Tuple<F, Ts...>> {
     static constexpr Literal name = "Tuple";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(first), FIELD(rest)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

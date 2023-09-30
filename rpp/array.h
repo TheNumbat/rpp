@@ -30,7 +30,7 @@ struct Array {
     Array& operator=(Array&& src) = default;
 
     Array clone() const
-        requires (Clone<T> || Trivial<T>) && Default_Constructable<T>
+        requires(Clone<T> || Trivial<T>) && Default_Constructable<T>
     {
         Array result;
         if constexpr(Clone<T>) {

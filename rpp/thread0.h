@@ -130,7 +130,6 @@ struct Reflect<Thread::Atomic> {
     static constexpr Literal name = "Atomic";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value_)>;
-    static_assert(Record<T>);
 };
 
 template<>

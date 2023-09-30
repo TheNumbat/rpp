@@ -381,6 +381,19 @@ struct Map {
     }
 
 private:
+    template<typename T>
+    void swap(T& a, T& b) {
+        if constexpr(Trivially_Movable<T>) {
+            alignas(alignof(T)) u8 tmp[sizeof(T)];
+            std::memcpy(tmp, &a, sizeof(T));
+            std::memcpy(&a, &b, sizeof(T));
+        } else {
+            T tmp = std::move(a);
+            a = std::move(b);
+            b = std::move(tmp);
+        }
+    }
+
     Slot& insert_slot(Slot&& slot) {
         u64 idx = slot.hash >> shift_;
         Slot* placement = null;
@@ -398,7 +411,7 @@ private:
             u64 hashidx = hash >> shift_;
             u64 hashdist = hashidx <= idx ? idx - hashidx : capacity_ + idx - hashidx;
             if(hashdist < dist) {
-                std::swap(data_[idx], slot);
+                swap(data_[idx], slot);
                 placement = placement ? placement : &data_[idx];
                 dist = hashdist;
             }
@@ -436,7 +449,6 @@ struct Reflect<detail::Map_Slot<K, V>> {
     static constexpr Literal name = "Map_Slot";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(hash), FIELD(data)>;
-    static_assert(Record<T>);
 };
 
 template<Key K, typename V, Allocator A>
@@ -446,7 +458,6 @@ struct Reflect<Map<K, V, A>> {
     static constexpr Kind kind = Kind::record_;
     using members =
         List<FIELD(data_), FIELD(capacity_), FIELD(length_), FIELD(usable_), FIELD(shift_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

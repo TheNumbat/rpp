@@ -24,7 +24,7 @@ struct Reflect<Ints> {
     static constexpr Literal name = "Ints";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
-    static_assert(Record<T>);
+
 };
 template<>
 struct Reflect<Vecs> {
@@ -32,7 +32,7 @@ struct Reflect<Vecs> {
     static constexpr Literal name = "Vecs";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
-    static_assert(Record<T>);
+
 };
 } // namespace rpp
 

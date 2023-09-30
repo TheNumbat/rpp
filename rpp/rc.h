@@ -199,7 +199,6 @@ struct Reflect<detail::Rc_Data<R>> {
     static constexpr Literal name = "Rc_Data";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value), FIELD(references)>;
-    static_assert(Record<T>);
 };
 
 template<typename R>
@@ -208,7 +207,6 @@ struct Reflect<Rc<R>> {
     static constexpr Literal name = "Rc";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
-    static_assert(Record<T>);
 };
 
 template<typename R>
@@ -217,7 +215,6 @@ struct Reflect<detail::Arc_Data<R>> {
     static constexpr Literal name = "Arc_Data";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value), FIELD(references)>;
-    static_assert(Record<T>);
 };
 
 template<typename R>
@@ -226,7 +223,6 @@ struct Reflect<Arc<R>> {
     static constexpr Literal name = "Arc";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp

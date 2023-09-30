@@ -806,7 +806,7 @@ inline Mat4 Mat4::ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
 }
 
 inline Mat4 Mat4::proj(f32 fov, f32 ar, f32 n) {
-    f32 f = 1.0f / tanf(Math::radians(fov) / 2.0f);
+    f32 f = 1.0f / Math::tan(Math::radians(fov) / 2.0f);
     Mat4 ret;
     ret[0][0] = f / ar;
     ret[1][1] = -f;
@@ -825,8 +825,8 @@ inline Mat4 Mat4::translate(Vec3 v) {
 
 inline Mat4 Mat4::rotate(f32 a, Vec3 axis) {
     Mat4 ret;
-    f32 c = cosf(Math::radians(a));
-    f32 s = sinf(Math::radians(a));
+    f32 c = Math::cos(Math::radians(a));
+    f32 s = Math::sin(Math::radians(a));
     axis = normalize(axis);
     Vec3 temp = axis * (1.0f - c);
     ret[0][0] = c + temp[0] * axis[0];
@@ -1025,7 +1025,7 @@ inline Quat Quat::axis_angle(Vec3 axis, f32 angle) {
 
 struct BBox {
 
-    BBox() : min(std::numeric_limits<f32>::max()), max(-std::numeric_limits<f32>::max()) {
+    BBox() : min(Limits<f32>::max()), max(Limits<f32>::min()) {
     }
     BBox(Vec3 min, Vec3 max) : min(min), max(max) {
     }
@@ -1035,8 +1035,8 @@ struct BBox {
     ~BBox() = default;
 
     void reset() {
-        min = Vec3(std::numeric_limits<f32>::max());
-        max = Vec3(-std::numeric_limits<f32>::max());
+        min = Vec3(Limits<f32>::max());
+        max = Vec3(Limits<f32>::min());
     }
 
     void enclose(Vec3 point) {
@@ -1082,8 +1082,8 @@ struct BBox {
 
     void screen_bb(const Mat4& transform, Vec2& min_out, Vec2& max_out) const {
 
-        min_out = Vec2(std::numeric_limits<f32>::max());
-        max_out = Vec2(-std::numeric_limits<f32>::max());
+        min_out = Vec2(Limits<f32>::max());
+        max_out = Vec2(Limits<f32>::min());
 
         Vec3 c[] = {Vec3(min.x, min.y, min.z), Vec3(max.x, min.y, min.z), Vec3(min.x, max.y, min.z),
                     Vec3(min.x, min.y, max.z), Vec3(max.x, max.y, min.z), Vec3(min.x, max.y, max.z),
@@ -1141,7 +1141,6 @@ struct Reflect<Vec2> {
     static constexpr Literal name = "Vec2";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1150,7 +1149,6 @@ struct Reflect<Vec3> {
     static constexpr Literal name = "Vec3";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1159,7 +1157,6 @@ struct Reflect<Vec4> {
     static constexpr Literal name = "Vec4";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1168,7 +1165,6 @@ struct Reflect<Vec2i> {
     static constexpr Literal name = "Vec2i";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1177,7 +1173,6 @@ struct Reflect<Vec3i> {
     static constexpr Literal name = "Vec3i";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1186,7 +1181,6 @@ struct Reflect<Vec4i> {
     static constexpr Literal name = "Vec4i";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1195,7 +1189,6 @@ struct Reflect<Vec2u> {
     static constexpr Literal name = "Vec2u";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1204,7 +1197,6 @@ struct Reflect<Vec3u> {
     static constexpr Literal name = "Vec3u";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1213,7 +1205,6 @@ struct Reflect<Vec4u> {
     static constexpr Literal name = "Vec4u";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
-    static_assert(Record<T>);
 };
 
 template<u64 N>
@@ -1222,7 +1213,6 @@ struct Reflect<VecN<N>> {
     static constexpr Literal name = "VecN";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data)>;
-    static_assert(Record<T>);
 };
 
 template<u64 N>
@@ -1231,7 +1221,6 @@ struct Reflect<VecNi<N>> {
     static constexpr Literal name = "VecNi";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data)>;
-    static_assert(Record<T>);
 };
 
 template<u64 N>
@@ -1240,7 +1229,6 @@ struct Reflect<VecNu<N>> {
     static constexpr Literal name = "VecNu";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1249,7 +1237,6 @@ struct Reflect<Mat4> {
     static constexpr Literal name = "Mat4";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(columns)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1258,7 +1245,6 @@ struct Reflect<Quat> {
     static constexpr Literal name = "Quat";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data)>;
-    static_assert(Record<T>);
 };
 
 template<>
@@ -1267,7 +1253,6 @@ struct Reflect<BBox> {
     static constexpr Literal name = "BBox";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(min), FIELD(max)>;
-    static_assert(Record<T>);
 };
 
 } // namespace rpp
