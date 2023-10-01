@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 #ifdef COMPILER_MSVC
 void* operator new(std::size_t, std::align_val_t, void* ptr) noexcept;
 void* operator new[](std::size_t, std::align_val_t, void* ptr) noexcept;
@@ -52,7 +56,7 @@ private:
     static void end();
 
     static constexpr u64 REGION_COUNT = 64;
-    static constexpr u64 REGION_STACK_SIZE = Math::MB(8);
+    static constexpr u64 REGION_STACK_SIZE = Math::MB(16);
 
     static thread_local u64 current_region;
     static thread_local u64 current_offset;
@@ -115,7 +119,7 @@ struct Free_List {
     void clear() {
         while(list_) {
             Free_Node* next = list_->next;
-            Base::dealloc(list_);
+            Base::free(list_);
             list_ = next;
         }
     }
@@ -133,7 +137,7 @@ private:
     }
 
     void free(T* mem) {
-        Free_Node* node = reinterpret_cast<T*>(mem);
+        Free_Node* node = reinterpret_cast<Free_Node*>(mem);
         node->next = list_;
         list_ = node;
     }

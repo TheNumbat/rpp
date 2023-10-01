@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 template<Movable T, Allocator A = Mdefault>
@@ -346,5 +350,36 @@ struct Reflect<Queue<Q, A>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(last_), FIELD(capacity_)>;
 };
+
+namespace Format {
+
+template<Reflectable T, Allocator A>
+struct Measure<Queue<T, A>> {
+    static u64 measure(const Queue<T, A>& queue) {
+        u64 n = 0;
+        u64 length = 7;
+        for(const T& item : queue) {
+            length += Measure<T>::measure(item);
+            if(n + 1 < queue.length()) length += 2;
+            n++;
+        }
+        return length;
+    }
+};
+template<Allocator O, Reflectable T, Allocator A>
+struct Write<O, Queue<T, A>> {
+    static u64 write(String<O>& output, u64 idx, const Queue<T, A>& queue) {
+        idx = output.write(idx, "Queue["_v);
+        u64 n = 0;
+        for(const T& item : queue) {
+            idx = Write<O, T>::write(output, idx, item);
+            if(n + 1 < queue.length()) idx = output.write(idx, ", "_v);
+            n++;
+        }
+        return output.write(idx, ']');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

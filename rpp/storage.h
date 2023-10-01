@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 template<typename T>
@@ -69,5 +73,24 @@ struct Reflect<Storage<S>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value_)>;
 };
+
+namespace Format {
+
+template<Reflectable T>
+struct Measure<Storage<T>> {
+    static u64 measure(const Storage<T>& storage) {
+        return 9 + String_View{Reflect<T>::name}.length();
+    }
+};
+template<Allocator O, Reflectable T>
+struct Write<O, Storage<T>> {
+    static u64 write(String<O>& output, u64 idx, const Storage<T>& storage) {
+        idx = output.write(idx, "Storage<"_v);
+        idx = output.write(idx, String_View{Reflect<T>::name});
+        return output.write(idx, '>');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

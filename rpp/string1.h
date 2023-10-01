@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 template<Allocator A>
@@ -79,5 +83,35 @@ u64 String<A>::write(u64 i, String_View text) {
     std::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
 }
+
+namespace Format {
+
+template<>
+struct Measure<String_View> {
+    inline static u64 measure(String_View string) {
+        return string.length();
+    }
+};
+template<Allocator A>
+struct Measure<String<A>> {
+    static u64 measure(const String<A>& string) {
+        return string.length();
+    }
+};
+
+template<Allocator O>
+struct Write<O, String_View> {
+    static u64 write(String<O>& output, u64 idx, String_View value) {
+        return output.write(idx, value);
+    }
+};
+template<Allocator O, Allocator A>
+struct Write<O, String<A>> {
+    static u64 write(String<O>& output, u64 idx, const String<A>& value) {
+        return output.write(idx, value);
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

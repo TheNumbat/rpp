@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 // NOTE(max): if DO_PROFILE is false, enter, exit, and alloc will no-op,

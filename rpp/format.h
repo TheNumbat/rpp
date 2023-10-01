@@ -1,9 +1,19 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
-namespace formatting {
+namespace Format {
+
+template<Reflectable T>
+struct Measure;
+
+template<Allocator A, Reflectable T>
+struct Write;
 
 template<Allocator A, Reflectable T>
 u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) {
@@ -14,12 +24,6 @@ u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) {
     std::snprintf(reinterpret_cast<char* const>(buffer.data()), buffer.length(), fmt, value);
     return output.write(idx, buffer.sub(0, val_len));
 }
-
-template<Reflectable T>
-struct Measure;
-
-template<Allocator A, Reflectable T>
-struct Write;
 
 template<u64 N>
 struct Record_Length {
@@ -114,269 +118,6 @@ struct Measure {
     }
 };
 
-template<>
-struct Measure<String_View> {
-    inline static u64 measure(String_View string) {
-        return string.length();
-    }
-};
-template<Allocator A>
-struct Measure<String<A>> {
-    static u64 measure(const String<A>& string) {
-        return string.length();
-    }
-};
-template<Reflectable T>
-struct Measure<Ref<T>> {
-    static u64 measure(const Ref<T>& ref) {
-        if(ref) return 5 + Measure<T>::measure(*ref);
-        return 9;
-    }
-};
-template<Reflectable L, Reflectable R>
-struct Measure<Pair<L, R>> {
-    static u64 measure(const Pair<L, R>& pair) {
-        return 8 + Measure<L>::measure(pair.first) + Measure<R>::measure(pair.second);
-    }
-};
-template<Reflectable T>
-struct Measure<Storage<T>> {
-    static u64 measure(const Storage<T>& storage) {
-        return 9 + String_View{Reflect<T>::name}.length();
-    }
-};
-template<Reflectable T>
-struct Measure<Opt<T>> {
-    static u64 measure(const Opt<T>& opt) {
-        if(opt) return 5 + Measure<T>::measure(*opt);
-        return 9;
-    }
-};
-template<Reflectable T, u64 N>
-struct Measure<Array<T, N>> {
-    static u64 measure(const Array<T, N>& array) {
-        u64 length = 2;
-        for(u64 i = 0; i < N; i++) {
-            length += Measure<T>::measure(array[i]);
-            if(i + 1 < N) length += 2;
-        }
-        return length;
-    }
-};
-template<Reflectable T, Allocator A>
-struct Measure<Vec<T, A>> {
-    static u64 measure(const Vec<T, A>& vec) {
-        u64 length = 5;
-        for(u64 i = 0; i < vec.length(); i++) {
-            length += Measure<T>::measure(vec[i]);
-            if(i + 1 < vec.length()) length += 2;
-        }
-        return length;
-    }
-};
-template<Reflectable T, Allocator A>
-struct Measure<Box<T, A>> {
-    static u64 measure(const Box<T, A>& box) {
-        if(box) return 5 + Measure<T>::measure(*box);
-        return 9;
-    }
-};
-template<Reflectable T, Allocator A>
-struct Measure<Rc<T, A>> {
-    static u64 measure(const Rc<T, A>& rc) {
-        if(rc)
-            return 6 + Measure<T>::measure(*rc) +
-                   Measure<decltype(rc.references())>::measure(rc.references());
-        return 8;
-    }
-};
-template<Reflectable T, Allocator A>
-struct Measure<Arc<T, A>> {
-    static u64 measure(const Arc<T, A>& arc) {
-        if(arc)
-            return 7 + Measure<T>::measure(*arc) +
-                   Measure<decltype(arc.references())>::measure(arc.references());
-        return 9;
-    }
-};
-template<Reflectable T, Allocator A>
-struct Measure<Stack<T, A>> {
-    static u64 measure(const Stack<T, A>& stack) {
-        u64 n = 0;
-        u64 length = 7;
-        for(const T& item : stack) {
-            length += Measure<T>::measure(item);
-            if(n + 1 < stack.length()) length += 2;
-            n++;
-        }
-        return length;
-    }
-};
-template<Reflectable T, Allocator A>
-struct Measure<Queue<T, A>> {
-    static u64 measure(const Queue<T, A>& queue) {
-        u64 n = 0;
-        u64 length = 7;
-        for(const T& item : queue) {
-            length += Measure<T>::measure(item);
-            if(n + 1 < queue.length()) length += 2;
-            n++;
-        }
-        return length;
-    }
-};
-template<Reflectable T, Allocator A>
-struct Measure<Heap<T, A>> {
-    static u64 measure(const Heap<T, A>& heap) {
-        u64 n = 0;
-        u64 length = 6;
-        for(const T& item : heap) {
-            length += Measure<T>::measure(item);
-            if(n + 1 < heap.length()) length += 2;
-            n++;
-        }
-        return length;
-    }
-};
-template<Reflectable K, Reflectable V, Allocator A>
-struct Measure<Map<K, V, A>> {
-    static u64 measure(const Map<K, V, A>& map) {
-        u64 n = 0;
-        u64 length = 5;
-        for(const Pair<K, V>& item : map) {
-            length += 5;
-            length += Measure<K>::measure(item.first) + Measure<V>::measure(item.second);
-            if(n + 1 < map.length()) length += 2;
-            n++;
-        }
-        return length;
-    }
-};
-template<Float F, u64 N>
-struct Measure<Math::Vect<F, N>> {
-    static u64 measure(const Math::Vect<F, N>& vect) {
-        u64 length = 5;
-        length += Measure<u64>::measure(N);
-        for(u64 i = 0; i < N; i++) {
-            length += Measure<F>::measure(vect[i]);
-            if(i + 1 < N) length += 2;
-        }
-        return length;
-    }
-};
-template<Int I, u64 N>
-struct Measure<Math::Vect<I, N>> {
-    static u64 measure(const Math::Vect<I, N>& vect) {
-        u64 length = 6;
-        length += Measure<u64>::measure(N);
-        for(u64 i = 0; i < N; i++) {
-            length += Measure<I>::measure(vect[i]);
-            if(i + 1 < N) length += 2;
-        }
-        return length;
-    }
-};
-template<>
-struct Measure<Math::Quat> {
-    static u64 measure(const Math::Quat& quat) {
-        u64 length = 12;
-        length += Measure<f32>::measure(quat.x);
-        length += Measure<f32>::measure(quat.y);
-        length += Measure<f32>::measure(quat.z);
-        length += Measure<f32>::measure(quat.w);
-        return length;
-    }
-};
-template<>
-struct Measure<Math::Mat4> {
-    static u64 measure(const Math::Mat4& mat) {
-        u64 length = 6;
-        for(u64 i = 0; i < 4; i++) {
-            length += 1;
-            for(u64 j = 0; j < 4; j++) {
-                length += Measure<f32>::measure(mat[i][j]);
-                if(j + 1 < 4) length += 2;
-            }
-            length += 1;
-            if(i + 1 < 4) length += 2;
-        }
-        return length;
-    }
-};
-template<>
-struct Measure<Math::BBox> {
-    static u64 measure(const Math::BBox& bbox) {
-        u64 length = 20;
-        length += Measure<f32>::measure(bbox.min.x);
-        length += Measure<f32>::measure(bbox.min.y);
-        length += Measure<f32>::measure(bbox.min.z);
-        length += Measure<f32>::measure(bbox.max.x);
-        length += Measure<f32>::measure(bbox.max.y);
-        length += Measure<f32>::measure(bbox.max.z);
-        return length;
-    }
-};
-template<typename... Ts>
-    requires(Reflectable<Ts> && ...)
-struct Tuple_Length {
-    template<typename Index>
-    void apply() {
-        length +=
-            Measure<typename Decay<decltype(tuple.template get<Index::value>())>::type>::measure(
-                tuple.template get<Index::value>());
-    }
-    const Tuple<Ts...>& tuple;
-    u64 length = 0;
-};
-template<typename... Ts>
-    requires(Reflectable<Ts> && ...)
-struct Measure<Tuple<Ts...>> {
-    static u64 measure(const Tuple<Ts...>& tuple) {
-        u64 length = 7;
-        constexpr u64 N = sizeof...(Ts);
-        if constexpr(N > 1) length += 2 * (N - 1);
-        using Indices = rpp::Index_List<Ts...>;
-        Tuple_Length<Ts...> iterator{tuple, 0};
-        rpp::detail::list::Iter<Tuple_Length<Ts...>, Indices>::apply(iterator);
-        return length + iterator.length;
-    }
-};
-template<typename... Ts>
-    requires(Reflectable<Ts> && ...)
-struct Measure<Variant<Ts...>> {
-    static u64 measure(const Variant<Ts...>& variant) {
-        u64 length = 9;
-        length +=
-            variant.match(Overload{[](const Ts& value) { return Measure<Ts>::measure(value); }...});
-        return length;
-    }
-};
-template<Literal N, Reflectable T>
-struct Measure<Named<N, T>> {
-    static u64 measure(const Named<N, T>& named) {
-        u64 length = String_View{N}.length() + 2;
-        return length + Measure<T>::measure(named.value);
-    }
-};
-template<Reflectable R, typename... Args>
-    requires(Reflectable<Args> && ...)
-struct Measure<Function<R(Args...)>> {
-    using Fn = R(Args...);
-    static u64 measure(const Function<Fn>& function) {
-        u64 length = 10;
-        if(function) {
-            length += String_View{Reflect<R>::name}.length();
-            length += 2;
-            if constexpr(sizeof...(Args) > 0)
-                length += (String_View{Reflect<Args>::name}.length() + ...);
-            if constexpr(sizeof...(Args) > 1) length += 2 * (sizeof...(Args) - 1);
-        } else {
-            length += 4;
-        }
-        return length;
-    }
-};
-
 template<Allocator A, Reflectable T>
 struct Write {
     static u64 write(String<A>& output, u64 idx, const T& value) {
@@ -446,329 +187,6 @@ struct Write {
     }
 };
 
-template<Allocator O>
-struct Write<O, String_View> {
-    static u64 write(String<O>& output, u64 idx, String_View value) {
-        return output.write(idx, value);
-    }
-};
-template<Allocator O, Allocator A>
-struct Write<O, String<A>> {
-    static u64 write(String<O>& output, u64 idx, const String<A>& value) {
-        return output.write(idx, value);
-    }
-};
-template<Allocator O, Reflectable T>
-struct Write<O, Ref<T>> {
-    static u64 write(String<O>& output, u64 idx, const Ref<T>& ref) {
-        if(!ref) return output.write(idx, "Ref{null}"_v);
-        idx = output.write(idx, "Ref{"_v);
-        idx = Write<O, T>::write(output, idx, *ref);
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, Reflectable L, Reflectable R>
-struct Write<O, Pair<L, R>> {
-    static u64 write(String<O>& output, u64 idx, const Pair<L, R>& pair) {
-        idx = output.write(idx, "Pair{"_v);
-        idx = Write<O, L>::write(output, idx, pair.first);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, R>::write(output, idx, pair.second);
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, Reflectable T>
-struct Write<O, Storage<T>> {
-    static u64 write(String<O>& output, u64 idx, const Storage<T>& storage) {
-        idx = output.write(idx, "Storage<"_v);
-        idx = output.write(idx, String_View{Reflect<T>::name});
-        return output.write(idx, '>');
-    }
-};
-template<Allocator O, Reflectable T>
-struct Write<O, Opt<T>> {
-    static u64 write(String<O>& output, u64 idx, const Opt<T>& opt) {
-        if(!opt) return output.write(idx, "Opt{None}"_v);
-        idx = output.write(idx, "Opt{"_v);
-        idx = Write<O, T>::write(output, idx, *opt);
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, Reflectable T, u64 N>
-struct Write<O, Array<T, N>> {
-    static u64 write(String<O>& output, u64 idx, const Array<T, N>& array) {
-        idx = output.write(idx, '[');
-        for(u64 i = 0; i < N; i++) {
-            idx = Write<O, T>::write(output, idx, array[i]);
-            if(i + 1 < N) idx = output.write(idx, ", "_v);
-        }
-        return output.write(idx, ']');
-    }
-};
-template<Allocator O, Reflectable T, Allocator A>
-struct Write<O, Vec<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Vec<T, A>& vec) {
-        idx = output.write(idx, "Vec["_v);
-        for(u64 i = 0; i < vec.length(); i++) {
-            idx = Write<O, T>::write(output, idx, vec[i]);
-            if(i + 1 < vec.length()) idx = output.write(idx, ", "_v);
-        }
-        return output.write(idx, ']');
-    }
-};
-template<Allocator O, Reflectable T, Allocator A>
-struct Write<O, Box<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Box<T, A>& box) {
-        if(!box) return output.write(idx, "Box{null}"_v);
-        idx = output.write(idx, "Box{"_v);
-        idx = Write<O, T>::write(output, idx, *box);
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, Reflectable T, Allocator A>
-struct Write<O, Rc<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Rc<T, A>& rc) {
-        if(!rc) return output.write(idx, "Rc{null}"_v);
-        idx = output.write(idx, "Rc["_v);
-        idx = Write<O, decltype(rc.references())>::write(output, idx, rc.references());
-        idx = output.write(idx, "]{"_v);
-        idx = Write<O, T>::write(output, idx, *rc);
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, Reflectable T, Allocator A>
-struct Write<O, Arc<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Arc<T, A>& arc) {
-        if(!arc) return output.write(idx, "Arc{null}"_v);
-        idx = output.write(idx, "Arc["_v);
-        idx = Write<O, decltype(arc.references())>::write(output, idx, arc.references());
-        idx = output.write(idx, "]{"_v);
-        idx = Write<O, T>::write(output, idx, *arc);
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, Reflectable T, Allocator A>
-struct Write<O, Stack<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Stack<T, A>& stack) {
-        idx = output.write(idx, "Stack["_v);
-        u64 n = 0;
-        for(const T& item : stack) {
-            idx = Write<O, T>::write(output, idx, item);
-            if(n + 1 < stack.length()) idx = output.write(idx, ", "_v);
-            n++;
-        }
-        return output.write(idx, ']');
-    }
-};
-template<Allocator O, Reflectable T, Allocator A>
-struct Write<O, Queue<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Queue<T, A>& queue) {
-        idx = output.write(idx, "Queue["_v);
-        u64 n = 0;
-        for(const T& item : queue) {
-            idx = Write<O, T>::write(output, idx, item);
-            if(n + 1 < queue.length()) idx = output.write(idx, ", "_v);
-            n++;
-        }
-        return output.write(idx, ']');
-    }
-};
-template<Allocator O, Reflectable T, Allocator A>
-struct Write<O, Heap<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Heap<T, A>& heap) {
-        idx = output.write(idx, "Heap["_v);
-        u64 n = 0;
-        for(const T& item : heap) {
-            idx = Write<O, T>::write(output, idx, item);
-            if(n + 1 < heap.length()) idx = output.write(idx, ", "_v);
-            n++;
-        }
-        return output.write(idx, ']');
-    }
-};
-template<Allocator O, Reflectable K, Reflectable V, Allocator A>
-struct Write<O, Map<K, V, A>> {
-    static u64 write(String<O>& output, u64 idx, const Map<K, V, A>& map) {
-        idx = output.write(idx, "Map["_v);
-        u64 n = 0;
-        for(const Pair<K, V>& item : map) {
-            idx = output.write(idx, "{"_v);
-            idx = Write<O, K>::write(output, idx, item.first);
-            idx = output.write(idx, " : "_v);
-            idx = Write<O, V>::write(output, idx, item.second);
-            idx = output.write(idx, '}');
-            if(n + 1 < map.length()) idx = output.write(idx, ", "_v);
-            n++;
-        }
-        return output.write(idx, ']');
-    }
-};
-template<Allocator O, Float F, u64 N>
-struct Write<O, Math::Vect<F, N>> {
-    static u64 write(String<O>& output, u64 idx, const Math::Vect<F, N>& vect) {
-        idx = output.write(idx, "Vec"_v);
-        idx = Write<O, u64>::write(output, idx, N);
-        idx = output.write(idx, '{');
-        for(u64 i = 0; i < N; i++) {
-            idx = Write<O, F>::write(output, idx, vect[i]);
-            if(i + 1 < N) idx = output.write(idx, ", "_v);
-        }
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, Signed_Int I, u64 N>
-struct Write<O, Math::Vect<I, N>> {
-    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) {
-        idx = output.write(idx, "Vec"_v);
-        idx = Write<O, u64>::write(output, idx, N);
-        idx = output.write(idx, "i{"_v);
-        for(u64 i = 0; i < N; i++) {
-            idx = Write<O, I>::write(output, idx, vect[i]);
-            if(i + 1 < N) idx = output.write(idx, ", "_v);
-        }
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, Unsigned_Int I, u64 N>
-struct Write<O, Math::Vect<I, N>> {
-    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) {
-        idx = output.write(idx, "Vec"_v);
-        idx = Write<O, u64>::write(output, idx, N);
-        idx = output.write(idx, "u{"_v);
-        for(u64 i = 0; i < N; i++) {
-            idx = Write<O, I>::write(output, idx, vect[i]);
-            if(i + 1 < N) idx = output.write(idx, ", "_v);
-        }
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O>
-struct Write<O, Math::Quat> {
-    static u64 write(String<O>& output, u64 idx, const Math::Quat& quat) {
-        idx = output.write(idx, "Quat{"_v);
-        idx = Write<O, f32>::write(output, idx, quat.x);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, quat.y);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, quat.z);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, quat.w);
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O>
-struct Write<O, Math::Mat4> {
-    static u64 write(String<O>& output, u64 idx, const Math::Mat4& mat) {
-        idx = output.write(idx, "Mat4{"_v);
-        for(u64 i = 0; i < 4; i++) {
-            idx = output.write(idx, '{');
-            for(u64 j = 0; j < 4; j++) {
-                idx = Write<O, f32>::write(output, idx, mat[i][j]);
-                if(j + 1 < 4) idx = output.write(idx, ", "_v);
-            }
-            idx = output.write(idx, '}');
-            if(i + 1 < 4) idx = output.write(idx, ", "_v);
-        }
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O>
-struct Write<O, Math::BBox> {
-    static u64 write(String<O>& output, u64 idx, const Math::BBox& bbox) {
-        idx = output.write(idx, "BBox{{"_v);
-        idx = Write<O, f32>::write(output, idx, bbox.min.x);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, bbox.min.y);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, bbox.min.z);
-        idx = output.write(idx, "}, {"_v);
-        idx = Write<O, f32>::write(output, idx, bbox.max.x);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, bbox.max.y);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, bbox.max.z);
-        return output.write(idx, "}}"_v);
-    }
-};
-template<Allocator O, typename... Ts>
-    requires(Reflectable<Ts> && ...)
-struct Tuple_Write {
-    template<typename Index>
-    void apply() {
-        constexpr u64 I = Index::value;
-        idx = Write<O, typename Decay<decltype(tuple.template get<I>())>::type>::write(
-            output, idx, tuple.template get<I>());
-        if constexpr(I + 1 < sizeof...(Ts)) idx = output.write(idx, ", "_v);
-    }
-    const Tuple<Ts...>& tuple;
-    String<O>& output;
-    u64 idx = 0;
-};
-template<Allocator O, typename... Ts>
-    requires(Reflectable<Ts> && ...)
-struct Write<O, Tuple<Ts...>> {
-    static u64 write(String<O>& output, u64 idx, const Tuple<Ts...>& tuple) {
-        idx = output.write(idx, "Tuple{"_v);
-        using Indices = rpp::Index_List<Ts...>;
-        Tuple_Write<O, Ts...> iterator{tuple, output, idx};
-        rpp::detail::list::Iter<Tuple_Write<O, Ts...>, Indices>::apply(iterator);
-        return output.write(iterator.idx, '}');
-    }
-};
-template<Allocator O, typename... Ts>
-    requires(Reflectable<Ts> && ...)
-struct Write<O, Variant<Ts...>> {
-    static u64 write(String<O>& output, u64 idx, const Variant<Ts...>& variant) {
-        idx = output.write(idx, "Variant{"_v);
-        idx = variant.match(Overload{[&output, idx](const Ts& value) {
-            return Write<O, Ts>::write(output, idx, value);
-        }...});
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, Literal N, Reflectable T>
-struct Write<O, Named<N, T>> {
-    static u64 write(String<O>& output, u64 idx, const Named<N, T>& named) {
-        idx = output.write(idx, String_View{N});
-        idx = output.write(idx, '{');
-        idx = Write<O, T>::write(output, idx, named.value);
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O, typename... Ts>
-    requires(Reflectable<Ts> && ...)
-struct Type_Write {
-    template<typename I>
-    void apply() {
-        using T = Index<I::value, Ts...>;
-        idx = output.write(idx, String_View{Reflect<T>::name});
-        if constexpr(I::value + 1 < sizeof...(Ts)) idx = output.write(idx, ", "_v);
-    }
-    String<O>& output;
-    u64 idx = 0;
-};
-template<Allocator O, Reflectable R, typename... Args>
-    requires(Reflectable<Args> && ...)
-struct Write<O, Function<R(Args...)>> {
-
-    using Fn = R(Args...);
-    using Indices = rpp::Index_List<Args...>;
-
-    static u64 write(String<O>& output, u64 idx, const Function<Fn>& function) {
-        idx = output.write(idx, "Function{"_v);
-        if(function) {
-            idx = output.write(idx, String_View{Reflect<R>::name});
-            idx = output.write(idx, '(');
-            Type_Write<O, Args...> iterator{output, idx};
-            rpp::detail::list::Iter<Type_Write<O, Args...>, Indices>::apply(iterator);
-            idx = output.write(iterator.idx, ')');
-        } else {
-            idx = output.write(idx, "null"_v);
-        }
-        return output.write(idx, '}');
-    }
-};
-
 template<Allocator A, typename... Ts>
     requires(Reflectable<Ts> && ...)
 u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx, const Ts&... args);
@@ -808,8 +226,9 @@ u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx, const
     return output_idx;
 }
 
-inline Pair<u64, u64> parse_fmt(String_View fmt) {
-    u64 length = 0, args = 0;
+inline u64 parse_fmt(String_View fmt, u64& args) {
+    u64 length = 0;
+    args = 0;
     for(u64 i = 0; i < fmt.length(); i++) {
         if(fmt[i] == '%') {
             if(i + 1 < fmt.length() && fmt[i + 1] == '%') {
@@ -823,22 +242,24 @@ inline Pair<u64, u64> parse_fmt(String_View fmt) {
         }
     }
 
-    return Pair{length, args};
+    return length;
 }
 
-} // namespace formatting
+} // namespace Format
 
 template<typename... Ts>
     requires(Reflectable<Ts> && ...)
 u64 format_length(String_View fmt, const Ts&... args) {
-    auto [fmt_length, n_args] = formatting::parse_fmt(fmt);
+    u64 n_args = 0;
+    u64 fmt_length = Format::parse_fmt(fmt, n_args);
     assert(n_args == sizeof...(args));
-    return fmt_length + (formatting::Measure<Ts>::measure(args) + ...);
+    return fmt_length + (Format::Measure<Ts>::measure(args) + ...);
 }
 
 template<>
 inline u64 format_length(String_View fmt) {
-    return formatting::parse_fmt(fmt).first;
+    u64 n_args = 0;
+    return Format::parse_fmt(fmt, n_args);
 }
 
 template<Allocator A, typename... Ts>
@@ -847,7 +268,7 @@ String<A> format(String_View fmt, const Ts&... args) {
     u64 length = format_length(fmt, args...);
     String<A> output{length};
     output.set_length(length);
-    u64 idx = formatting::write(fmt, 0, output, 0, args...);
+    u64 idx = Format::write(fmt, 0, output, 0, args...);
     assert(idx == length);
     return output;
 }

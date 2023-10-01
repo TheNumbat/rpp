@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 template<typename T>
@@ -110,5 +114,26 @@ struct Reflect<Opt<O>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(ok_), FIELD(value_)>;
 };
+
+namespace Format {
+
+template<Reflectable T>
+struct Measure<Opt<T>> {
+    static u64 measure(const Opt<T>& opt) {
+        if(opt) return 5 + Measure<T>::measure(*opt);
+        return 9;
+    }
+};
+template<Allocator O, Reflectable T>
+struct Write<O, Opt<T>> {
+    static u64 write(String<O>& output, u64 idx, const Opt<T>& opt) {
+        if(!opt) return output.write(idx, "Opt{None}"_v);
+        idx = output.write(idx, "Opt{"_v);
+        idx = Write<O, T>::write(output, idx, *opt);
+        return output.write(idx, '}');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

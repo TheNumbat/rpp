@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "base.h"
+
 namespace rpp {
 
 template<typename... Ts>
@@ -114,6 +116,62 @@ struct Reflect<Tuple<F, Ts...>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(first), FIELD(rest)>;
 };
+
+namespace Format {
+
+template<typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Tuple_Length {
+    template<typename Index>
+    void apply() {
+        length +=
+            Measure<typename Decay<decltype(tuple.template get<Index::value>())>::type>::measure(
+                tuple.template get<Index::value>());
+    }
+    const Tuple<Ts...>& tuple;
+    u64 length = 0;
+};
+template<typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Measure<Tuple<Ts...>> {
+    static u64 measure(const Tuple<Ts...>& tuple) {
+        u64 length = 7;
+        constexpr u64 N = sizeof...(Ts);
+        if constexpr(N > 1) length += 2 * (N - 1);
+        using Indices = rpp::Index_List<Ts...>;
+        Tuple_Length<Ts...> iterator{tuple, 0};
+        rpp::detail::list::Iter<Tuple_Length<Ts...>, Indices>::apply(iterator);
+        return length + iterator.length;
+    }
+};
+
+template<Allocator O, typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Tuple_Write {
+    template<typename Index>
+    void apply() {
+        constexpr u64 I = Index::value;
+        idx = Write<O, typename Decay<decltype(tuple.template get<I>())>::type>::write(
+            output, idx, tuple.template get<I>());
+        if constexpr(I + 1 < sizeof...(Ts)) idx = output.write(idx, ", "_v);
+    }
+    const Tuple<Ts...>& tuple;
+    String<O>& output;
+    u64 idx = 0;
+};
+template<Allocator O, typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Write<O, Tuple<Ts...>> {
+    static u64 write(String<O>& output, u64 idx, const Tuple<Ts...>& tuple) {
+        idx = output.write(idx, "Tuple{"_v);
+        using Indices = rpp::Index_List<Ts...>;
+        Tuple_Write<O, Ts...> iterator{tuple, output, idx};
+        rpp::detail::list::Iter<Tuple_Write<O, Ts...>, Indices>::apply(iterator);
+        return output.write(iterator.idx, '}');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp
 

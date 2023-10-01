@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 template<typename T, u64 N>
@@ -88,5 +92,32 @@ struct Reflect<Array<T, N>> {
     static constexpr Kind kind = Kind::array_;
     static constexpr u64 length = N;
 };
+
+namespace Format {
+
+template<Reflectable T, u64 N>
+struct Measure<Array<T, N>> {
+    static u64 measure(const Array<T, N>& array) {
+        u64 length = 2;
+        for(u64 i = 0; i < N; i++) {
+            length += Measure<T>::measure(array[i]);
+            if(i + 1 < N) length += 2;
+        }
+        return length;
+    }
+};
+template<Allocator O, Reflectable T, u64 N>
+struct Write<O, Array<T, N>> {
+    static u64 write(String<O>& output, u64 idx, const Array<T, N>& array) {
+        idx = output.write(idx, '[');
+        for(u64 i = 0; i < N; i++) {
+            idx = Write<O, T>::write(output, idx, array[i]);
+            if(i + 1 < N) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, ']');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

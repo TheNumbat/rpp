@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "base.h"
+
 namespace rpp {
 namespace Math {
 
@@ -1254,5 +1256,173 @@ struct Reflect<BBox> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(min), FIELD(max)>;
 };
+
+namespace Hash {
+
+template<typename T, u64 N>
+u64 hash(Math::Vect<T, N> v) {
+    u64 h = 0;
+    for(u64 i = 0; i < N; i++) h = combine(h, hash(v[i]));
+    return h;
+}
+
+} // namespace Hash
+
+namespace Format {
+
+template<Float F, u64 N>
+struct Measure<Math::Vect<F, N>> {
+    static u64 measure(const Math::Vect<F, N>& vect) {
+        u64 length = 5;
+        length += Measure<u64>::measure(N);
+        for(u64 i = 0; i < N; i++) {
+            length += Measure<F>::measure(vect[i]);
+            if(i + 1 < N) length += 2;
+        }
+        return length;
+    }
+};
+template<Int I, u64 N>
+struct Measure<Math::Vect<I, N>> {
+    static u64 measure(const Math::Vect<I, N>& vect) {
+        u64 length = 6;
+        length += Measure<u64>::measure(N);
+        for(u64 i = 0; i < N; i++) {
+            length += Measure<I>::measure(vect[i]);
+            if(i + 1 < N) length += 2;
+        }
+        return length;
+    }
+};
+template<>
+struct Measure<Math::Quat> {
+    static u64 measure(const Math::Quat& quat) {
+        u64 length = 12;
+        length += Measure<f32>::measure(quat.x);
+        length += Measure<f32>::measure(quat.y);
+        length += Measure<f32>::measure(quat.z);
+        length += Measure<f32>::measure(quat.w);
+        return length;
+    }
+};
+template<>
+struct Measure<Math::Mat4> {
+    static u64 measure(const Math::Mat4& mat) {
+        u64 length = 6;
+        for(u64 i = 0; i < 4; i++) {
+            length += 1;
+            for(u64 j = 0; j < 4; j++) {
+                length += Measure<f32>::measure(mat[i][j]);
+                if(j + 1 < 4) length += 2;
+            }
+            length += 1;
+            if(i + 1 < 4) length += 2;
+        }
+        return length;
+    }
+};
+template<>
+struct Measure<Math::BBox> {
+    static u64 measure(const Math::BBox& bbox) {
+        u64 length = 20;
+        length += Measure<f32>::measure(bbox.min.x);
+        length += Measure<f32>::measure(bbox.min.y);
+        length += Measure<f32>::measure(bbox.min.z);
+        length += Measure<f32>::measure(bbox.max.x);
+        length += Measure<f32>::measure(bbox.max.y);
+        length += Measure<f32>::measure(bbox.max.z);
+        return length;
+    }
+};
+
+template<Allocator O, Float F, u64 N>
+struct Write<O, Math::Vect<F, N>> {
+    static u64 write(String<O>& output, u64 idx, const Math::Vect<F, N>& vect) {
+        idx = output.write(idx, "Vec"_v);
+        idx = Write<O, u64>::write(output, idx, N);
+        idx = output.write(idx, '{');
+        for(u64 i = 0; i < N; i++) {
+            idx = Write<O, F>::write(output, idx, vect[i]);
+            if(i + 1 < N) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O, Signed_Int I, u64 N>
+struct Write<O, Math::Vect<I, N>> {
+    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) {
+        idx = output.write(idx, "Vec"_v);
+        idx = Write<O, u64>::write(output, idx, N);
+        idx = output.write(idx, "i{"_v);
+        for(u64 i = 0; i < N; i++) {
+            idx = Write<O, I>::write(output, idx, vect[i]);
+            if(i + 1 < N) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O, Unsigned_Int I, u64 N>
+struct Write<O, Math::Vect<I, N>> {
+    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) {
+        idx = output.write(idx, "Vec"_v);
+        idx = Write<O, u64>::write(output, idx, N);
+        idx = output.write(idx, "u{"_v);
+        for(u64 i = 0; i < N; i++) {
+            idx = Write<O, I>::write(output, idx, vect[i]);
+            if(i + 1 < N) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O>
+struct Write<O, Math::Quat> {
+    static u64 write(String<O>& output, u64 idx, const Math::Quat& quat) {
+        idx = output.write(idx, "Quat{"_v);
+        idx = Write<O, f32>::write(output, idx, quat.x);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, quat.y);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, quat.z);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, quat.w);
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O>
+struct Write<O, Math::Mat4> {
+    static u64 write(String<O>& output, u64 idx, const Math::Mat4& mat) {
+        idx = output.write(idx, "Mat4{"_v);
+        for(u64 i = 0; i < 4; i++) {
+            idx = output.write(idx, '{');
+            for(u64 j = 0; j < 4; j++) {
+                idx = Write<O, f32>::write(output, idx, mat[i][j]);
+                if(j + 1 < 4) idx = output.write(idx, ", "_v);
+            }
+            idx = output.write(idx, '}');
+            if(i + 1 < 4) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O>
+struct Write<O, Math::BBox> {
+    static u64 write(String<O>& output, u64 idx, const Math::BBox& bbox) {
+        idx = output.write(idx, "BBox{{"_v);
+        idx = Write<O, f32>::write(output, idx, bbox.min.x);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, bbox.min.y);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, bbox.min.z);
+        idx = output.write(idx, "}, {"_v);
+        idx = Write<O, f32>::write(output, idx, bbox.max.x);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, bbox.max.y);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, bbox.max.z);
+        return output.write(idx, "}}"_v);
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

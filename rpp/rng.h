@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "base.h"
+
 namespace rpp::RNG {
 
 struct Stream {
@@ -40,11 +42,11 @@ struct Stream {
         return unit<F>() < p;
     }
 
-    template<Movable T>
-    void shuffle(Slice<T> arr) {
-        for(u64 i = 0; i < arr.size() - 1; i++) {
-            u64 j = range(i, arr.length());
-            std::swap(arr[i], arr[j]);
+    template<Allocator A, Movable T>
+    void shuffle(Vec<T, A>& vec) {
+        for(u64 i = 0; i < vec.length() - 1; i++) {
+            u64 j = range(i, vec.length());
+            swap(vec[i], vec[j]);
         }
     }
 

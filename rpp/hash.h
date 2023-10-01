@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 namespace Hash {
@@ -61,13 +65,6 @@ inline u64 hash(String_View string) {
 
 inline u64 hash(Log::Location l) {
     return combine(combine(hash(l.file), hash(l.function)), combine(hash(l.line), hash(l.column)));
-}
-
-template<typename T, u64 N>
-u64 hash(Math::Vect<T, N> v) {
-    u64 h = 0;
-    for(u64 i = 0; i < N; i++) h = combine(h, hash(v[i]));
-    return h;
 }
 
 } // namespace Hash

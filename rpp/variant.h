@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "base.h"
+
 namespace rpp {
 
 template<typename... Ts>
@@ -192,5 +194,48 @@ struct Reflect<Variant<Ts...>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(index_)>;
 };
+
+namespace Format {
+
+template<typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Measure<Variant<Ts...>> {
+    static u64 measure(const Variant<Ts...>& variant) {
+        u64 length = 9;
+        length +=
+            variant.match(Overload{[](const Ts& value) { return Measure<Ts>::measure(value); }...});
+        return length;
+    }
+};
+template<Literal N, Reflectable T>
+struct Measure<Named<N, T>> {
+    static u64 measure(const Named<N, T>& named) {
+        u64 length = String_View{N}.length() + 2;
+        return length + Measure<T>::measure(named.value);
+    }
+};
+
+template<Allocator O, typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Write<O, Variant<Ts...>> {
+    static u64 write(String<O>& output, u64 idx, const Variant<Ts...>& variant) {
+        idx = output.write(idx, "Variant{"_v);
+        idx = variant.match(Overload{[&output, idx](const Ts& value) {
+            return Write<O, Ts>::write(output, idx, value);
+        }...});
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O, Literal N, Reflectable T>
+struct Write<O, Named<N, T>> {
+    static u64 write(String<O>& output, u64 idx, const Named<N, T>& named) {
+        idx = output.write(idx, String_View{N});
+        idx = output.write(idx, '{');
+        idx = Write<O, T>::write(output, idx, named.value);
+        return output.write(idx, '}');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

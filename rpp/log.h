@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 #define Here Log::Location::make(std::source_location::current())
 #define Log_Scope Log::Scope log_scope__##__COUNTER__
 

@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 template<typename T>
@@ -327,5 +331,32 @@ struct Reflect<Slice<T>> {
     using members = List<FIELD(data_), FIELD(length_)>;
     static_assert(Record<Slice<T>>);
 };
+
+namespace Format {
+
+template<Reflectable T, Allocator A>
+struct Measure<Vec<T, A>> {
+    static u64 measure(const Vec<T, A>& vec) {
+        u64 length = 5;
+        for(u64 i = 0; i < vec.length(); i++) {
+            length += Measure<T>::measure(vec[i]);
+            if(i + 1 < vec.length()) length += 2;
+        }
+        return length;
+    }
+};
+template<Allocator O, Reflectable T, Allocator A>
+struct Write<O, Vec<T, A>> {
+    static u64 write(String<O>& output, u64 idx, const Vec<T, A>& vec) {
+        idx = output.write(idx, "Vec["_v);
+        for(u64 i = 0; i < vec.length(); i++) {
+            idx = Write<O, T>::write(output, idx, vec[i]);
+            if(i + 1 < vec.length()) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, ']');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

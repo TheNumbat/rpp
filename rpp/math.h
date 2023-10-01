@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp::Math {
 
 constexpr f32 EPS_F = (16.0f * Limits<f32>::epsilon());

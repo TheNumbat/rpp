@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "base.h"
+
 namespace rpp {
 
 namespace detail {
@@ -51,6 +53,7 @@ struct Function<Words, R(Args...)> {
     }
 
 private:
+    using VoidFn = void (*)();
     static constexpr u64 MAX_ALIGN = 16;
 
     template<typename F>
@@ -58,11 +61,11 @@ private:
     void construct(F&& f) {
         static_assert(alignof(F) <= MAX_ALIGN);
         static_assert(sizeof(F) <= Words * 8);
-        static void* f_vtable[] = {reinterpret_cast<void*>(&f_destruct<F>),
-                                   reinterpret_cast<void*>(&f_move<F>),
-                                   reinterpret_cast<void*>(&f_invoke<F>)};
+        static VoidFn f_vtable[] = {reinterpret_cast<VoidFn>(&f_destruct<F>),
+                                    reinterpret_cast<VoidFn>(&f_move<F>),
+                                    reinterpret_cast<VoidFn>(&f_invoke<F>)};
         new(storage) F{std::forward<F>(f)};
-        vtable = f_vtable;
+        vtable = static_cast<VoidFn*>(f_vtable);
     }
     void destruct() {
         if(vtable) {
@@ -81,26 +84,26 @@ private:
     }
 
     template<typename F>
-    static void f_destruct(void* src) {
+    static void f_destruct(F* src) {
         if constexpr(Must_Destruct<F>) {
-            reinterpret_cast<F*>(src)->~F();
+            src->~F();
         }
     }
     template<typename F>
-    static void f_move(void* dst, void* src) {
+    static void f_move(F* dst, F* src) {
         if constexpr(Trivially_Movable<F>) {
             std::memcpy(dst, src, sizeof(F));
         } else {
-            new(dst) F{std::move(*reinterpret_cast<F*>(src))};
+            new(dst) F{std::move(*src)};
         }
     }
     template<typename F>
-    static void f_invoke(void* src, Args... args) {
-        (*reinterpret_cast<F*>(src))(std::forward<Args>(args)...);
+    static void f_invoke(F* src, Args... args) {
+        src->operator()(std::forward<Args>(args)...);
     }
 
     alignas(MAX_ALIGN) u8 storage[Words * 8] = {};
-    void** vtable = null;
+    VoidFn* vtable = null;
 
     friend struct Reflect<Function<Words, Fn>>;
 };
@@ -120,5 +123,62 @@ struct Reflect<detail::Function<Words, Fn>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<>;
 };
+
+namespace Format {
+
+template<Reflectable R, typename... Args>
+    requires(Reflectable<Args> && ...)
+struct Measure<Function<R(Args...)>> {
+    using Fn = R(Args...);
+    static u64 measure(const Function<Fn>& function) {
+        u64 length = 10;
+        if(function) {
+            length += String_View{Reflect<R>::name}.length();
+            length += 2;
+            if constexpr(sizeof...(Args) > 0)
+                length += (String_View{Reflect<Args>::name}.length() + ...);
+            if constexpr(sizeof...(Args) > 1) length += 2 * (sizeof...(Args) - 1);
+        } else {
+            length += 4;
+        }
+        return length;
+    }
+};
+
+template<Allocator O, typename... Ts>
+    requires(Reflectable<Ts> && ...)
+struct Type_Write {
+    template<typename I>
+    void apply() {
+        using T = Index<I::value, Ts...>;
+        idx = output.write(idx, String_View{Reflect<T>::name});
+        if constexpr(I::value + 1 < sizeof...(Ts)) idx = output.write(idx, ", "_v);
+    }
+    String<O>& output;
+    u64 idx = 0;
+};
+template<Allocator O, Reflectable R, typename... Args>
+    requires(Reflectable<Args> && ...)
+struct Write<O, Function<R(Args...)>> {
+
+    using Fn = R(Args...);
+    using Indices = rpp::Index_List<Args...>;
+
+    static u64 write(String<O>& output, u64 idx, const Function<Fn>& function) {
+        idx = output.write(idx, "Function{"_v);
+        if(function) {
+            idx = output.write(idx, String_View{Reflect<R>::name});
+            idx = output.write(idx, '(');
+            Type_Write<O, Args...> iterator{output, idx};
+            rpp::detail::list::Iter<Type_Write<O, Args...>, Indices>::apply(iterator);
+            idx = output.write(iterator.idx, ')');
+        } else {
+            idx = output.write(idx, "null"_v);
+        }
+        return output.write(idx, '}');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

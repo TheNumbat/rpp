@@ -80,11 +80,11 @@ static_assert(sizeof(bool) == 1);
 static_assert(sizeof(void*) == 8);
 } // namespace rpp
 
+#define RPP_BASE
+
 #include "reflect.h"
 
 #include "math.h"
-
-#include "3d_math.h"
 
 #include "ref0.h"
 
@@ -96,15 +96,13 @@ static_assert(sizeof(void*) == 8);
 
 #include "log.h"
 
+#include "format.h"
+
+#include "3d_math.h"
+
 #include "ref1.h"
 
 #include "pair.h"
-
-#include "tuple.h"
-
-#include "variant.h"
-
-#include "function.h"
 
 #include "storage.h"
 
@@ -114,15 +112,11 @@ static_assert(sizeof(void*) == 8);
 
 #include "vec.h"
 
+#include "queue.h"
+
 #include "string1.h"
 
 #include "box.h"
-
-#include "stack.h"
-
-#include "queue.h"
-
-#include "heap.h"
 
 #include "hash.h"
 
@@ -130,10 +124,13 @@ static_assert(sizeof(void*) == 8);
 
 #include "profile.h"
 
-#include "rng.h"
-
 #include "alloc1.h"
 
 #include "rc.h"
 
-#include "format.h"
+// #include "tuple.h"
+// #include "variant.h"
+// #include "function.h"
+// #include "stack.h"
+// #include "heap.h"
+// #include "rng.h"

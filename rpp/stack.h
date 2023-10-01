@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "base.h"
+
 namespace rpp {
 
 template<Movable T, Allocator A = Mdefault>
@@ -101,5 +103,36 @@ struct Reflect<Stack<S, A>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
 };
+
+namespace Format {
+
+template<Reflectable T, Allocator A>
+struct Measure<Stack<T, A>> {
+    static u64 measure(const Stack<T, A>& stack) {
+        u64 n = 0;
+        u64 length = 7;
+        for(const T& item : stack) {
+            length += Measure<T>::measure(item);
+            if(n + 1 < stack.length()) length += 2;
+            n++;
+        }
+        return length;
+    }
+};
+template<Allocator O, Reflectable T, Allocator A>
+struct Write<O, Stack<T, A>> {
+    static u64 write(String<O>& output, u64 idx, const Stack<T, A>& stack) {
+        idx = output.write(idx, "Stack["_v);
+        u64 n = 0;
+        for(const T& item : stack) {
+            idx = Write<O, T>::write(output, idx, item);
+            if(n + 1 < stack.length()) idx = output.write(idx, ", "_v);
+            n++;
+        }
+        return output.write(idx, ']');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

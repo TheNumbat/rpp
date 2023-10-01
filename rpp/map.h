@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 template<typename T>
@@ -381,19 +385,6 @@ struct Map {
     }
 
 private:
-    template<typename T>
-    void swap(T& a, T& b) {
-        if constexpr(Trivially_Movable<T>) {
-            alignas(alignof(T)) u8 tmp[sizeof(T)];
-            std::memcpy(tmp, &a, sizeof(T));
-            std::memcpy(&a, &b, sizeof(T));
-        } else {
-            T tmp = std::move(a);
-            a = std::move(b);
-            b = std::move(tmp);
-        }
-    }
-
     Slot& insert_slot(Slot&& slot) {
         u64 idx = slot.hash >> shift_;
         Slot* placement = null;
@@ -459,5 +450,42 @@ struct Reflect<Map<K, V, A>> {
     using members =
         List<FIELD(data_), FIELD(capacity_), FIELD(length_), FIELD(usable_), FIELD(shift_)>;
 };
+
+namespace Format {
+
+template<Reflectable K, Reflectable V, Allocator A>
+struct Measure<Map<K, V, A>> {
+    static u64 measure(const Map<K, V, A>& map) {
+        u64 n = 0;
+        u64 length = 5;
+        for(const Pair<K, V>& item : map) {
+            length += 5;
+            length += Measure<K>::measure(item.first) + Measure<V>::measure(item.second);
+            if(n + 1 < map.length()) length += 2;
+            n++;
+        }
+        return length;
+    }
+};
+
+template<Allocator O, Reflectable K, Reflectable V, Allocator A>
+struct Write<O, Map<K, V, A>> {
+    static u64 write(String<O>& output, u64 idx, const Map<K, V, A>& map) {
+        idx = output.write(idx, "Map["_v);
+        u64 n = 0;
+        for(const Pair<K, V>& item : map) {
+            idx = output.write(idx, "{"_v);
+            idx = Write<O, K>::write(output, idx, item.first);
+            idx = output.write(idx, " : "_v);
+            idx = Write<O, V>::write(output, idx, item.second);
+            idx = output.write(idx, '}');
+            if(n + 1 < map.length()) idx = output.write(idx, ", "_v);
+            n++;
+        }
+        return output.write(idx, ']');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

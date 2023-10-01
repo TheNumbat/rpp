@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 template<typename A, typename B>
@@ -77,6 +81,27 @@ struct Reflect<Pair<A, B>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(first), FIELD(second)>;
 };
+
+namespace Format {
+
+template<Reflectable L, Reflectable R>
+struct Measure<Pair<L, R>> {
+    static u64 measure(const Pair<L, R>& pair) {
+        return 8 + Measure<L>::measure(pair.first) + Measure<R>::measure(pair.second);
+    }
+};
+template<Allocator O, Reflectable L, Reflectable R>
+struct Write<O, Pair<L, R>> {
+    static u64 write(String<O>& output, u64 idx, const Pair<L, R>& pair) {
+        idx = output.write(idx, "Pair{"_v);
+        idx = Write<O, L>::write(output, idx, pair.first);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, R>::write(output, idx, pair.second);
+        return output.write(idx, '}');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp
 

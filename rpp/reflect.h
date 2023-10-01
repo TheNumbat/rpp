@@ -1,6 +1,10 @@
 
 #pragma once
 
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
+
 namespace rpp {
 
 template<typename T>
@@ -1019,5 +1023,19 @@ using detail::Reflectable;
 
 using detail::iterate_enum;
 using detail::iterate_record;
+
+template<Movable T>
+void swap(T& a, T& b) {
+    if constexpr(Trivially_Movable<T>) {
+        alignas(alignof(T)) u8 tmp[sizeof(T)];
+        std::memcpy(tmp, &a, sizeof(T));
+        std::memcpy(&a, &b, sizeof(T));
+        std::memcpy(&b, tmp, sizeof(T));
+    } else {
+        T tmp = std::move(a);
+        a = std::move(b);
+        b = std::move(tmp);
+    }
+}
 
 } // namespace rpp

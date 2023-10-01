@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "base.h"
+
 namespace rpp {
 
 namespace detail {
@@ -224,5 +226,51 @@ struct Reflect<Arc<R>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
 };
+
+namespace Format {
+
+template<Reflectable T, Allocator A>
+struct Measure<Rc<T, A>> {
+    static u64 measure(const Rc<T, A>& rc) {
+        if(rc)
+            return 6 + Measure<T>::measure(*rc) +
+                   Measure<decltype(rc.references())>::measure(rc.references());
+        return 8;
+    }
+};
+template<Reflectable T, Allocator A>
+struct Measure<Arc<T, A>> {
+    static u64 measure(const Arc<T, A>& arc) {
+        if(arc)
+            return 7 + Measure<T>::measure(*arc) +
+                   Measure<decltype(arc.references())>::measure(arc.references());
+        return 9;
+    }
+};
+
+template<Allocator O, Reflectable T, Allocator A>
+struct Write<O, Rc<T, A>> {
+    static u64 write(String<O>& output, u64 idx, const Rc<T, A>& rc) {
+        if(!rc) return output.write(idx, "Rc{null}"_v);
+        idx = output.write(idx, "Rc["_v);
+        idx = Write<O, decltype(rc.references())>::write(output, idx, rc.references());
+        idx = output.write(idx, "]{"_v);
+        idx = Write<O, T>::write(output, idx, *rc);
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O, Reflectable T, Allocator A>
+struct Write<O, Arc<T, A>> {
+    static u64 write(String<O>& output, u64 idx, const Arc<T, A>& arc) {
+        if(!arc) return output.write(idx, "Arc{null}"_v);
+        idx = output.write(idx, "Arc["_v);
+        idx = Write<O, decltype(arc.references())>::write(output, idx, arc.references());
+        idx = output.write(idx, "]{"_v);
+        idx = Write<O, T>::write(output, idx, *arc);
+        return output.write(idx, '}');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

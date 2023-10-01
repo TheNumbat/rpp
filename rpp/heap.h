@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "base.h"
+
 namespace rpp {
 
 template<Ordered T, Allocator A = Mdefault>
@@ -250,5 +252,36 @@ struct Reflect<Heap<H, A>> {
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
 };
+
+namespace Format {
+
+template<Reflectable T, Allocator A>
+struct Measure<Heap<T, A>> {
+    static u64 measure(const Heap<T, A>& heap) {
+        u64 n = 0;
+        u64 length = 6;
+        for(const T& item : heap) {
+            length += Measure<T>::measure(item);
+            if(n + 1 < heap.length()) length += 2;
+            n++;
+        }
+        return length;
+    }
+};
+template<Allocator O, Reflectable T, Allocator A>
+struct Write<O, Heap<T, A>> {
+    static u64 write(String<O>& output, u64 idx, const Heap<T, A>& heap) {
+        idx = output.write(idx, "Heap["_v);
+        u64 n = 0;
+        for(const T& item : heap) {
+            idx = Write<O, T>::write(output, idx, item);
+            if(n + 1 < heap.length()) idx = output.write(idx, ", "_v);
+            n++;
+        }
+        return output.write(idx, ']');
+    }
+};
+
+} // namespace Format
 
 } // namespace rpp

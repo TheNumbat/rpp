@@ -1,11 +1,20 @@
 
-#include "rpp/async.h"
 #include "rpp/base.h"
+
 #include "rpp/files.h"
 #include "rpp/net.h"
+
+#include "rpp/async.h"
 #include "rpp/pool.h"
-#include "rpp/range_allocator.h"
 #include "rpp/thread.h"
+
+#include "rpp/range_allocator.h"
+
+#include "rpp/function.h"
+#include "rpp/heap.h"
+#include "rpp/stack.h"
+#include "rpp/tuple.h"
+#include "rpp/variant.h"
 
 using namespace rpp;
 
@@ -24,7 +33,6 @@ struct Reflect<Ints> {
     static constexpr Literal name = "Ints";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
-
 };
 template<>
 struct Reflect<Vecs> {
@@ -32,7 +40,6 @@ struct Reflect<Vecs> {
     static constexpr Literal name = "Vecs";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
-
 };
 } // namespace rpp
 
@@ -43,17 +50,22 @@ i32 main() {
     Profile::start_thread();
     Profile::begin_frame();
 
+    [] {
+        Region_Scope;
+        Range_Allocator<Mregion>::test();
+    }();
+
     // Alloc0
-    {
+    [] {
         Prof_Scope("Alloc0");
 
         using A = Mallocator<"Test">;
         void* ptr = A::alloc(100);
         A::free(ptr);
-    }
+    }();
 
     // Ref0/1
-    {
+    [] {
         Prof_Scope("Ref0/1");
 
         i32 i = 5;
@@ -64,10 +76,10 @@ i32 main() {
 
         Ref<Ref<i32>> rr{r};
         assert(**rr == 10);
-    }
+    }();
 
     // String0
-    {
+    [] {
         Prof_Scope("String0");
 
         String_View sv = "Hello World"_v;
@@ -94,31 +106,31 @@ i32 main() {
 
         (void)s4;
         (void)sv4;
-    }
+    }();
 
     // Thread0
-    {
+    [] {
         Prof_Scope("Thread0");
 
         Thread::Mutex mut;
         mut.lock();
         mut.unlock();
         { Thread::Lock lock{mut}; }
-    }
+    }();
 
     // Log
-    {
+    [] {
         Prof_Scope("Log");
 
         info("Info");
         warn("Warn");
-    }
+    }();
 
     using M = Thread::Mutex;
     using SV = String_View;
 
     // Pair
-    {
+    [] {
         Prof_Scope("Pair");
 
         Pair<i32, i32> p{1, 2};
@@ -147,10 +159,10 @@ i32 main() {
 
         auto&& [e_, f] = p4;
         assert(e_ == 1 && f == 2);
-    }
+    }();
 
     // Tuple
-    {
+    [] {
         Prof_Scope("Tuple");
 
         Tuple<> t0;
@@ -202,10 +214,10 @@ i32 main() {
         assert(g == 1 && h == "Hello"_v && i == "World"_v.string());
 
         Tuple<M, M> t10;
-    }
+    }();
 
     // Variant
-    { //
+    [] {
         static_assert(alignof(i32) == 4);
         Variant<i32> v{1};
         info("sizeof variant %", sizeof(v));
@@ -249,10 +261,10 @@ i32 main() {
         v11.match([](const auto& i) {
             info("variant has %: %", String_View{Decay<decltype(i)>::type::name}, i);
         });
-    }
+    }();
 
     // Storage
-    {
+    [] {
         Prof_Scope("Storage");
 
         Storage<String<>> s;
@@ -272,10 +284,10 @@ i32 main() {
         m->lock();
         m->unlock();
         m.destruct();
-    }
+    }();
 
     // Opt
-    {
+    [] {
         Prof_Scope("Opt");
 
         Opt<i32> o;
@@ -296,10 +308,10 @@ i32 main() {
         assert(os->length() == 5);
 
         Opt<M> m;
-    }
+    }();
 
     // Array
-    {
+    [] {
         Prof_Scope("Array");
 
         Array<i32, 1> a;
@@ -340,10 +352,10 @@ i32 main() {
         Array<M, 2> m;
 
         (void)f;
-    }
+    }();
 
     // Vec
-    {
+    [] {
         Prof_Scope("Vec");
 
         Vec<i32> v;
@@ -416,10 +428,10 @@ i32 main() {
         (void)m2;
         (void)s3;
         (void)s5;
-    }
+    }();
 
     // Box
-    {
+    [] {
         Prof_Scope("Box");
 
         Box<i32> b{5};
@@ -440,10 +452,10 @@ i32 main() {
 
         Box<M> m;
         m.emplace();
-    }
+    }();
 
     // Stack
-    {
+    [] {
         Prof_Scope("Stack");
 
         Stack<i32> v;
@@ -496,10 +508,10 @@ i32 main() {
         for(i32 i = 0; i < 10; i++) {
             vf.push([]() { info("Hello"); });
         }
-    }
+    }();
 
     // Queue
-    {
+    [] {
         Prof_Scope("Queue");
 
         {
@@ -557,10 +569,10 @@ i32 main() {
         for(i32 i = 0; i < 10; i++) {
             vf.push([]() { info("Hello"); });
         }
-    }
+    }();
 
     // Heap
-    {
+    [] {
         Prof_Scope("Heap");
 
         {
@@ -631,10 +643,10 @@ i32 main() {
         for(i32 i = 0; i < 10; i++) {
             vf.push({[]() { info("Hello"); }});
         }
-    }
+    }();
 
     // Map
-    {
+    [] {
         Prof_Scope("Map");
 
         {
@@ -692,10 +704,10 @@ i32 main() {
         for(i32 i = 0; i < 40; i++) {
             ff.insert(i, []() { info("Hello"); });
         }
-    }
+    }();
 
     // Rc
-    {
+    [] {
         Rc<i32> r0;
         assert(!r0);
 
@@ -711,10 +723,10 @@ i32 main() {
         assert(r1 && r3 && *r1 == 5 && *r3 == 5);
         assert(r1.references() == 2 && r3.references() == 2);
         assert(!r2 && r2.references() == 0);
-    }
+    }();
 
     // Arc
-    {
+    [] {
         Arc<i32> r0;
         assert(!r0);
 
@@ -730,10 +742,10 @@ i32 main() {
         assert(r1 && r3 && *r1 == 5 && *r3 == 5);
         assert(r1.references() == 2 && r3.references() == 2);
         assert(!r2 && r2.references() == 0);
-    }
+    }();
 
     // Function
-    {
+    [] {
         Function<void()> f{
             []() { info("Hello function"); },
         };
@@ -766,6 +778,7 @@ i32 main() {
             [](i32 a, i32 b) { return a + b; },
         };
 
+        info("f6(1, 2): %", f6(1, 2));
         assert(f6(1, 2) == 3);
 
         Function<i32(i32, i32&, const i32&, i32&&)> f7{
@@ -808,10 +821,10 @@ i32 main() {
                 info("Hello function 3");
             },
         };
-    }
+    }();
 
     // Format
-    {
+    [] {
         info("%%");
 
         info("%", true);
@@ -927,9 +940,9 @@ i32 main() {
                        5.0f, 6.0f, 7.0f, 8.0f,    //
                        9.0f, 10.0f, 11.0f, 12.0f, //
                        13.0f, 14.0f, 15.0f, 16.0f});
-    }
+    }();
 
-    { // Thread
+    [] { // Thread
         auto value = Thread::spawn([]() {
             info("Hello from thread");
             return Vec<i32>{2, 3};
@@ -945,11 +958,11 @@ i32 main() {
 
         info("Thread 1 returned %", value->block());
         v->block();
-    }
+    }();
 
-    { Files::read("unknown"_v); }
+    [] { Files::read("unknown"_v); }();
 
-    {
+    [] {
         Net::Address addr{"127.0.0.1"_v, 25565};
         Net::Udp udp;
 
@@ -965,10 +978,10 @@ i32 main() {
         assert(data);
         assert(data->length == 5);
         info("%", String_View{packet.data(), data->length});
-    }
+    }();
 
     // Coroutines
-    {
+    [] {
         int wtf_clang_format = 0;
         (void)wtf_clang_format;
 
@@ -1071,9 +1084,10 @@ i32 main() {
             assert(task.done());
             assert(task.block() == 1);
         }
-    }
+    }();
 
-    { // Thread pool
+    // Thread pool
+    [] {
         Thread::Pool pool;
 
         Vec<Thread::Future<void>> tasks;
@@ -1133,8 +1147,8 @@ i32 main() {
             // These are OK to drop because the promises are refcounted and
             // no job can deadlock itself
         }
-    }
-    {
+    }();
+    [] {
         Thread::Pool pool;
         {
             auto job = [&pool](i32 ms) -> Async::Task<i32> {
@@ -1173,7 +1187,7 @@ i32 main() {
             // cannot start and drop another job2 because it blocks on another job -
             // if all but one thread shut down it deadlocks itself
         }
-    }
+    }();
 
     Profile::end_frame();
     Profile::end_thread();
