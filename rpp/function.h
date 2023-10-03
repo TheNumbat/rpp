@@ -98,8 +98,8 @@ private:
         }
     }
     template<typename F>
-    static void f_invoke(F* src, Args... args) {
-        src->operator()(std::forward<Args>(args)...);
+    static R f_invoke(F* src, Args... args) {
+        return src->operator()(std::forward<Args>(args)...);
     }
 
     alignas(MAX_ALIGN) u8 storage[Words * 8] = {};
