@@ -1120,7 +1120,9 @@ i32 main() {
             job();
         }
         {
-            auto job = [&pool]() -> Async::Task<i32> {
+            auto job = [&pool_ = pool]() -> Async::Task<i32> {
+                // pool will be gone after the first suspend, so we need to copy it
+                Thread::Pool<>& pool = pool_;
                 co_await pool.suspend();
                 info("Hello from coroutine 4.1 on thread pool");
                 co_await pool.suspend();
@@ -1132,7 +1134,9 @@ i32 main() {
             job().block();
         }
         {
-            auto job = [&pool]() -> Async::Task<i32> {
+            auto job = [&pool_ = pool]() -> Async::Task<i32> {
+                // pool will be gone after the first suspend, so we need to copy it
+                Thread::Pool<>& pool = pool_;
                 co_await pool.suspend();
                 info("Hello from coroutine 3.1 on thread pool");
                 co_await pool.suspend();
