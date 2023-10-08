@@ -143,6 +143,7 @@ Async::Task<void> wait(Thread::Pool<>& pool, u64 ms) {
 
     co_await pool.event(Async::Event::of_sys(timer));
 
+    CloseHandle(timer);
     co_return;
 }
 
