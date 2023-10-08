@@ -18,10 +18,10 @@ struct Write;
 template<Allocator A, Reflectable T>
 u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) {
     Region_Scope;
-    u64 val_len = std::snprintf(null, 0, fmt, value);
+    u64 val_len = Std::snprintf(null, 0, fmt, value);
     String<Mregion> buffer{val_len + 1};
     buffer.set_length(val_len + 1);
-    std::snprintf(reinterpret_cast<char* const>(buffer.data()), buffer.length(), fmt, value);
+    Std::snprintf(buffer.data(), buffer.length(), fmt, value);
     return output.write(idx, buffer.sub(0, val_len));
 }
 
@@ -64,31 +64,31 @@ struct Measure {
         } else if constexpr(R::kind == Kind::char_) {
             return 1;
         } else if constexpr(R::kind == Kind::i8_) {
-            return std::snprintf(null, 0, "%hhd", value);
+            return Std::snprintf(null, 0, "%hhd", value);
         } else if constexpr(R::kind == Kind::i16_) {
-            return std::snprintf(null, 0, "%hd", value);
+            return Std::snprintf(null, 0, "%hd", value);
         } else if constexpr(R::kind == Kind::i32_) {
-            return std::snprintf(null, 0, "%d", value);
+            return Std::snprintf(null, 0, "%d", value);
         } else if constexpr(R::kind == Kind::i64_) {
 #ifdef COMPILER_MSVC
-            return std::snprintf(null, 0, "%lld", value);
+            return Std::snprintf(null, 0, "%lld", value);
 #else
-            return std::snprintf(null, 0, "%ld", value);
+            return Std::snprintf(null, 0, "%ld", value);
 #endif
         } else if constexpr(R::kind == Kind::u8_) {
-            return std::snprintf(null, 0, "%hhu", value);
+            return Std::snprintf(null, 0, "%hhu", value);
         } else if constexpr(R::kind == Kind::u16_) {
-            return std::snprintf(null, 0, "%hu", value);
+            return Std::snprintf(null, 0, "%hu", value);
         } else if constexpr(R::kind == Kind::u32_) {
-            return std::snprintf(null, 0, "%u", value);
+            return Std::snprintf(null, 0, "%u", value);
         } else if constexpr(R::kind == Kind::u64_) {
 #ifdef COMPILER_MSVC
-            return std::snprintf(null, 0, "%llu", value);
+            return Std::snprintf(null, 0, "%llu", value);
 #else
-            return std::snprintf(null, 0, "%lu", value);
+            return Std::snprintf(null, 0, "%lu", value);
 #endif
         } else if constexpr(R::kind == Kind::f32_ || R::kind == Kind::f64_) {
-            return std::snprintf(null, 0, "%f", value);
+            return Std::snprintf(null, 0, "%f", value);
         } else if constexpr(R::kind == Kind::bool_) {
             return value ? 4 : 5;
         } else if constexpr(R::kind == Kind::array_) {
@@ -100,7 +100,7 @@ struct Measure {
             return length;
         } else if constexpr(R::kind == Kind::pointer_) {
             if(value == null) return 6;
-            return 2 + std::snprintf(null, 0, "%p", value);
+            return 2 + Std::snprintf(null, 0, "%p", value);
         } else if constexpr(R::kind == Kind::record_) {
             u64 name_len = String_View{R::name}.length();
             Record_Length<List_Length<typename R::members>> iterator;
@@ -165,8 +165,7 @@ struct Write {
         } else if constexpr(R::kind == Kind::pointer_) {
             if(value == null) return output.write(idx, "(null)"_v);
             idx = output.write(idx, '(');
-            idx += std::snprintf(reinterpret_cast<char* const>(output.data()) + idx,
-                                 output.length() - idx, "%p", value);
+            idx += Std::snprintf(output.data() + idx, output.length() - idx, "%p", value);
             return output.write(idx, ')');
         } else if constexpr(R::kind == Kind::record_) {
             idx = output.write(idx, String_View{R::name});

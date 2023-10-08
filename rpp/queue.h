@@ -76,7 +76,7 @@ struct Queue {
             }
         } else {
             static_assert(Trivial<T>);
-            std::memcpy(ret.data_, data_, capacity_ * sizeof(T));
+            Std::memcpy(ret.data_, data_, capacity_ * sizeof(T));
         }
         return ret;
     }
@@ -94,11 +94,11 @@ struct Queue {
 
         if constexpr(Trivially_Movable<T>) {
             if(length_ <= last_) {
-                std::memcpy(new_data, start, sizeof(T) * length_);
+                Std::memcpy(new_data, start, sizeof(T) * length_);
             } else {
                 u64 first = length_ - last_;
-                std::memcpy(new_data, start + capacity_, sizeof(T) * first);
-                std::memcpy(new_data + first, data_, sizeof(T) * last_);
+                Std::memcpy(new_data, start + capacity_, sizeof(T) * first);
+                Std::memcpy(new_data + first, data_, sizeof(T) * last_);
             }
         } else {
             static_assert(Move_Constructable<T>);
@@ -235,7 +235,7 @@ struct Queue {
             u64 next = idx == capacity_ - 1 ? 0 : idx + 1;
             if(found) {
                 if constexpr(Trivially_Movable<T>) {
-                    std::memcpy(&data_[next], &data_[idx], sizeof(T));
+                    Std::memcpy(&data_[next], &data_[idx], sizeof(T));
                 } else {
                     static_assert(Move_Constructable<T>);
                     new(&data_[next]) T{std::move(data_[idx])};

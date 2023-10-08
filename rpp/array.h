@@ -42,7 +42,7 @@ struct Array {
                 result[i] = data_[i].clone();
             }
         } else {
-            std::memcpy(result.data_, data_, sizeof(T) * N);
+            Std::memcpy(result.data_, data_, sizeof(T) * N);
         }
         return result;
     }

@@ -3,12 +3,7 @@
 
 #include "base.h"
 
-#ifdef OS_WINDOWS
-#define Arc Arc__w32
-#include <windows.h>
-#undef Arc
-#include <ws2def.h>
-#else
+#ifdef OS_LINUX
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
@@ -24,16 +19,17 @@ struct Address {
 
     Address() = default;
 
-    explicit Address(sockaddr_in sockaddr);
     explicit Address(u16 port);
     explicit Address(String_View address, u16 port);
 
-    const sockaddr_in& sockaddr() const {
-        return sockaddr_;
-    }
-
 private:
+#ifdef OS_WINDOWS
+    alignas(4) u8 sockaddr_storage[16];
+#else
     sockaddr_in sockaddr_;
+#endif
+
+    friend struct Udp;
 };
 
 struct Udp {

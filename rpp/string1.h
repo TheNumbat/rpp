@@ -36,7 +36,7 @@ template<Allocator A>
 String<A> String_View::terminate() const {
     String<A> ret{length_ + 1};
     ret.set_length(length_ + 1);
-    std::memcpy(ret.data(), data_, length_);
+    Std::memcpy(ret.data(), data_, length_);
     ret[length_] = '\0';
     return ret;
 }
@@ -73,14 +73,14 @@ template<Allocator A>
 template<Allocator B>
 u64 String<A>::write(u64 i, const String<B>& text) {
     assert(i + text.length() <= length_);
-    std::memcpy(data_ + i, text.data(), text.length());
+    Std::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
 }
 
 template<Allocator A>
 u64 String<A>::write(u64 i, String_View text) {
     assert(i + text.length() <= length_);
-    std::memcpy(data_ + i, text.data(), text.length());
+    Std::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
 }
 

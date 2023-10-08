@@ -1,6 +1,9 @@
 
 #include "base.h"
 
+#include <csignal>
+#include <cstdio>
+#include <cstring>
 #include <ctime>
 
 #ifdef OS_WINDOWS
@@ -104,7 +107,7 @@ String_View sys_error() {
 }
 
 void debug_break() {
-    raise(SIGTRAP);
+    std::raise(SIGTRAP);
 }
 
 #endif

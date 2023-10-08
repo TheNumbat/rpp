@@ -7,7 +7,6 @@
 namespace rpp::Net {
 
 Address::Address(String_View address, u16 port) {
-
     sockaddr_ = {};
     sockaddr_.sin_family = AF_INET;
     sockaddr_.sin_port = htons(port);
@@ -16,9 +15,6 @@ Address::Address(String_View address, u16 port) {
                  &sockaddr_.sin_addr.s_addr) != 1) {
         die("Failed to create address: %", Log::sys_error());
     }
-}
-
-Address::Address(sockaddr_in sockaddr) : sockaddr_(sockaddr) {
 }
 
 Address::Address(u16 port) {
@@ -53,30 +49,30 @@ Udp& Udp::operator=(Udp&& src) {
 }
 
 void Udp::bind(Address address) {
-    if(::bind(fd, reinterpret_cast<const sockaddr*>(&address.sockaddr()), sizeof(sockaddr_in)) <
-       0) {
+    if(::bind(fd, reinterpret_cast<const sockaddr*>(&address.sockaddr_), sizeof(sockaddr_in)) < 0) {
         die("Failed to bind socket: %", Log::sys_error());
     }
 }
 
 Opt<Udp::Data> Udp::recv(Packet& in) {
 
-    sockaddr_in src;
-    socklen_t src_len = sizeof(src);
+    Address src;
+    socklen_t src_len = sizeof(src.sockaddr_);
+
     i64 ret = ::recvfrom(fd, in.begin(), in.capacity, MSG_DONTWAIT | MSG_TRUNC,
-                         reinterpret_cast<sockaddr*>(&src), &src_len);
+                         reinterpret_cast<sockaddr*>(&src.sockaddr_), &src_len);
 
     if(ret == -1 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
         return Opt<Data>{};
     }
 
-    return Opt{Data{static_cast<u64>(ret), Address{src}}};
+    return Opt{Data{static_cast<u64>(ret), std::move(src)}};
 }
 
 u64 Udp::send(Address address, const Packet& out, u64 length) {
 
     i64 ret = sendto(fd, out.data(), length, MSG_CONFIRM,
-                     reinterpret_cast<const sockaddr*>(&address.sockaddr()), sizeof(sockaddr_in));
+                     reinterpret_cast<const sockaddr*>(&address.sockaddr_), sizeof(sockaddr_in));
     if(ret == -1) {
         die("Failed send packet: %", Log::sys_error());
     }

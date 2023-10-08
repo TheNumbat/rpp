@@ -72,7 +72,7 @@ struct Vec {
             }
         } else {
             static_assert(Trivial<T>);
-            std::memcpy(ret.data_, data_, length_ * sizeof(T));
+            Std::memcpy(ret.data_, data_, length_ * sizeof(T));
         }
         return ret;
     }
@@ -98,7 +98,7 @@ struct Vec {
 
         if(data_ && new_data) {
             if constexpr(Trivially_Movable<T>) {
-                std::memcpy((void*)new_data, data_, sizeof(T) * length_);
+                Std::memcpy((void*)new_data, data_, sizeof(T) * length_);
             } else {
                 static_assert(Move_Constructable<T>);
                 for(u64 i = 0; i < length_; i++) {

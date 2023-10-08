@@ -2,9 +2,14 @@
 #pragma once
 
 #include "base.h"
+#include "simd.h"
 
 namespace rpp {
 namespace Math {
+
+using SIMD::F32x4;
+
+namespace detail {
 
 template<typename T>
 struct Vec2_base;
@@ -21,23 +26,25 @@ using Vect_Base =
                 typename If<N == 3, Vec3_base<T>,
                             typename If<N == 4, Vec4_base<T>, VecN_base<T, N>>::type>::type>::type;
 
-template<typename T, u64 N>
+template<Trivial T, u64 N>
 struct Vect : Vect_Base<T, N> {
 
+    static_assert(N > 1);
     using Base = Vect_Base<T, N>;
+
     static constexpr bool is_float = Float<T>;
-    static constexpr bool is_simd = is_float && N == 4;
+    static constexpr bool is_simd = Same<T, f32> && N == 4;
 
     constexpr Vect() : Base{} {
         if constexpr(is_simd)
-            this->pack = _mm_setzero_ps();
+            this->pack = F32x4::zero();
         else
             for(u64 i = 0; i < N; i++) this->data[i] = T{};
     };
 
-    template<typename S = T>
-        requires is_simd && Same<S, T>
-    constexpr explicit Vect(__m128 p) : Base{} {
+    constexpr explicit Vect(F32x4 p)
+        requires is_simd
+        : Base{} {
         this->pack = p;
     }
 
@@ -45,14 +52,16 @@ struct Vect : Vect_Base<T, N> {
         for(u64 i = 0; i < N; i++) this->data[i] = x;
     }
 
-    constexpr explicit Vect(Vect<T, N - 1> f, T s) : Base{} {
+    constexpr explicit Vect(Vect<T, N - 1> f, T s)
+        requires(N > 2)
+        : Base{} {
         for(u64 i = 0; i < N - 1; i++) this->data[i] = f[i];
         this->data[N - 1] = s;
     }
 
-    template<typename S, typename... Ss>
-        requires All<T, S, Ss...> && Length<N - 1, Ss...>
-    constexpr explicit Vect(S first, Ss... rest) : Base{first, rest...} {
+    template<typename... S>
+        requires All<T, S...> && (sizeof...(S) == N)
+    constexpr explicit Vect(S... args) : Base{args...} {
     }
 
     T& operator[](u64 idx) {
@@ -64,28 +73,28 @@ struct Vect : Vect_Base<T, N> {
 
     Vect operator+=(Vect v) {
         if constexpr(is_simd)
-            this->pack = _mm_add_ps(this->pack, v.pack);
+            this->pack = F32x4::add(this->pack, v.pack);
         else
             for(u64 i = 0; i < N; i++) this->data[i] += v.data[i];
         return *this;
     }
     Vect operator-=(Vect v) {
         if constexpr(is_simd)
-            this->pack = _mm_sub_ps(this->pack, v.pack);
+            this->pack = F32x4::sub(this->pack, v.pack);
         else
             for(u64 i = 0; i < N; i++) this->data[i] -= v.data[i];
         return *this;
     }
     Vect operator*=(Vect v) {
         if constexpr(is_simd)
-            this->pack = _mm_mul_ps(this->pack, v.pack);
+            this->pack = F32x4::mul(this->pack, v.pack);
         else
             for(u64 i = 0; i < N; i++) this->data[i] *= v.data[i];
         return *this;
     }
     Vect operator/=(Vect v) {
         if constexpr(is_simd)
-            this->pack = _mm_div_ps(this->pack, v.pack);
+            this->pack = F32x4::div(this->pack, v.pack);
         else
             for(u64 i = 0; i < N; i++) this->data[i] /= v.data[i];
         return *this;
@@ -93,28 +102,28 @@ struct Vect : Vect_Base<T, N> {
 
     Vect operator+=(T s) {
         if constexpr(is_simd)
-            this->pack = _mm_add_ps(this->pack, _mm_set1_ps(s));
+            this->pack = F32x4::add(this->pack, F32x4::set1(s));
         else
             for(u64 i = 0; i < N; i++) this->data[i] += s;
         return *this;
     }
     Vect operator-=(T s) {
         if constexpr(is_simd)
-            this->pack = _mm_sub_ps(this->pack, _mm_set1_ps(s));
+            this->pack = F32x4::sub(this->pack, F32x4::set1(s));
         else
             for(u64 i = 0; i < N; i++) this->data[i] -= s;
         return *this;
     }
     Vect operator*=(T s) {
         if constexpr(is_simd)
-            this->pack = _mm_mul_ps(this->pack, _mm_set1_ps(s));
+            this->pack = F32x4::mul(this->pack, F32x4::set1(s));
         else
             for(u64 i = 0; i < N; i++) this->data[i] *= s;
         return *this;
     }
     Vect operator/=(T s) {
         if constexpr(is_simd)
-            this->pack = _mm_div_ps(this->pack, _mm_set1_ps(s));
+            this->pack = F32x4::div(this->pack, F32x4::set1(s));
         else
             for(u64 i = 0; i < N; i++) this->data[i] /= s;
         return *this;
@@ -122,7 +131,7 @@ struct Vect : Vect_Base<T, N> {
 
     Vect operator+(Vect o) const {
         if constexpr(is_simd)
-            return {_mm_add_ps(this->pack, o.pack)};
+            return Vect{F32x4::add(this->pack, o.pack)};
         else {
             Vect r;
             for(u64 i = 0; i < N; i++) r.data[i] = this->data[i] + o.data[i];
@@ -131,7 +140,7 @@ struct Vect : Vect_Base<T, N> {
     }
     Vect operator-(Vect o) const {
         if constexpr(is_simd)
-            return {_mm_sub_ps(this->pack, o.pack)};
+            return Vect{F32x4::sub(this->pack, o.pack)};
         else {
             Vect r;
             for(u64 i = 0; i < N; i++) r.data[i] = this->data[i] - o.data[i];
@@ -140,7 +149,7 @@ struct Vect : Vect_Base<T, N> {
     }
     Vect operator*(Vect o) const {
         if constexpr(is_simd)
-            return {_mm_mul_ps(this->pack, o.pack)};
+            return Vect{F32x4::mul(this->pack, o.pack)};
         else {
             Vect r;
             for(u64 i = 0; i < N; i++) r.data[i] = this->data[i] * o.data[i];
@@ -149,7 +158,7 @@ struct Vect : Vect_Base<T, N> {
     }
     Vect operator/(Vect o) const {
         if constexpr(is_simd)
-            return {_mm_div_ps(this->pack, o.pack)};
+            return Vect{F32x4::div(this->pack, o.pack)};
         else {
             Vect r;
             for(u64 i = 0; i < N; i++) r.data[i] = this->data[i] / o.data[i];
@@ -159,7 +168,7 @@ struct Vect : Vect_Base<T, N> {
 
     Vect operator+(T s) const {
         if constexpr(is_simd)
-            return {_mm_add_ps(this->pack, _mm_set1_ps(s))};
+            return Vect{F32x4::add(this->pack, F32x4::set1(s))};
         else {
             Vect r;
             for(u64 i = 0; i < N; i++) r.data[i] = this->data[i] + s;
@@ -168,7 +177,7 @@ struct Vect : Vect_Base<T, N> {
     }
     Vect operator-(T s) const {
         if constexpr(is_simd)
-            return {_mm_sub_ps(this->pack, _mm_set1_ps(s))};
+            return Vect{F32x4::sub(this->pack, F32x4::set1(s))};
         else {
             Vect r;
             for(u64 i = 0; i < N; i++) r.data[i] = this->data[i] - s;
@@ -177,7 +186,7 @@ struct Vect : Vect_Base<T, N> {
     }
     Vect operator*(T s) const {
         if constexpr(is_simd)
-            return {_mm_mul_ps(this->pack, _mm_set1_ps(s))};
+            return Vect{F32x4::mul(this->pack, F32x4::set1(s))};
         else {
             Vect r;
             for(u64 i = 0; i < N; i++) r.data[i] = this->data[i] * s;
@@ -186,7 +195,7 @@ struct Vect : Vect_Base<T, N> {
     }
     Vect operator/(T s) const {
         if constexpr(is_simd)
-            return {_mm_div_ps(this->pack, _mm_set1_ps(s))};
+            return Vect{F32x4::div(this->pack, F32x4::set1(s))};
         else {
             Vect r;
             for(u64 i = 0; i < N; i++) r.data[i] = this->data[i] / s;
@@ -196,7 +205,7 @@ struct Vect : Vect_Base<T, N> {
 
     bool operator==(Vect o) const {
         if constexpr(is_simd)
-            return _mm_movemask_ps(_mm_cmpeq_ps(this->pack, o.pack)) == 0xf;
+            return F32x4::movemask(F32x4::cmpeq(this->pack, o.pack)) == 0xf;
         else {
             for(u64 i = 0; i < N; i++)
                 if(this->data[i] != o.data[i]) return false;
@@ -205,7 +214,7 @@ struct Vect : Vect_Base<T, N> {
     }
     bool operator!=(Vect o) const {
         if constexpr(is_simd)
-            return _mm_movemask_ps(_mm_cmpeq_ps(this->pack, o.pack)) != 0xf;
+            return F32x4::movemask(F32x4::cmpeq(this->pack, o.pack)) != 0xf;
         else {
             for(u64 i = 0; i < N; i++)
                 if(this->data[i] != o.data[i]) return true;
@@ -213,43 +222,52 @@ struct Vect : Vect_Base<T, N> {
         }
     }
 
-    Vect abs() const {
+    Vect abs() const
+        requires is_float || Signed_Int<T>
+    {
         Vect r;
-        for(u64 i = 0; i < N; i++) r.data[i] = Math::abs(this->data[i]);
+        if constexpr(is_simd)
+            r.pack = F32x4::abs(this->pack);
+        else
+            for(u64 i = 0; i < N; i++) r.data[i] = Math::abs(this->data[i]);
         return r;
     }
-    Vect operator-() {
+    Vect operator-()
+        requires is_float || Signed_Int<T>
+    {
         if constexpr(is_simd)
-            this->pack = _mm_sub_ps(_mm_set1_ps(0.0f), this->pack);
+            this->pack = F32x4::sub(F32x4::zero(), this->pack);
         else
             for(u64 i = 0; i < N; i++) this->data[i] = -this->data[i];
         return *this;
     }
 
-    template<typename S = T>
-        requires is_float && Same<S, T>
-    Vect normalize() {
+    Vect normalize()
+        requires is_float
+    {
         T l = norm();
         if constexpr(is_simd)
-            this->pack = _mm_div_ps(this->pack, _mm_set1_ps(l));
+            this->pack = F32x4::div(this->pack, F32x4::set1(l));
         else
             for(u64 i = 0; i < N; i++) this->data[i] /= l;
         return *this;
     }
 
-    template<typename S = T>
-        requires is_float && Same<S, T>
-    Vect unit() const {
+    Vect unit() const
+        requires is_float
+    {
         Vect r;
         T l = norm();
         if constexpr(is_simd)
-            r.pack = _mm_div_ps(this->pack, _mm_set1_ps(l));
+            r.pack = F32x4::div(this->pack, F32x4::set1(l));
         else
             for(u64 i = 0; i < N; i++) r.data[i] = this->data[i] / l;
         return r;
     }
 
-    Vect<T, N - 1> proj() const {
+    Vect<T, N - 1> proj() const
+        requires(N > 2)
+    {
         Vect<T, N - 1> r;
         for(u64 i = 0; i < N - 1; i++) r.data[i] = this->data[i] / this->data[N - 1];
         return r;
@@ -263,40 +281,52 @@ struct Vect : Vect_Base<T, N> {
     }
 
     T norm2() const {
-        return dot(*this, *this);
+        if constexpr(is_simd)
+            return F32x4::dp(this->pack, this->pack);
+        else {
+            T r = T{};
+            for(u64 i = 0; i < N; i++) r += this->data[i] * this->data[i];
+            return r;
+        }
     }
 
     T min() const {
         T r = this->data[0];
-        for(u64 i = 1; i < N; i++) r = _MIN(r, this->data[i]);
+        for(u64 i = 1; i < N; i++) r = Math::min(r, this->data[i]);
         return r;
     }
 
     T max() const {
         T r = this->data[0];
-        for(u64 i = 1; i < N; i++) r = _MAX(r, this->data[i]);
+        for(u64 i = 1; i < N; i++) r = Math::max(r, this->data[i]);
         return r;
     }
 
-    template<typename S = T>
-        requires is_float && Same<S, T>
-    Vect<T, N> floor() {
+    Vect<T, N> floor()
+        requires is_float
+    {
         Vect<T, N> r;
-        for(u64 i = 0; i < N; i++) r.data[i] = Math::floor(this->data[i]);
+        if constexpr(is_simd)
+            r.pack = F32x4::floor(this->pack);
+        else
+            for(u64 i = 0; i < N; i++) r.data[i] = Math::floor(this->data[i]);
         return r;
     }
 
-    template<typename S = T>
-        requires is_float && Same<S, T>
-    Vect<T, N> ceil() {
+    Vect<T, N> ceil()
+        requires is_float
+    {
         Vect<T, N> r;
-        for(u64 i = 0; i < N; i++) r.data[i] = Math::ceil(this->data[i]);
+        if constexpr(is_simd)
+            r.pack = F32x4::ceil(this->pack);
+        else
+            for(u64 i = 0; i < N; i++) r.data[i] = Math::ceil(this->data[i]);
         return r;
     }
 
-    template<typename S = T>
-        requires is_float && Same<S, T>
-    T norm() const {
+    T norm() const
+        requires is_float
+    {
         return Math::sqrt(norm2());
     }
 
@@ -390,7 +420,7 @@ struct Vec4_base<f32> {
             Vect<f32, 3> yzw;
         };
         f32 data[4];
-        __m128 pack;
+        SIMD::F32x4 pack;
     };
 };
 template<typename T, u64 N>
@@ -398,96 +428,9 @@ struct VecN_base {
     T data[N];
 };
 
-template<typename T, u64 N>
-Vect<T, N> operator+(float s, Vect<T, N> v) {
-    if constexpr(Vect<T, N>::is_simd)
-        return {_mm_add_ps(v.pack, _mm_set1_ps(s))};
-    else {
-        Vect<T, N> r;
-        for(u64 i = 0; i < N; i++) r.data[i] = v.data[i] + s;
-        return r;
-    }
-}
+} // namespace detail
 
-template<typename T, u64 N>
-Vect<T, N> operator-(float s, Vect<T, N> v) {
-    if constexpr(Vect<T, N>::is_simd)
-        return {_mm_sub_ps(v.pack, _mm_set1_ps(s))};
-    else {
-        Vect<T, N> r;
-        for(u64 i = 0; i < N; i++) r.data[i] = s - v.data[i];
-        return r;
-    }
-}
-
-template<typename T, u64 N>
-Vect<T, N> operator*(T s, Vect<T, N> v) {
-    if constexpr(Vect<T, N>::is_simd)
-        return {_mm_mul_ps(v.pack, _mm_set1_ps(s))};
-    else {
-        Vect<T, N> r;
-        for(u64 i = 0; i < N; i++) r.data[i] = v.data[i] * s;
-        return r;
-    }
-}
-
-template<typename T, u64 N>
-Vect<T, N> operator/(T s, Vect<T, N> v) {
-    if constexpr(Vect<T, N>::is_simd)
-        return {_mm_div_ps(v.pack, _mm_set1_ps(s))};
-    else {
-        Vect<T, N> r;
-        for(u64 i = 0; i < N; i++) r.data[i] = s / v.data[i];
-        return r;
-    }
-}
-
-template<typename T, u64 N>
-Vect<T, N> min(Vect<T, N> x, Vect<T, N> y) {
-    if constexpr(Vect<T, N>::is_simd) return {_mm_min_ps(x.pack, y.pack)};
-    Vect<T, N> r;
-    for(u64 i = 0; i < N; i++) r.data[i] = Math::min(x.data[i], y.data[i]);
-    return r;
-}
-
-template<typename T, u64 N>
-Vect<T, N> max(Vect<T, N> x, Vect<T, N> y) {
-    if constexpr(Vect<T, N>::is_simd) return {_mm_max_ps(x.pack, y.pack)};
-    Vect<T, N> r;
-    for(u64 i = 0; i < N; i++) r.data[i] = Math::max(x.data[i], y.data[i]);
-    return r;
-}
-
-template<typename T, u64 N>
-Vect<T, N> abs(Vect<T, N> x) {
-    if constexpr(Vect<T, N>::is_simd) return {_mm_andnot_ps(_mm_set1_ps(-0.0f), x.pack)};
-    Vect<T, N> r;
-    for(u64 i = 0; i < N; i++) r.data[i] = Math::abs(x.data[i]);
-    return r;
-}
-
-template<typename T, u64 N>
-T dot(Vect<T, N> x, Vect<T, N> y) {
-    if constexpr(Vect<T, N>::is_simd) return Vect<f32, 4>{_mm_dp_ps(x.pack, y.pack, 0xf1)}.x;
-    T r = {};
-    for(u64 i = 0; i < N; i++) r += x.data[i] * y.data[i];
-    return r;
-}
-
-template<typename T, u64 N>
-Vect<T, N> lerp(Vect<T, N> min, Vect<T, N> max, T dist) {
-    return min + (max - min) * dist;
-}
-
-template<typename T, u64 N>
-Vect<T, N> clamp(Vect<T, N> x, Vect<T, N> min, Vect<T, N> max) {
-    return max(min(x, max), min);
-}
-
-template<typename T, u64 N>
-Vect<T, N> normalize(Vect<T, N> x) {
-    return x.unit();
-}
+using detail::Vect;
 
 using Vec2 = Vect<f32, 2>;
 using Vec3 = Vect<f32, 3>;
@@ -511,15 +454,72 @@ inline Vec3 cross(Vec3 l, Vec3 r) {
     return Vec3{l.y * r.z - l.z * r.y, l.z * r.x - l.x * r.z, l.x * r.y - l.y * r.x};
 }
 
-struct Mat4;
-inline Mat4 inverse(Mat4 m);
-inline Mat4 transpose(Mat4 m);
+template<typename T, u64 N>
+Vect<T, N> min(Vect<T, N> x, Vect<T, N> y) {
+    if constexpr(Vect<T, N>::is_simd)
+        return Vect<T, N>{F32x4::min(x.pack, y.pack)};
+    else {
+        Vect<T, N> r;
+        for(u64 i = 0; i < N; i++) r.data[i] = Math::min(x.data[i], y.data[i]);
+        return r;
+    }
+}
+
+template<typename T, u64 N>
+Vect<T, N> max(Vect<T, N> x, Vect<T, N> y) {
+    if constexpr(Vect<T, N>::is_simd)
+        return Vect<T, N>{F32x4::max(x.pack, y.pack)};
+    else {
+        Vect<T, N> r;
+        for(u64 i = 0; i < N; i++) r.data[i] = Math::max(x.data[i], y.data[i]);
+        return r;
+    }
+}
+
+template<typename T, u64 N>
+Vect<T, N> abs(Vect<T, N> x)
+    requires Float<T> || Signed_Int<T>
+{
+    if constexpr(Vect<T, N>::is_simd)
+        return Vect<T, N>{F32x4::abs(x.pack)};
+    else {
+        Vect<T, N> r;
+        for(u64 i = 0; i < N; i++) r.data[i] = Math::abs(x.data[i]);
+        return r;
+    }
+}
+
+template<typename T, u64 N>
+T dot(Vect<T, N> x, Vect<T, N> y) {
+    if constexpr(Vect<T, N>::is_simd)
+        return F32x4::dp(x.pack, y.pack);
+    else {
+        T r = {};
+        for(u64 i = 0; i < N; i++) r += x.data[i] * y.data[i];
+        return r;
+    }
+}
+
+template<Float T, u64 N>
+Vect<T, N> lerp(Vect<T, N> min, Vect<T, N> max, T dist) {
+    return min + (max - min) * dist;
+}
+
+template<typename T, u64 N>
+Vect<T, N> clamp(Vect<T, N> x, Vect<T, N> min, Vect<T, N> max) {
+    return Math::max(Math::min(x, max), min);
+}
+
+template<Float T, u64 N>
+Vect<T, N> normalize(Vect<T, N> x) {
+    return x.unit();
+}
 
 struct Mat4 {
 
     union {
         f32 data[16];
-        __m128 pack[4];
+        F32x4 pack[4];
         Vec4 columns[4];
     };
 
@@ -541,365 +541,48 @@ struct Mat4 {
     static Mat4 translate(Vec3 v);
     static Mat4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f);
     static Mat4 proj(f32 fov, f32 ar, f32 n);
-    static Mat4 transpose(Mat4 m);
-    static Mat4 rotate_to(Vec3 dir);
+    static Mat4 rotate_y_to(Vec3 dir);
     static Mat4 rotate_z_to(Vec3 dir);
+    static Mat4 inverse(Mat4 m);
+    static Mat4 transpose(Mat4 m);
 
-    bool operator==(Mat4 v) {
-        return columns[0] == v.columns[0] && columns[1] == v.columns[1] &&
-               columns[2] == v.columns[2] && columns[3] == v.columns[3];
-    }
-    bool operator!=(Mat4 v) {
-        return columns[0] != v.columns[0] || columns[1] != v.columns[1] ||
-               columns[2] != v.columns[2] || columns[3] != v.columns[3];
-    }
+    bool operator==(Mat4 m) const;
+    bool operator!=(Mat4 m) const;
 
-    Mat4 operator+=(Mat4 v) {
-        for(u64 i = 0; i < 4; i++) pack[i] = _mm_add_ps(pack[i], v.pack[i]);
-        return *this;
-    }
-    Mat4 operator-=(Mat4 v) {
-        for(u64 i = 0; i < 4; i++) pack[i] = _mm_sub_ps(pack[i], v.pack[i]);
-        return *this;
-    }
+    Mat4 operator+(Mat4 m) const;
+    Mat4 operator-(Mat4 m) const;
+    Mat4 operator*(Mat4 m) const;
 
-    Mat4 operator+=(f32 s) {
-        __m128 add = _mm_set1_ps(s);
-        for(u64 i = 0; i < 4; i++) pack[i] = _mm_add_ps(pack[i], add);
-        return *this;
-    }
-    Mat4 operator-=(f32 s) {
-        __m128 sub = _mm_set1_ps(s);
-        for(u64 i = 0; i < 4; i++) pack[i] = _mm_sub_ps(pack[i], sub);
-        return *this;
-    }
-    Mat4 operator*=(f32 s) {
-        __m128 mul = _mm_set1_ps(s);
-        for(u64 i = 0; i < 4; i++) pack[i] = _mm_mul_ps(pack[i], mul);
-        return *this;
-    }
-    Mat4 operator/=(f32 s) {
-        __m128 div = _mm_set1_ps(s);
-        for(u64 i = 0; i < 4; i++) pack[i] = _mm_div_ps(pack[i], div);
-        return *this;
-    }
+    Mat4 operator+(f32 s) const;
+    Mat4 operator-(f32 s) const;
+    Mat4 operator*(f32 s) const;
+    Mat4 operator/(f32 s) const;
 
-    Vec4& operator[](u64 idx) {
-        return columns[idx];
-    }
-    Vec4 operator[](u64 idx) const {
-        return columns[idx];
-    }
+    Vec4& operator[](u64 idx);
+    Vec4 operator[](u64 idx) const;
 
-    Mat4 operator+(Mat4 m) const {
-        Mat4 ret;
-        for(u64 i = 0; i < 4; i++) ret.pack[i] = _mm_add_ps(pack[i], m.pack[i]);
-        return ret;
-    }
-    Mat4 operator-(Mat4 m) const {
-        Mat4 ret;
-        for(u64 i = 0; i < 4; i++) ret.pack[i] = _mm_sub_ps(pack[i], m.pack[i]);
-        return ret;
-    }
+    Vec4 operator*(Vec4 v) const;
+    Vec3 operator*(Vec3 v) const;
+    Vec3 rotate(Vec3 v) const;
 
-    Mat4 operator+(f32 s) const {
-        Mat4 ret;
-        __m128 add = _mm_set1_ps(s);
-        for(u64 i = 0; i < 4; i++) ret.pack[i] = _mm_add_ps(pack[i], add);
-        return ret;
-    }
-    Mat4 operator-(f32 s) const {
-        Mat4 ret;
-        __m128 sub = _mm_set1_ps(s);
-        for(u64 i = 0; i < 4; i++) ret.pack[i] = _mm_sub_ps(pack[i], sub);
-        return ret;
-    }
-    Mat4 operator*(f32 s) const {
-        Mat4 ret;
-        __m128 mul = _mm_set1_ps(s);
-        for(u64 i = 0; i < 4; i++) ret.pack[i] = _mm_mul_ps(pack[i], mul);
-        return ret;
-    }
-    Mat4 operator/(f32 s) const {
-        Mat4 ret;
-        __m128 div = _mm_set1_ps(s);
-        for(u64 i = 0; i < 4; i++) ret.pack[i] = _mm_div_ps(pack[i], div);
-        return ret;
-    }
+    Mat4 T() const;
+    Mat4 inverse() const;
+    Vec3 to_euler() const;
 
-    Mat4 operator*=(Mat4 v) {
-        *this = *this * v;
-        return *this;
-    }
-    Mat4 operator*(Mat4 m) const {
-        Mat4 ret;
-        for(u64 i = 0; i < 4; i++) {
-            ret.pack[i] = _mm_add_ps(_mm_add_ps(_mm_mul_ps(_mm_set1_ps(m[i][0]), pack[0]),
-                                                _mm_mul_ps(_mm_set1_ps(m[i][1]), pack[1])),
-                                     _mm_add_ps(_mm_mul_ps(_mm_set1_ps(m[i][2]), pack[2]),
-                                                _mm_mul_ps(_mm_set1_ps(m[i][3]), pack[3])));
-        }
-        return ret;
-    }
+    const Vec4* begin() const;
+    const Vec4* end() const;
+    Vec4* begin();
+    Vec4* end();
 
-    Vec4 operator*(Vec4 v) const {
-        return Vec4{_mm_add_ps(_mm_add_ps(_mm_mul_ps(pack[0], _mm_set1_ps(v.x)),
-                                          _mm_mul_ps(pack[1], _mm_set1_ps(v.y))),
-                               _mm_add_ps(_mm_mul_ps(pack[2], _mm_set1_ps(v.z)),
-                                          _mm_mul_ps(pack[3], _mm_set1_ps(v.w))))};
-    }
-
-    Vec3 operator*(Vec3 v) const {
-        Vec4 r = *this * Vec4{v, 1.0f};
-        return r.proj();
-    }
-    Vec3 rotate(Vec3 v) const {
-        Vec4 r = *this * Vec4{v, 0.0f};
-        return r.xyz;
-    }
-
-    Mat4 T() const {
-        return transpose(*this);
-    }
-    Mat4 inverse() const {
-        return Math::inverse(*this);
-    }
-
-    const Vec4* begin() const {
-        return columns;
-    }
-    const Vec4* end() const {
-        return columns + 4;
-    }
-    Vec4* begin() {
-        return columns;
-    }
-    Vec4* end() {
-        return columns + 4;
-    }
-
-    Vec3 to_euler() const {
-
-        bool single = true;
-        static const f32 singularity[] = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
-                                          0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0};
-        for(int i = 0; i < 12 && single; i++) {
-            single = single && Math::abs(data[i] - singularity[i]) < Math::EPS_F;
-        }
-        if(single) return Vec3{0.0f, 0.0f, 180.0f};
-
-        Vec3 eul1, eul2;
-
-        f32 cy = Math::hypot(columns[0][0], columns[0][1]);
-        if(cy > Math::EPS_F) {
-            eul1[0] = Math::atan2(columns[1][2], columns[2][2]);
-            eul1[1] = Math::atan2(-columns[0][2], cy);
-            eul1[2] = Math::atan2(columns[0][1], columns[0][0]);
-
-            eul2[0] = Math::atan2(-columns[1][2], -columns[2][2]);
-            eul2[1] = Math::atan2(-columns[0][2], -cy);
-            eul2[2] = Math::atan2(-columns[0][1], -columns[0][0]);
-        } else {
-            eul1[0] = Math::atan2(-columns[2][1], columns[1][1]);
-            eul1[1] = Math::atan2(-columns[0][2], cy);
-            eul1[2] = 0;
-            eul2 = eul1;
-        }
-        f32 d1 = Math::abs(eul1[0]) + Math::abs(eul1[1]) + Math::abs(eul1[2]);
-        f32 d2 = Math::abs(eul2[0]) + Math::abs(eul2[1]) + Math::abs(eul2[2]);
-        if(d1 > d2)
-            return Math::degrees(eul2);
-        else
-            return Math::degrees(eul1);
-    }
-
-    static Mat4 I, zero, swap_x_z;
+    static Mat4 I;
+    static Mat4 zero;
+    static Mat4 swap_x_z;
 };
 
-inline Mat4 Mat4::I = Mat4{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                           0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
-inline Mat4 Mat4::zero = Mat4{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                              0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-inline Mat4 Mat4::swap_x_z = Mat4{0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                                  1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
+struct Quat : detail::Vect_Base<f32, 4> {
 
-#define MakeShuffleMask(x, y, z, w) (x | (y << 2) | (z << 4) | (w << 6))
-#define VecSwizzleMask(vec, mask) _mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(vec), mask))
-#define VecSwizzle(vec, x, y, z, w) VecSwizzleMask(vec, MakeShuffleMask(x, y, z, w))
-#define VecSwizzle1(vec, x) VecSwizzleMask(vec, MakeShuffleMask(x, x, x, x))
-#define VecSwizzle_0022(vec) _mm_moveldup_ps(vec)
-#define VecSwizzle_1133(vec) _mm_movehdup_ps(vec)
-#define VecShuffle(vec1, vec2, x, y, z, w) _mm_shuffle_ps(vec1, vec2, MakeShuffleMask(x, y, z, w))
-#define VecShuffle_0101(vec1, vec2) _mm_movelh_ps(vec1, vec2)
-#define VecShuffle_2323(vec1, vec2) _mm_movehl_ps(vec2, vec1)
-inline __m128 Mat2Mul(__m128 vec1, __m128 vec2) {
-    return _mm_add_ps(_mm_mul_ps(vec1, VecSwizzle(vec2, 0, 3, 0, 3)),
-                      _mm_mul_ps(VecSwizzle(vec1, 1, 0, 3, 2), VecSwizzle(vec2, 2, 1, 2, 1)));
-}
-inline __m128 Mat2AdjMul(__m128 vec1, __m128 vec2) {
-    return _mm_sub_ps(_mm_mul_ps(VecSwizzle(vec1, 3, 3, 0, 0), vec2),
-                      _mm_mul_ps(VecSwizzle(vec1, 1, 1, 2, 2), VecSwizzle(vec2, 2, 3, 0, 1)));
-}
-inline __m128 Mat2MulAdj(__m128 vec1, __m128 vec2) {
-    return _mm_sub_ps(_mm_mul_ps(vec1, VecSwizzle(vec2, 3, 0, 3, 0)),
-                      _mm_mul_ps(VecSwizzle(vec1, 1, 0, 3, 2), VecSwizzle(vec2, 2, 1, 2, 1)));
-}
-inline Mat4 inverse(Mat4 m) {
-    __m128 A = VecShuffle_0101(m.pack[0], m.pack[1]);
-    __m128 B = VecShuffle_2323(m.pack[0], m.pack[1]);
-    __m128 C = VecShuffle_0101(m.pack[2], m.pack[3]);
-    __m128 D = VecShuffle_2323(m.pack[2], m.pack[3]);
+    using Base = detail::Vect_Base<f32, 4>;
 
-    __m128 detSub = _mm_sub_ps(_mm_mul_ps(VecShuffle(m.pack[0], m.pack[2], 0, 2, 0, 2),
-                                          VecShuffle(m.pack[1], m.pack[3], 1, 3, 1, 3)),
-                               _mm_mul_ps(VecShuffle(m.pack[0], m.pack[2], 1, 3, 1, 3),
-                                          VecShuffle(m.pack[1], m.pack[3], 0, 2, 0, 2)));
-    __m128 detA = VecSwizzle1(detSub, 0);
-    __m128 detB = VecSwizzle1(detSub, 1);
-    __m128 detC = VecSwizzle1(detSub, 2);
-    __m128 detD = VecSwizzle1(detSub, 3);
-    __m128 D_C = Mat2AdjMul(D, C);
-    __m128 A_B = Mat2AdjMul(A, B);
-    __m128 X_ = _mm_sub_ps(_mm_mul_ps(detD, A), Mat2Mul(B, D_C));
-    __m128 W_ = _mm_sub_ps(_mm_mul_ps(detA, D), Mat2Mul(C, A_B));
-
-    __m128 detM = _mm_mul_ps(detA, detD);
-    __m128 Y_ = _mm_sub_ps(_mm_mul_ps(detB, C), Mat2MulAdj(D, A_B));
-    __m128 Z_ = _mm_sub_ps(_mm_mul_ps(detC, B), Mat2MulAdj(A, D_C));
-    detM = _mm_add_ps(detM, _mm_mul_ps(detB, detC));
-
-    __m128 tr = _mm_mul_ps(A_B, VecSwizzle(D_C, 0, 2, 1, 3));
-    tr = _mm_hadd_ps(tr, tr);
-    tr = _mm_hadd_ps(tr, tr);
-    detM = _mm_sub_ps(detM, tr);
-
-    const __m128 adjSignMask = _mm_setr_ps(1.f, -1.f, -1.f, 1.f);
-    __m128 rDetM = _mm_div_ps(adjSignMask, detM);
-
-    X_ = _mm_mul_ps(X_, rDetM);
-    Y_ = _mm_mul_ps(Y_, rDetM);
-    Z_ = _mm_mul_ps(Z_, rDetM);
-    W_ = _mm_mul_ps(W_, rDetM);
-
-    Mat4 r;
-    r.pack[0] = VecShuffle(X_, Y_, 3, 1, 3, 1);
-    r.pack[1] = VecShuffle(X_, Y_, 2, 0, 2, 0);
-    r.pack[2] = VecShuffle(Z_, W_, 3, 1, 3, 1);
-    r.pack[3] = VecShuffle(Z_, W_, 2, 0, 2, 0);
-    return r;
-}
-
-inline Mat4 Mat4::transpose(Mat4 m) {
-    Mat4 ret;
-    for(u64 i = 0; i < 4; i++)
-        for(u64 j = 0; j < 4; j++) ret[i][j] = m[j][i];
-    return ret;
-}
-
-inline Mat4 Mat4::ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
-    Mat4 ret;
-    ret[0][0] = 2.0f / (r - l);
-    ret[1][1] = 2.0f / (t - b);
-    ret[2][2] = 2.0f / (n - f);
-    ret[3][0] = (-l - r) / (r - l);
-    ret[3][1] = (-b - t) / (t - b);
-    ret[3][2] = -n / (f - n);
-    return ret;
-}
-
-inline Mat4 Mat4::proj(f32 fov, f32 ar, f32 n) {
-    f32 f = 1.0f / Math::tan(Math::radians(fov) / 2.0f);
-    Mat4 ret;
-    ret[0][0] = f / ar;
-    ret[1][1] = -f;
-    ret[2][2] = 0.0f;
-    ret[3][3] = 0.0f;
-    ret[3][2] = n;
-    ret[2][3] = -1.0f;
-    return ret;
-}
-
-inline Mat4 Mat4::translate(Vec3 v) {
-    Mat4 ret;
-    ret[3].xyz = v;
-    return ret;
-}
-
-inline Mat4 Mat4::rotate(f32 a, Vec3 axis) {
-    Mat4 ret;
-    f32 c = Math::cos(Math::radians(a));
-    f32 s = Math::sin(Math::radians(a));
-    axis = normalize(axis);
-    Vec3 temp = axis * (1.0f - c);
-    ret[0][0] = c + temp[0] * axis[0];
-    ret[0][1] = temp[0] * axis[1] + s * axis[2];
-    ret[0][2] = temp[0] * axis[2] - s * axis[1];
-    ret[1][0] = temp[1] * axis[0] - s * axis[2];
-    ret[1][1] = c + temp[1] * axis[1];
-    ret[1][2] = temp[1] * axis[2] + s * axis[0];
-    ret[2][0] = temp[2] * axis[0] + s * axis[1];
-    ret[2][1] = temp[2] * axis[1] - s * axis[0];
-    ret[2][2] = c + temp[2] * axis[2];
-    return ret;
-}
-
-inline Mat4 Mat4::scale(Vec3 s) {
-    Mat4 ret;
-    ret[0][0] = s.x;
-    ret[1][1] = s.y;
-    ret[2][2] = s.z;
-    return ret;
-}
-
-inline Mat4 Mat4::look_at(Vec3 pos, Vec3 at, Vec3 up) {
-    Mat4 ret = Mat4::zero;
-    Vec3 F = normalize(at - pos);
-    Vec3 S = normalize(cross(F, up));
-    Vec3 U = cross(S, F);
-    ret[0][0] = S.x;
-    ret[0][1] = U.x;
-    ret[0][2] = -F.x;
-    ret[1][0] = S.y;
-    ret[1][1] = U.y;
-    ret[1][2] = -F.y;
-    ret[2][0] = S.z;
-    ret[2][1] = U.z;
-    ret[2][2] = -F.z;
-    ret[3][0] = -dot(S, pos);
-    ret[3][1] = -dot(U, pos);
-    ret[3][2] = dot(F, pos);
-    ret[3][3] = 1.0f;
-    return ret;
-}
-
-inline Mat4 Mat4::rotate_to(Vec3 dir) {
-
-    dir.normalize();
-
-    if(Math::abs(dir.y - 1.0f) < Math::EPS_F)
-        return Mat4::I;
-    else if(Math::abs(dir.y + 1.0f) < Math::EPS_F)
-        return Mat4{Vec4{1.0f, 0.0f, 0.0f, 0.0f}, Vec4{0.0f, -1.0f, 0.0f, 0.0f},
-                    Vec4{0.0f, 0.0f, 1.0f, 0.0f}, Vec4{0.0f, 0.0f, 0.0f, 1.0f}};
-    else {
-        Vec3 x = cross(dir, Vec3{0.0f, 1.0f, 0.0f}).unit();
-        Vec3 z = cross(x, dir).unit();
-        return Mat4{Vec4{x, 0.0f}, Vec4{dir, 0.0f}, Vec4{z, 0.0f}, Vec4{0.0f, 0.0f, 0.0f, 1.0f}};
-    }
-}
-
-inline Mat4 Mat4::rotate_z_to(Vec3 dir) {
-    Mat4 y = rotate_to(dir);
-    Vec4 _y = y[1];
-    Vec4 _z = y[2];
-    y[1] = _z;
-    y[2] = -_y;
-    return y;
-}
-
-struct Quat : Vect_Base<f32, 4> {
-
-    using Base = Vect_Base<f32, 4>;
     Quat() : Base{0.0f, 0.0f, 0.0f, 1.0f} {
     }
     Quat(f32 x, f32 y, f32 z, f32 w) : Base{x, y, z, w} {
@@ -909,8 +592,31 @@ struct Quat : Vect_Base<f32, 4> {
     Quat(Vec4 src) : Base{src} {
     }
 
-    static Quat axis_angle(Vec3 axis, f32 angle);
-    static Quat euler(Vec3 angles);
+    static Quat axis_angle(Vec3 axis, f32 angle) {
+        axis.normalize();
+        angle = Math::radians(angle) / 2.0f;
+        f32 sin = Math::sin(angle);
+        f32 x = sin * axis.x;
+        f32 y = sin * axis.y;
+        f32 z = sin * axis.z;
+        f32 w = Math::cos(angle);
+        return Quat(x, y, z, w).unit();
+    }
+    static Quat euler(Vec3 angles) {
+        if(angles == Vec3{0.0f, 0.0f, 180.0f} || angles == Vec3{180.0f, 0.0f, 0.0f})
+            return Quat{0.0f, 0.0f, -1.0f, 0.0f};
+        f32 c1 = Math::cos(Math::radians(angles[2] * 0.5f));
+        f32 c2 = Math::cos(Math::radians(angles[1] * 0.5f));
+        f32 c3 = Math::cos(Math::radians(angles[0] * 0.5f));
+        f32 s1 = Math::sin(Math::radians(angles[2] * 0.5f));
+        f32 s2 = Math::sin(Math::radians(angles[1] * 0.5f));
+        f32 s3 = Math::sin(Math::radians(angles[0] * 0.5f));
+        f32 x = c1 * c2 * s3 - s1 * s2 * c3;
+        f32 y = c1 * s2 * c3 + s1 * c2 * s3;
+        f32 z = s1 * c2 * c3 - c1 * s2 * s3;
+        f32 w = c1 * c2 * c3 + s1 * s2 * s3;
+        return Quat(x, y, z, w);
+    }
 
     f32& operator[](int idx) {
         return data[idx];
@@ -998,33 +704,6 @@ struct Quat : Vect_Base<f32, 4> {
     }
 };
 
-inline Quat Quat::euler(Vec3 angles) {
-    if(angles == Vec3{0.0f, 0.0f, 180.0f} || angles == Vec3{180.0f, 0.0f, 0.0f})
-        return Quat{0.0f, 0.0f, -1.0f, 0.0f};
-    f32 c1 = Math::cos(Math::radians(angles[2] * 0.5f));
-    f32 c2 = Math::cos(Math::radians(angles[1] * 0.5f));
-    f32 c3 = Math::cos(Math::radians(angles[0] * 0.5f));
-    f32 s1 = Math::sin(Math::radians(angles[2] * 0.5f));
-    f32 s2 = Math::sin(Math::radians(angles[1] * 0.5f));
-    f32 s3 = Math::sin(Math::radians(angles[0] * 0.5f));
-    f32 x = c1 * c2 * s3 - s1 * s2 * c3;
-    f32 y = c1 * s2 * c3 + s1 * c2 * s3;
-    f32 z = s1 * c2 * c3 - c1 * s2 * s3;
-    f32 w = c1 * c2 * c3 + s1 * s2 * s3;
-    return Quat(x, y, z, w);
-}
-
-inline Quat Quat::axis_angle(Vec3 axis, f32 angle) {
-    axis.normalize();
-    angle = Math::radians(angle) / 2.0f;
-    f32 sin = Math::sin(angle);
-    f32 x = sin * axis.x;
-    f32 y = sin * axis.y;
-    f32 z = sin * axis.z;
-    f32 w = Math::cos(angle);
-    return Quat(x, y, z, w).unit();
-}
-
 struct BBox {
 
     BBox() : min(Limits<f32>::max()), max(Limits<f32>::min()) {
@@ -1082,7 +761,7 @@ struct BBox {
         }
     }
 
-    void screen_bb(const Mat4& transform, Vec2& min_out, Vec2& max_out) const {
+    void project(const Mat4& proj, Vec2& min_out, Vec2& max_out) const {
 
         min_out = Vec2(Limits<f32>::max());
         max_out = Vec2(Limits<f32>::min());
@@ -1093,7 +772,7 @@ struct BBox {
 
         bool partially_behind = false, all_behind = true;
         for(auto& v : c) {
-            Vec3 p = transform * v;
+            Vec3 p = proj * v;
             if(p.z < 0.0f) {
                 partially_behind = true;
             } else {
@@ -1117,141 +796,165 @@ struct BBox {
 
 } // namespace Math
 
-using Math::Vec2;
-using Math::Vec2i;
-using Math::Vec2u;
-using Math::Vec3;
-using Math::Vec3i;
-using Math::Vec3u;
-using Math::Vec4;
-using Math::Vec4i;
-using Math::Vec4u;
-template<u64 N>
-using VecN = Math::VecN<N>;
-template<u64 N>
-using VecNi = Math::VecNi<N>;
-template<u64 N>
-using VecNu = Math::VecNu<N>;
+template<typename T, u64 N>
+Math::Vect<T, N> operator+(T s, Math::Vect<T, N> v) {
+    if constexpr(Math::Vect<T, N>::is_simd)
+        return Math::Vect<T, N>{SIMD::F32x4::add(v.pack, SIMD::F32x4::set1(s))};
+    else {
+        Math::Vect<T, N> r;
+        for(u64 i = 0; i < N; i++) r.data[i] = v.data[i] + s;
+        return r;
+    }
+}
 
-using Math::BBox;
-using Math::Mat4;
-using Math::Quat;
+template<typename T, u64 N>
+Math::Vect<T, N> operator-(T s, Math::Vect<T, N> v) {
+    if constexpr(Math::Vect<T, N>::is_simd)
+        return Math::Vect<T, N>{SIMD::F32x4::sub(v.pack, SIMD::F32x4::set1(s))};
+    else {
+        Math::Vect<T, N> r;
+        for(u64 i = 0; i < N; i++) r.data[i] = s - v.data[i];
+        return r;
+    }
+}
+
+template<typename T, u64 N>
+Math::Vect<T, N> operator*(T s, Math::Vect<T, N> v) {
+    if constexpr(Math::Vect<T, N>::is_simd)
+        return Math::Vect<T, N>{SIMD::F32x4::mul(v.pack, SIMD::F32x4::set1(s))};
+    else {
+        Math::Vect<T, N> r;
+        for(u64 i = 0; i < N; i++) r.data[i] = v.data[i] * s;
+        return r;
+    }
+}
+
+template<typename T, u64 N>
+Math::Vect<T, N> operator/(T s, Math::Vect<T, N> v) {
+    if constexpr(Math::Vect<T, N>::is_simd)
+        return Math::Vect<T, N>{SIMD::F32x4::div(v.pack, SIMD::F32x4::set1(s))};
+    else {
+        Math::Vect<T, N> r;
+        for(u64 i = 0; i < N; i++) r.data[i] = s / v.data[i];
+        return r;
+    }
+}
 
 template<>
-struct Reflect<Vec2> {
-    using T = Vec2;
+struct Reflect<Math::Vec2> {
+    using T = Math::Vec2;
     static constexpr Literal name = "Vec2";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y)>;
 };
 
 template<>
-struct Reflect<Vec3> {
-    using T = Vec3;
+struct Reflect<Math::Vec3> {
+    using T = Math::Vec3;
     static constexpr Literal name = "Vec3";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z)>;
 };
 
 template<>
-struct Reflect<Vec4> {
-    using T = Vec4;
+struct Reflect<Math::Vec4> {
+    using T = Math::Vec4;
     static constexpr Literal name = "Vec4";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
 };
 
 template<>
-struct Reflect<Vec2i> {
-    using T = Vec2i;
+struct Reflect<Math::Vec2i> {
+    using T = Math::Vec2i;
     static constexpr Literal name = "Vec2i";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y)>;
 };
 
 template<>
-struct Reflect<Vec3i> {
-    using T = Vec3i;
+struct Reflect<Math::Vec3i> {
+    using T = Math::Vec3i;
     static constexpr Literal name = "Vec3i";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z)>;
 };
 
 template<>
-struct Reflect<Vec4i> {
-    using T = Vec4i;
+struct Reflect<Math::Vec4i> {
+    using T = Math::Vec4i;
     static constexpr Literal name = "Vec4i";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
 };
 
 template<>
-struct Reflect<Vec2u> {
-    using T = Vec2u;
+struct Reflect<Math::Vec2u> {
+    using T = Math::Vec2u;
     static constexpr Literal name = "Vec2u";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y)>;
 };
 
 template<>
-struct Reflect<Vec3u> {
-    using T = Vec3u;
+struct Reflect<Math::Vec3u> {
+    using T = Math::Vec3u;
     static constexpr Literal name = "Vec3u";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z)>;
 };
 
 template<>
-struct Reflect<Vec4u> {
-    using T = Vec4u;
+struct Reflect<Math::Vec4u> {
+    using T = Math::Vec4u;
     static constexpr Literal name = "Vec4u";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
 };
 
 template<u64 N>
-struct Reflect<VecN<N>> {
-    using T = VecN<N>;
+struct Reflect<Math::VecN<N>> {
+    using T = Math::VecN<N>;
     static constexpr Literal name = "VecN";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data)>;
 };
 
 template<u64 N>
-struct Reflect<VecNi<N>> {
-    using T = VecNi<N>;
+struct Reflect<Math::VecNi<N>> {
+    using T = Math::VecNi<N>;
     static constexpr Literal name = "VecNi";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data)>;
 };
 
 template<u64 N>
-struct Reflect<VecNu<N>> {
-    using T = VecNu<N>;
+struct Reflect<Math::VecNu<N>> {
+    using T = Math::VecNu<N>;
     static constexpr Literal name = "VecNu";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data)>;
 };
 
 template<>
-struct Reflect<Mat4> {
-    using T = Mat4;
+struct Reflect<Math::Mat4> {
+    using T = Math::Mat4;
     static constexpr Literal name = "Mat4";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(columns)>;
 };
 
 template<>
-struct Reflect<Quat> {
-    using T = Quat;
+struct Reflect<Math::Quat> {
+    using T = Math::Quat;
     static constexpr Literal name = "Quat";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data)>;
 };
 
 template<>
-struct Reflect<BBox> {
-    using T = BBox;
+struct Reflect<Math::BBox> {
+    using T = Math::BBox;
     static constexpr Literal name = "BBox";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(min), FIELD(max)>;
@@ -1295,17 +998,6 @@ struct Measure<Math::Vect<I, N>> {
     }
 };
 template<>
-struct Measure<Math::Quat> {
-    static u64 measure(const Math::Quat& quat) {
-        u64 length = 12;
-        length += Measure<f32>::measure(quat.x);
-        length += Measure<f32>::measure(quat.y);
-        length += Measure<f32>::measure(quat.z);
-        length += Measure<f32>::measure(quat.w);
-        return length;
-    }
-};
-template<>
 struct Measure<Math::Mat4> {
     static u64 measure(const Math::Mat4& mat) {
         u64 length = 6;
@@ -1318,6 +1010,17 @@ struct Measure<Math::Mat4> {
             length += 1;
             if(i + 1 < 4) length += 2;
         }
+        return length;
+    }
+};
+template<>
+struct Measure<Math::Quat> {
+    static u64 measure(const Math::Quat& quat) {
+        u64 length = 12;
+        length += Measure<f32>::measure(quat.x);
+        length += Measure<f32>::measure(quat.y);
+        length += Measure<f32>::measure(quat.z);
+        length += Measure<f32>::measure(quat.w);
         return length;
     }
 };
@@ -1375,20 +1078,6 @@ struct Write<O, Math::Vect<I, N>> {
     }
 };
 template<Allocator O>
-struct Write<O, Math::Quat> {
-    static u64 write(String<O>& output, u64 idx, const Math::Quat& quat) {
-        idx = output.write(idx, "Quat{"_v);
-        idx = Write<O, f32>::write(output, idx, quat.x);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, quat.y);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, quat.z);
-        idx = output.write(idx, ", "_v);
-        idx = Write<O, f32>::write(output, idx, quat.w);
-        return output.write(idx, '}');
-    }
-};
-template<Allocator O>
 struct Write<O, Math::Mat4> {
     static u64 write(String<O>& output, u64 idx, const Math::Mat4& mat) {
         idx = output.write(idx, "Mat4{"_v);
@@ -1401,6 +1090,20 @@ struct Write<O, Math::Mat4> {
             idx = output.write(idx, '}');
             if(i + 1 < 4) idx = output.write(idx, ", "_v);
         }
+        return output.write(idx, '}');
+    }
+};
+template<Allocator O>
+struct Write<O, Math::Quat> {
+    static u64 write(String<O>& output, u64 idx, const Math::Quat& quat) {
+        idx = output.write(idx, "Quat{"_v);
+        idx = Write<O, f32>::write(output, idx, quat.x);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, quat.y);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, quat.z);
+        idx = output.write(idx, ", "_v);
+        idx = Write<O, f32>::write(output, idx, quat.w);
         return output.write(idx, '}');
     }
 };
@@ -1424,5 +1127,4 @@ struct Write<O, Math::BBox> {
 };
 
 } // namespace Format
-
 } // namespace rpp

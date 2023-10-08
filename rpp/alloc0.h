@@ -129,7 +129,7 @@ private:
         if(list_) {
             Free_Node* ret = list_;
             list_ = list_->next;
-            std::memset(ret, 0, sizeof(Free_Node));
+            Std::memset(ret, 0, sizeof(Free_Node));
             return reinterpret_cast<T*>(ret);
         }
         void* new_node = Base::alloc(sizeof(Free_Node));

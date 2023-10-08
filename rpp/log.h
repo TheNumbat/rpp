@@ -55,8 +55,9 @@ struct Scope {
     ~Scope();
 };
 
-String_View sys_error();
 u64 sys_time();
+String_View sys_error();
+
 void debug_break();
 void output(Level level, const Location& loc, String_View msg);
 

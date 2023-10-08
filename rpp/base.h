@@ -11,6 +11,13 @@
 
 #ifdef _WIN64
 #define OS_WINDOWS
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #elif defined __linux__
 #define OS_LINUX
 #else
@@ -37,17 +44,14 @@
 #ifdef OS_LINUX
 #include <errno.h>
 #include <pthread.h>
-#include <signal.h>
 #endif
 
-#include <cstdio>
-#include <cstring>
 #include <float.h>
-#include <initializer_list>
-#include <smmintrin.h>
-#include <source_location>
 #include <stdint.h>
 #include <stdlib.h>
+
+#include <initializer_list>
+#include <source_location>
 #include <type_traits>
 
 #define null nullptr
@@ -78,6 +82,17 @@ static_assert(sizeof(f64) == 8);
 static_assert(sizeof(char) == 1);
 static_assert(sizeof(bool) == 1);
 static_assert(sizeof(void*) == 8);
+
+namespace Std {
+
+i32 strncmp(const char* a, const char* b, u64 bytes);
+u64 strlen(const char* str);
+void* memset(void* dest, i32 value, u64 bytes);
+void* memcpy(void* dest, const void* src, u64 bytes);
+i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...);
+
+} // namespace Std
+
 } // namespace rpp
 
 #define RPP_BASE
@@ -97,8 +112,6 @@ static_assert(sizeof(void*) == 8);
 #include "log.h"
 
 #include "format.h"
-
-#include "3d_math.h"
 
 #include "ref1.h"
 
@@ -127,10 +140,3 @@ static_assert(sizeof(void*) == 8);
 #include "alloc1.h"
 
 #include "rc.h"
-
-// #include "tuple.h"
-// #include "variant.h"
-// #include "function.h"
-// #include "stack.h"
-// #include "heap.h"
-// #include "rng.h"

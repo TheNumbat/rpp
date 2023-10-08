@@ -14,11 +14,11 @@ struct String_View {
 
     String_View() = default;
     explicit String_View(const char* c_string)
-        : data_(reinterpret_cast<const u8*>(c_string)), length_(std::strlen(c_string)) {
+        : data_(reinterpret_cast<const u8*>(c_string)), length_(Std::strlen(c_string)) {
     }
     explicit String_View(const Literal& literal)
         : data_(reinterpret_cast<const u8*>(literal.c_string)),
-          length_(std::strlen(literal.c_string)) {
+          length_(Std::strlen(literal.c_string)) {
     }
     explicit String_View(const u8* data, u64 length) : data_(data), length_(length) {
     }
@@ -108,7 +108,7 @@ struct String {
         ret.data_ = reinterpret_cast<u8*>(B::alloc(capacity_));
         ret.length_ = length_;
         ret.capacity_ = capacity_;
-        std::memcpy(ret.data_, data_, length_);
+        Std::memcpy(ret.data_, data_, length_);
         return ret;
     }
 
@@ -172,7 +172,7 @@ String<A> String_View::string() const {
     ret.data_ = reinterpret_cast<u8*>(A::alloc(length_));
     ret.length_ = length_;
     ret.capacity_ = length_;
-    std::memcpy(ret.data_, data_, length_);
+    Std::memcpy(ret.data_, data_, length_);
     return ret;
 }
 
@@ -182,7 +182,7 @@ inline String_View operator""_v(const char* c_string, size_t length) {
 
 inline bool operator==(String_View l, String_View r) {
     if(l.length() != r.length()) return false;
-    return std::strncmp(reinterpret_cast<const char*>(l.data()),
+    return Std::strncmp(reinterpret_cast<const char*>(l.data()),
                         reinterpret_cast<const char*>(r.data()), l.length()) == 0;
 }
 
@@ -198,7 +198,7 @@ inline bool operator<(String_View l, String_View r) {
 template<Allocator A, Allocator B>
 bool operator==(const String<A>& l, const String<B>& r) {
     if(l.length() != r.length()) return false;
-    return std::strncmp(reinterpret_cast<const char*>(l.data()),
+    return Std::strncmp(reinterpret_cast<const char*>(l.data()),
                         reinterpret_cast<const char*>(r.data()), l.length()) == 0;
 }
 

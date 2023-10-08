@@ -136,7 +136,7 @@ struct Map {
         Map<K, V, B> ret(capacity_);
         ret.length_ = length_;
         if constexpr(Trivial<K> && Trivial<V>) {
-            std::memcpy(ret.data_, data_, capacity_ * sizeof(Slot));
+            Std::memcpy(ret.data_, data_, capacity_ * sizeof(Slot));
         } else {
             for(u64 i = 0; i < length_; i++) {
                 new(&ret.data_[i]) Slot{data_[i].clone()};
@@ -173,7 +173,7 @@ struct Map {
                 data_[i].~Slot();
             }
         } else {
-            std::memset(data_, Slot::EMPTY, capacity_ * sizeof(Slot));
+            Std::memset(data_, Slot::EMPTY, capacity_ * sizeof(Slot));
         }
         length_ = 0;
     }

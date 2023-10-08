@@ -1,6 +1,7 @@
 
 #include "net.h"
 
+#include <cstdio>
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -43,11 +44,15 @@ struct WSA_Startup {
 
 static WSA_Startup g_wsa_startup;
 
+static_assert(sizeof(sockaddr_in) == 16);
+static_assert(alignof(sockaddr_in) == 4);
+
 Address::Address(String_View address_, u16 port) {
 
     Region_Scope;
     auto address = address_.terminate<Mregion>();
 
+    sockaddr_in& sockaddr_ = *reinterpret_cast<sockaddr_in*>(sockaddr_storage);
     sockaddr_ = {};
     sockaddr_.sin_family = AF_INET;
     sockaddr_.sin_port = htons(port);
@@ -63,10 +68,8 @@ Address::Address(String_View address_, u16 port) {
     }
 }
 
-Address::Address(sockaddr_in sockaddr) : sockaddr_(sockaddr) {
-}
-
 Address::Address(u16 port) {
+    sockaddr_in& sockaddr_ = *reinterpret_cast<sockaddr_in*>(sockaddr_storage);
     sockaddr_ = {};
     sockaddr_.sin_family = AF_INET;
     sockaddr_.sin_port = htons(port);
@@ -106,7 +109,8 @@ Udp& Udp::operator=(Udp&& src) {
 
 void Udp::bind(Address address) {
 
-    if(::bind(socket, (SOCKADDR*)&address.sockaddr(), sizeof(sockaddr_in)) == SOCKET_ERROR) {
+    if(::bind(socket, reinterpret_cast<SOCKADDR*>(address.sockaddr_storage), sizeof(sockaddr_in)) ==
+       SOCKET_ERROR) {
         die("Failed to bind socket: %", wsa_error());
     }
 }
@@ -122,13 +126,17 @@ Opt<Udp::Data> Udp::recv(Packet& in) {
         return {};
     }
 
-    return Opt{Data{static_cast<u64>(ret), Address{src}}};
+    Address retaddr;
+    *reinterpret_cast<sockaddr_in*>(retaddr.sockaddr_storage) = src;
+
+    return Opt{Data{static_cast<u64>(ret), std::move(retaddr)}};
 }
 
 u64 Udp::send(Address address, const Packet& out, u64 length) {
 
-    i32 ret = sendto(socket, reinterpret_cast<const char*>(out.data()), static_cast<i32>(length), 0,
-                     reinterpret_cast<const SOCKADDR*>(&address.sockaddr()), sizeof(sockaddr_in));
+    i32 ret =
+        sendto(socket, reinterpret_cast<const char*>(out.data()), static_cast<i32>(length), 0,
+               reinterpret_cast<const SOCKADDR*>(address.sockaddr_storage), sizeof(sockaddr_in));
     if(ret == SOCKET_ERROR) {
         warn("Failed send packet: %", wsa_error());
     }

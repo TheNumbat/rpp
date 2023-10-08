@@ -9,6 +9,7 @@
 #include "rpp/thread.h"
 
 #include "rpp/range_allocator.h"
+#include "rpp/vmath.h"
 
 #include "rpp/function.h"
 #include "rpp/heap.h"
@@ -920,6 +921,8 @@ i32 main() {
             assert(r2.references() == 2);
             info("%", r2);
         }
+
+        using namespace Math;
 
         info("%", Vec2{1.0f, 2.0f});
         info("%", Vec3{1.0f, 2.0f, 3.0f});

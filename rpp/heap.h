@@ -71,7 +71,7 @@ struct Heap {
             }
         } else {
             static_assert(Trivial<T>);
-            std::memcpy(ret.data_, data_, length_ * sizeof(T));
+            Std::memcpy(ret.data_, data_, length_ * sizeof(T));
         }
         return ret;
     }
@@ -83,7 +83,7 @@ struct Heap {
 
         T* new_data = reinterpret_cast<T*>(A::alloc(new_capacity * sizeof(T)));
         if constexpr(Trivially_Movable<T>) {
-            std::memcpy(new_data, data_, length_ * sizeof(T));
+            Std::memcpy(new_data, data_, length_ * sizeof(T));
         } else {
             static_assert(Move_Constructable<T>);
             for(u64 i = 0; i < length_; i++) {
@@ -151,7 +151,7 @@ struct Heap {
 
         if(length_ > 0) {
             if constexpr(Trivially_Movable<T>) {
-                std::memcpy(data_, data_ + length_, sizeof(T));
+                Std::memcpy(data_, data_ + length_, sizeof(T));
             } else {
                 static_assert(Move_Constructable<T>);
                 new(data_) T{std::move(data_[length_])};
