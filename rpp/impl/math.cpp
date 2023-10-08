@@ -3,7 +3,7 @@
 #include <intrin.h>
 #endif
 
-#include "base.h"
+#include "../base.h"
 #include <cmath>
 
 namespace rpp::Math {

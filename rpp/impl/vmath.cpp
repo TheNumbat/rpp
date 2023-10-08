@@ -1,5 +1,6 @@
 
-#include "vmath.h"
+#include "../vmath.h"
+
 #include <smmintrin.h>
 
 namespace rpp::Math {

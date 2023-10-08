@@ -1,5 +1,5 @@
 
-#include "simd.h"
+#include "../simd.h"
 
 #include <smmintrin.h>
 

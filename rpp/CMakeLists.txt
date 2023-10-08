@@ -3,13 +3,11 @@ cmake_minimum_required(VERSION 3.17)
 project(rpp LANGUAGES CXX)
 
 set(SOURCES_RPP
-    "alloc.cpp"
     "alloc0.h"
     "alloc1.h"
     "array.h"
     "async.h"
     "asyncio.h"
-    "base.cpp"
     "base.h"
     "box.h"
     "files.h"
@@ -17,16 +15,13 @@ set(SOURCES_RPP
     "function.h"
     "hash.h"
     "heap.h"
-    "log.cpp"
     "log.h"
     "map.h"
-    "math.cpp"
     "math.h"
     "net.h"
     "opt.h"
     "pair.h"
     "pool.h"
-    "profile.cpp"
     "profile.h"
     "queue.h"
     "range_allocator.h"
@@ -35,7 +30,6 @@ set(SOURCES_RPP
     "ref1.h"
     "reflect.h"
     "rng.h"
-    "simd.cpp"
     "simd.h"
     "stack.h"
     "storage.h"
@@ -46,19 +40,26 @@ set(SOURCES_RPP
     "tuple.h"
     "variant.h"
     "vec.h"
-    "vmath.cpp"
     "vmath.h"
+
+    "impl/alloc.cpp"
+    "impl/base.cpp"
+    "impl/log.cpp"
+    "impl/math.cpp"
+    "impl/profile.cpp"
+    "impl/simd.cpp"
+    "impl/vmath.cpp"
 )
 
 if(WIN32)
     set(SOURCES_RPP ${SOURCES_RPP}
-        "w32_util.h"
-        "w32_util.cpp"
-        "async_w32.cpp"
-        "asyncio_w32.cpp"
-        "thread_w32.cpp"
-        "files_w32.cpp"
-        "net_w32.cpp"
+        "w32/w32_util.h"
+        "w32/w32_util.cpp"
+        "w32/async_w32.cpp"
+        "w32/asyncio_w32.cpp"
+        "w32/thread_w32.cpp"
+        "w32/files_w32.cpp"
+        "w32/net_w32.cpp"
     )
 endif()
 
@@ -68,11 +69,11 @@ endif()
 
 if(APPLE OR LINUX)
     set(SOURCES_RPP ${SOURCES_RPP}
-        "async_pos.cpp"
-        "asyncio_pos.cpp"
-        "thread_pos.cpp"
-        "files_pos.cpp"
-        "net_pos.cpp"
+        "pos/async_pos.cpp"
+        "pos/asyncio_pos.cpp"
+        "pos/thread_pos.cpp"
+        "pos/files_pos.cpp"
+        "pos/net_pos.cpp"
     )
 endif()
 

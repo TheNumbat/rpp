@@ -1,5 +1,5 @@
 
-#include "net.h"
+#include "../net.h"
 
 #include <arpa/inet.h>
 #include <unistd.h>

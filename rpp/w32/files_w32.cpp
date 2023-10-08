@@ -1,5 +1,5 @@
 
-#include "files.h"
+#include "../files.h"
 
 #include "w32_util.h"
 #include <windows.h>

@@ -14,6 +14,7 @@
 
 #include "rpp/function.h"
 #include "rpp/heap.h"
+#include "rpp/rc.h"
 #include "rpp/stack.h"
 #include "rpp/tuple.h"
 #include "rpp/variant.h"

@@ -76,6 +76,7 @@
         "span": "cpp",
         "queue": "cpp",
         "random": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "csignal": "cpp"
     }
 }

@@ -1,5 +1,5 @@
 
-#include "net.h"
+#include "../net.h"
 
 #include <cstdio>
 #include <windows.h>

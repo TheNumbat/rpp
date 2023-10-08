@@ -1,5 +1,5 @@
 
-#include "base.h"
+#include "../base.h"
 
 #include <csignal>
 #include <cstdio>
@@ -7,7 +7,7 @@
 #include <ctime>
 
 #ifdef OS_WINDOWS
-#include "w32_util.h"
+#include "../w32/w32_util.h"
 #include <windows.h>
 #endif
 

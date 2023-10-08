@@ -2,6 +2,7 @@
 #pragma once
 
 #include "base.h"
+#include "rc.h"
 
 namespace rpp {
 namespace Thread {

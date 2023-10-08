@@ -138,5 +138,3 @@ i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...);
 #include "profile.h"
 
 #include "alloc1.h"
-
-#include "rc.h"
