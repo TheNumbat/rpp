@@ -205,8 +205,10 @@ struct Event {
 
 #ifdef OS_WINDOWS
     using Sys_Event = void*;
+    static constexpr Sys_Event Sys_Event_Null = null;
 #else
-    static_assert(false);
+    using Sys_Event = i32;
+    static constexpr Sys_Event Sys_Event_Null = -1;
 #endif
 
     Event();
@@ -216,12 +218,12 @@ struct Event {
     Event& operator=(const Event&) = delete;
 
     Event(Event&& src) : event_{src.event_} {
-        src.event_ = null;
+        src.event_ = Sys_Event_Null;
     }
     Event& operator=(Event&& src) {
         this->~Event();
         event_ = src.event_;
-        src.event_ = null;
+        src.event_ = Sys_Event_Null;
         return *this;
     }
 
@@ -236,12 +238,7 @@ struct Event {
 private:
     Event(Sys_Event event) : event_{event} {
     }
-
-#ifdef OS_WINDOWS
-    Sys_Event event_ = null;
-#else
-    static_assert(false);
-#endif
+    Sys_Event event_ = Sys_Event_Null;
 };
 
 } // namespace rpp::Async

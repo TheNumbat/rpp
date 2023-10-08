@@ -60,7 +60,7 @@ Utilities
 
 To-Do:
 - Thread pool upgrades
-    - Async IO events
+    - finish async IO events on linux
     - Thread local queues & work stealing
     - Affinity per task
 - Range allocator upgrades

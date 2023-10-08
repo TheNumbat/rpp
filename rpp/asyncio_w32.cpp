@@ -1,6 +1,4 @@
 
-#pragma once
-
 #include "asyncio.h"
 
 #include "w32_util.h"

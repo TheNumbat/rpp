@@ -1181,10 +1181,10 @@ i32 main() {
                 auto wait =
                     job(0); // should run on another thread, we don't yield until the next await
                 info("5.1: co_await 100ms job");
-                i32 k = co_await job(100); // same thread should pick up the job as we wait
-                immediately
-                    // continues on the same thread via continuation
-                    info("5.1: co_await 0s job");
+                i32 k = co_await job(100);
+                // same thread should pick up the job as we wait immediately
+                // continues on the same thread via continuation
+                info("5.1: co_await 0s job");
                 i32 l = co_await wait;
                 // does not wait or use continuation because already done
                 info("5.1 done: % % % %", i, j, k, l);
