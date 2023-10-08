@@ -7,6 +7,7 @@
 #include <ctime>
 
 #ifdef OS_WINDOWS
+#include "w32_util.h"
 #include <windows.h>
 #endif
 
@@ -39,32 +40,6 @@ static Static_Data g_log_data;
 static thread_local u64 g_log_indent = 0;
 
 #ifdef OS_WINDOWS
-
-static String_View ucs2_to_utf8(const wchar_t* ucs2, int ucs2_len) {
-
-    constexpr int buffer_size = 256;
-    static thread_local char buffer[buffer_size];
-
-    int written = WideCharToMultiByte(CP_UTF8, 0, ucs2, ucs2_len, buffer, buffer_size, null, null);
-    if(written == 0) {
-        warn("Failed to convert ucs2 to utf8: %", sys_error());
-        return String_View{};
-    }
-    assert(written <= buffer_size);
-
-    return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};
-}
-
-static String_View basic_win32_error(DWORD err) {
-
-    constexpr int buffer_size = 64;
-    static thread_local char buffer[buffer_size];
-
-    int written = std::snprintf(buffer, buffer_size, "Win32 Error: %d", err);
-    assert(written > 0 && written + 1 <= buffer_size);
-
-    return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};
-}
 
 String_View sys_error() {
 

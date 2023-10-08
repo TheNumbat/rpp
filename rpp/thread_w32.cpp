@@ -154,7 +154,8 @@ void sys_join(OS_Thread thread_) {
 
     DWORD ret = WaitForSingleObjectEx(thread, INFINITE, false);
     if(ret != WAIT_OBJECT_0) {
-        die("Unexpected wait return when joining thread %: %", id, Log::sys_error());
+        die("Unexpected wait return when joining thread %: % (%)", id, static_cast<u32>(ret),
+            Log::sys_error());
     }
 
     bool ok = CloseHandle(thread);

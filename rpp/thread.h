@@ -102,6 +102,8 @@ using Future = Arc<Promise<T>, A>;
 template<Allocator A = Alloc>
 struct Thread {
 
+    Thread() = default;
+
     template<Invocable F>
     explicit Thread(F&& f) {
         F* data = reinterpret_cast<F*>(A::alloc(sizeof(F)));
@@ -120,13 +122,14 @@ struct Thread {
 
     Thread& operator=(const Thread&) = delete;
     Thread& operator=(Thread&& src) {
-        join();
+        this->~Thread();
         thread = src.thread;
         src.thread = OS_Thread_Null;
         return *this;
     }
 
     Id id() {
+        assert(thread);
         return sys_id(thread);
     }
     void join() {

@@ -5,6 +5,7 @@
 #include "rpp/net.h"
 
 #include "rpp/async.h"
+#include "rpp/asyncio.h"
 #include "rpp/pool.h"
 #include "rpp/thread.h"
 
@@ -1180,10 +1181,10 @@ i32 main() {
                 auto wait =
                     job(0); // should run on another thread, we don't yield until the next await
                 info("5.1: co_await 100ms job");
-                i32 k =
-                    co_await job(100); // same thread should pick up the job as we wait immediately
-                // continues on the same thread via continuation
-                info("5.1: co_await 0s job");
+                i32 k = co_await job(100); // same thread should pick up the job as we wait
+                immediately
+                    // continues on the same thread via continuation
+                    info("5.1: co_await 0s job");
                 i32 l = co_await wait;
                 // does not wait or use continuation because already done
                 info("5.1 done: % % % %", i, j, k, l);
@@ -1193,6 +1194,44 @@ i32 main() {
             assert(job2().block() == 4);
             // cannot start and drop another job2 because it blocks on another job -
             // if all but one thread shut down it deadlocks itself
+        }
+    }();
+
+    [] {
+        Thread::Pool pool;
+        {
+            auto job = [&pool]() -> Async::Task<void> {
+                info("coWaiting 100ms.");
+                co_await AsyncIO::wait(pool, 100);
+                info("coWaited 100ms.");
+                co_return;
+            };
+
+            job().block();
+            info("Waited 100ms.");
+        }
+    }();
+    [] {
+        Thread::Pool pool;
+        {
+            Vec<u8> large(4096 + 1);
+            large.resize(4096 + 1);
+            AsyncIO::write(pool, "large_file"_v, Slice<u8>{large}).block();
+        }
+        {
+            auto file = AsyncIO::read(pool, "large_file"_v).block();
+            info("Read file: %", file->length());
+        }
+        {
+            auto job = [&pool]() -> Async::Task<Vec<u8, AsyncIO::Alloc>> {
+                info("coReading file.");
+                auto file = co_await AsyncIO::read(pool, "large_file"_v);
+                info("coRead file: %", file->length());
+                co_return std::move(*file);
+            };
+
+            auto file = job().block();
+            info("Read file: %", file.length());
         }
     }();
 

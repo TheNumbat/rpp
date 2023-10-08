@@ -1,28 +1,10 @@
 
 #include "files.h"
 
+#include "w32_util.h"
 #include <windows.h>
 
 namespace rpp::Files {
-
-static Pair<wchar_t*, int> utf8_to_ucs2(String_View utf8_) {
-
-    Region_Scope;
-    auto utf8 = utf8_.terminate<Mregion>();
-
-    constexpr int buffer_size = MAX_PATH;
-    static thread_local wchar_t wbuffer[buffer_size];
-
-    int written = MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<const char*>(utf8.data()),
-                                      static_cast<u32>(utf8.length()), wbuffer, buffer_size);
-    if(written == 0) {
-        warn("Failed to convert utf8 to ucs2: %", Log::sys_error());
-        return Pair{static_cast<wchar_t*>(null), 0};
-    }
-    assert(written <= buffer_size);
-
-    return Pair{static_cast<wchar_t*>(wbuffer), written};
-}
 
 Opt<File_Time> last_write_time(String_View path) {
 
@@ -60,8 +42,8 @@ Opt<Vec<u8, Alloc>> read(String_View path) {
         return {};
     }
 
-    HANDLE handle =
-        CreateFileW(ucs2_path, GENERIC_READ, 0, null, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, null);
+    HANDLE handle = CreateFileW(ucs2_path, GENERIC_READ, FILE_SHARE_READ, null, OPEN_EXISTING,
+                                FILE_ATTRIBUTE_NORMAL, null);
     if(handle == INVALID_HANDLE_VALUE) {
         warn("Failed to create file %: %", path, Log::sys_error());
         return {};
@@ -81,8 +63,10 @@ Opt<Vec<u8, Alloc>> read(String_View path) {
 
     if(ReadFile(handle, data.data(), static_cast<u32>(size), null, null) == FALSE) {
         warn("Failed to read file %: %", path, Log::sys_error());
+        CloseHandle(handle);
         return {};
     }
+
     CloseHandle(handle);
 
     return Opt{std::move(data)};
@@ -107,10 +91,11 @@ bool write(String_View path, Slice<u8> data) {
 
     if(WriteFile(handle, data.data(), static_cast<u32>(data.length()), null, null) == FALSE) {
         warn("Failed to write file %: %", path, Log::sys_error());
+        CloseHandle(handle);
         return false;
     }
-    CloseHandle(handle);
 
+    CloseHandle(handle);
     return true;
 }
 

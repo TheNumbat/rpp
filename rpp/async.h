@@ -201,4 +201,47 @@ struct Promise<void, A> : Promise_Base<void, A> {
     }
 };
 
+struct Event {
+
+#ifdef OS_WINDOWS
+    using Sys_Event = void*;
+#else
+    static_assert(false);
+#endif
+
+    Event();
+    ~Event();
+
+    Event(const Event&) = delete;
+    Event& operator=(const Event&) = delete;
+
+    Event(Event&& src) : event_{src.event_} {
+        src.event_ = null;
+    }
+    Event& operator=(Event&& src) {
+        this->~Event();
+        event_ = src.event_;
+        src.event_ = null;
+        return *this;
+    }
+
+    static Event of_sys(Sys_Event event);
+    static u64 wait_any(Slice<Event> events);
+    static void wait_all(Slice<Event> events);
+
+    void wait() const;
+    void signal() const;
+    bool ready() const;
+
+private:
+    Event(Sys_Event event) : event_{event} {
+    }
+
+#ifdef OS_WINDOWS
+    Sys_Event event_ = null;
+#else
+    static_assert(false);
+#endif
+};
+
 } // namespace rpp::Async

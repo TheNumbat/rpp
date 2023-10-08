@@ -8,6 +8,7 @@ set(SOURCES_RPP
     "alloc1.h"
     "array.h"
     "async.h"
+    "asyncio.h"
     "base.cpp"
     "base.h"
     "box.h"
@@ -50,7 +51,15 @@ set(SOURCES_RPP
 )
 
 if(WIN32)
-    set(SOURCES_RPP ${SOURCES_RPP} "thread_w32.cpp" "files_w32.cpp" "net_w32.cpp")
+    set(SOURCES_RPP ${SOURCES_RPP}
+        "w32_util.h"
+        "w32_util.cpp"
+        "async_w32.cpp"
+        "asyncio_w32.cpp"
+        "thread_w32.cpp"
+        "files_w32.cpp"
+        "net_w32.cpp"
+    )
 endif()
 
 if(UNIX AND NOT APPLE)
@@ -58,7 +67,13 @@ if(UNIX AND NOT APPLE)
 endif()
 
 if(APPLE OR LINUX)
-    set(SOURCES_RPP ${SOURCES_RPP} "thread_pos.cpp" "files_pos.cpp" "net_pos.cpp")
+    set(SOURCES_RPP ${SOURCES_RPP}
+        "async_pos.cpp"
+        "asyncio_pos.cpp"
+        "thread_pos.cpp"
+        "files_pos.cpp"
+        "net_pos.cpp"
+    )
 endif()
 
 add_library(rpp STATIC ${SOURCES_RPP})

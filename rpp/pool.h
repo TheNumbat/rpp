@@ -8,7 +8,6 @@
 namespace rpp::Thread {
 
 // TOD(max):
-//      asynchronous IO events (win32, io_uring)
 //      queue per thread & work stealing
 //      set CPU affinity for individual jobs
 
@@ -36,6 +35,28 @@ private:
 };
 
 template<Allocator A = Alloc>
+struct Schedule_Event {
+
+    explicit Schedule_Event(Priority priority_, Async::Event event_, Pool<A>& pool_)
+        : priority{priority_}, event{std::move(event_)}, pool{pool_} {
+    }
+    template<typename R, typename RA>
+    void await_suspend(std::coroutine_handle<Async::Promise<R, RA>> task) {
+        pool.enqueue_event(priority, std::move(event), task);
+    }
+    void await_resume() {
+    }
+    bool await_ready() {
+        return event.ready();
+    }
+
+private:
+    Priority priority = Priority::normal;
+    Async::Event event;
+    Pool<A>& pool;
+};
+
+template<Allocator A = Alloc>
 struct Pool {
 
     explicit Pool() {
@@ -46,14 +67,20 @@ struct Pool {
                 do_work();
             }));
         }
+        pending_events.push(Async::Event{});
+        event_thread = Thread([this] { do_events(); });
     }
     ~Pool() {
         {
-            Lock lock(jobs_mut);
+            Lock jlock(jobs_mut);
+            Lock elock(events_mut);
             shutdown = true;
             jobs_cond.broadcast();
+            pending_events[0].signal();
         }
+        event_thread.join();
         threads.clear();
+        pending_events.clear();
     }
 
     template<typename F, typename... Args>
@@ -65,6 +92,9 @@ struct Pool {
 
     Schedule<A> suspend(Priority p = Priority::normal) {
         return Schedule<A>{p, *this};
+    }
+    Schedule_Event<A> event(Async::Event event, Priority p = Priority::normal) {
+        return Schedule_Event<A>{p, std::move(event), *this};
     }
 
 private:
@@ -102,6 +132,7 @@ private:
     };
 
     void push_job(Priority p, Box<Job_Base, Alloc> job) {
+        Lock lock(jobs_mut);
         switch(p) {
         case Priority::critical:
         case Priority::high: {
@@ -112,6 +143,7 @@ private:
             normal_jobs.push(std::move(job));
         } break;
         }
+        jobs_cond.signal();
     }
 
     template<typename F, typename... Args>
@@ -131,19 +163,26 @@ private:
             }
         };
         Box<Job<decltype(func)>, Alloc> job{std::move(func)};
-
-        Lock lock(jobs_mut);
         push_job(p, Box<Job_Base, Alloc>{std::move(job)});
-        jobs_cond.signal();
         return future;
     }
 
     template<typename R, typename RA>
     void co_enqueue(Priority p, std::coroutine_handle<Async::Promise<R, RA>> coroutine) {
         Box<Co_Job<R, RA>, Alloc> job{coroutine};
-        Lock lock(jobs_mut);
         push_job(p, Box<Job_Base, Alloc>{std::move(job)});
-        jobs_cond.signal();
+    }
+
+    template<typename R, typename RA>
+    void enqueue_event(Priority p, Async::Event event,
+                       std::coroutine_handle<Async::Promise<R, RA>> coroutine) {
+        Box<Co_Job<R, RA>, Alloc> job{coroutine};
+        {
+            Lock lock(events_mut);
+            events_to_enqueue.emplace(std::move(event),
+                                      Pending_Event_State{p, Box<Job_Base, Alloc>{std::move(job)}});
+        }
+        pending_events[0].signal();
     }
 
     void do_work() {
@@ -169,6 +208,36 @@ private:
         }
     }
 
+    void do_events() {
+        for(;;) {
+            u64 idx = Async::Event::wait_any(Slice<Async::Event>{pending_events});
+            {
+                if(idx == 0) {
+                    Lock lock(events_mut);
+                    if(shutdown) return;
+
+                    for(auto& [event, state] : events_to_enqueue) {
+                        pending_events.push(std::move(event));
+                        pending_event_states.push(std::move(state));
+                    }
+                    events_to_enqueue.clear();
+                } else {
+                    auto job = std::move(pending_event_states[idx - 1].continuation);
+                    auto p = pending_event_states[idx - 1].p;
+
+                    if(pending_events.length() > 2) {
+                        swap(pending_events[idx], pending_events.back());
+                        swap(pending_event_states[idx - 1], pending_event_states.back());
+                    }
+                    pending_events.pop();
+                    pending_event_states.pop();
+
+                    push_job(p, std::move(job));
+                }
+            }
+        }
+    }
+
     bool shutdown = false;
     Mutex jobs_mut;
     Cond jobs_cond;
@@ -177,8 +246,21 @@ private:
     Queue<Box<Job_Base, A>, A> important_jobs;
     Vec<Thread<A>, A> threads;
 
+    struct Pending_Event_State {
+        Priority p;
+        Box<Job_Base, A> continuation;
+    };
+
+    Vec<Async::Event, A> pending_events;
+    Vec<Pending_Event_State, A> pending_event_states;
+    Vec<Pair<Async::Event, Pending_Event_State>, A> events_to_enqueue;
+    Thread<A> event_thread;
+    Mutex events_mut;
+
     template<Allocator>
     friend struct Schedule;
+    template<Allocator>
+    friend struct Schedule_Event;
 };
 
 } // namespace rpp::Thread
