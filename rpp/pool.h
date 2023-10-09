@@ -7,10 +7,6 @@
 
 namespace rpp::Thread {
 
-// TOD(max):
-//      queue per thread & work stealing
-//      set CPU affinity for individual jobs
-
 template<Allocator A>
 struct Pool;
 
