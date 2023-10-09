@@ -6,13 +6,18 @@ Minimal Rust-inspired C++20 standard library (mostly) replacement.
 - Only includes code I'm actively using.
 
 Headers
-- base.h: always include
-- files.h: file IO
-- net.h: network IO
+- base.h: reflection, allocators, profiling, strings, basic containers, basic math
+- files.h: sync file IO
+- net.h: sync network IO
 - thread.h: threading primitives
 - async.h: thread-safe coroutine primitives
+- asyncio.h: IO coroutines
 - pool.h: thread pool and coroutine scheduler
 - range_allocator.h: generic general purpose allocator
+- simd.h: basic SSE vectors
+- vmath.h: 3D vector and matrix math
+- rng.h: hash-based PRNG
+- function.h, heap.h, rc.h, stack.h, tuple.h, variant.h: see containers
 
 Supported configurations
 - Windows / x86_64 / MSVC
