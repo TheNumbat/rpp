@@ -145,9 +145,8 @@ private:
         std::coroutine_handle<Async::Promise<R, RA>> coroutine;
     };
 
-    void push_job(Priority p, u64 affinity_, Box<Job_Base, Alloc> job) {
+    void push_job(Priority p, u64 affinity, Box<Job_Base, Alloc> job) {
 
-        u64 affinity = affinity_ & affinity_mask;
         u64 affinity_bits = 0;
         u64 idx = Limits<u64>::max();
 
