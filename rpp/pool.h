@@ -270,9 +270,9 @@ private:
             u64 idx = Async::Event::wait_any(Slice<Async::Event>{pending_events});
             {
                 if(idx == 0) {
-                    if(shutdown.load()) return;
-
                     Lock lock(events_mut);
+
+                    if(shutdown.load()) return;
 
                     for(auto& [event, state] : events_to_enqueue) {
                         pending_events.push(std::move(event));

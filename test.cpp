@@ -1195,6 +1195,21 @@ i32 main() {
             // cannot start and drop another job2 because it blocks on another job -
             // if all but one thread shut down it deadlocks itself
         }
+        {
+            Function<Async::Task<void>(Thread::Pool<>&, u64)> lots_of_jobs =
+                [&lots_of_jobs](Thread::Pool<>& pool, u64 depth) -> Async::Task<void> {
+                if(depth == 0) {
+                    co_return;
+                }
+                co_await pool.suspend();
+                auto job0 = lots_of_jobs(pool, depth - 1);
+                auto job1 = lots_of_jobs(pool, depth - 1);
+                co_await job0;
+                co_await job1;
+            };
+
+            lots_of_jobs(pool, 14).block();
+        }
     }();
 
     [] {
