@@ -102,12 +102,11 @@ struct Pool {
         return enqueue(p, affinity, std::forward<F>(f), std::forward<Args>(args)...);
     }
 
-    Schedule<A> suspend(Priority p = Priority::normal, u64 affinity = Limits<u64>::max()) {
+    Schedule<A> suspend(Priority p = Priority::normal, u64 affinity = 0) {
         assert((affinity & affinity_mask) == affinity);
         return Schedule<A>{p, affinity, *this};
     }
-    Schedule_Event<A> event(Async::Event event, Priority p = Priority::normal,
-                            u64 affinity = Limits<u64>::max()) {
+    Schedule_Event<A> event(Async::Event event, Priority p = Priority::normal, u64 affinity = 0) {
         assert((affinity & affinity_mask) == affinity);
         return Schedule_Event<A>{p, affinity, std::move(event), *this};
     }
