@@ -66,7 +66,6 @@ Utilities
 To-Do:
 - Thread pool upgrades
     - Work stealing
-    - Affinity per task
     - Proper async file IO on linux
 - Range allocator upgrades
     - Second level of linear buckets
