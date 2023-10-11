@@ -98,14 +98,17 @@ struct Pool {
         requires Invocable<F, Args...>
     auto single(Priority p, u64 affinity, F&& f, Args&&... args)
         -> Future<Invoke_Result<F, Args...>, Alloc> {
+        assert((affinity & affinity_mask) == affinity);
         return enqueue(p, affinity, std::forward<F>(f), std::forward<Args>(args)...);
     }
 
     Schedule<A> suspend(Priority p = Priority::normal, u64 affinity = Limits<u64>::max()) {
+        assert((affinity & affinity_mask) == affinity);
         return Schedule<A>{p, affinity, *this};
     }
     Schedule_Event<A> event(Async::Event event, Priority p = Priority::normal,
                             u64 affinity = Limits<u64>::max()) {
+        assert((affinity & affinity_mask) == affinity);
         return Schedule_Event<A>{p, affinity, std::move(event), *this};
     }
 
