@@ -43,7 +43,7 @@ struct Schedule_Event {
     void await_resume() {
     }
     bool await_ready() {
-        return event.ready();
+        return event.try_wait();
     }
 
 private:
@@ -217,6 +217,8 @@ private:
                         pending_event_states.push(std::move(state));
                     }
                     events_to_enqueue.clear();
+
+                    pending_events[0].reset();
                 } else {
                     auto job = std::move(pending_event_states[idx - 1].continuation);
                     auto p = pending_event_states[idx - 1].p;

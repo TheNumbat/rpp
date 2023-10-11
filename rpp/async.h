@@ -203,42 +203,38 @@ struct Promise<void, A> : Promise_Base<void, A> {
 
 struct Event {
 
-#ifdef OS_WINDOWS
-    using Sys_Event = void*;
-    static constexpr Sys_Event Sys_Event_Null = null;
-#else
-    using Sys_Event = i32;
-    static constexpr Sys_Event Sys_Event_Null = -1;
-#endif
-
     Event();
     ~Event();
 
     Event(const Event&) = delete;
     Event& operator=(const Event&) = delete;
 
-    Event(Event&& src) : event_{src.event_} {
-        src.event_ = Sys_Event_Null;
-    }
-    Event& operator=(Event&& src) {
-        this->~Event();
-        event_ = src.event_;
-        src.event_ = Sys_Event_Null;
-        return *this;
-    }
+    Event(Event&& src);
+    Event& operator=(Event&& src);
 
-    static Event of_sys(Sys_Event event);
     static u64 wait_any(Slice<Event> events);
-    static void wait_all(Slice<Event> events);
 
-    void wait() const;
     void signal() const;
-    bool ready() const;
+    void reset() const;
+    bool try_wait() const;
+
+#ifdef OS_WINDOWS
+    static Event of_sys(void* event);
+#else
+    static Event of_sys(i32 fd, i32 mask);
+#endif
 
 private:
-    Event(Sys_Event event) : event_{event} {
+#ifdef OS_WINDOWS
+    Event(void* event) : event_{event} {
     }
-    Sys_Event event_ = Sys_Event_Null;
+    void* event_ = null;
+#else
+    Event(i32 fd, i32 mask) : fd{fd}, mask{mask} {
+    }
+    i32 fd = -1;
+    i32 mask = 0;
+#endif
 };
 
 } // namespace rpp::Async
