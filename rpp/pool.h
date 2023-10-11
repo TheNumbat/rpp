@@ -28,7 +28,7 @@ struct Schedule {
 
 private:
     Priority priority = Priority::normal;
-    u64 affinity = Limits<u64>::max();
+    u64 affinity = 0;
     Pool<A>& pool;
 };
 
@@ -50,7 +50,7 @@ struct Schedule_Event {
 
 private:
     Priority priority = Priority::normal;
-    u64 affinity = Limits<u64>::max();
+    u64 affinity = 0;
     Async::Event event;
     Pool<A>& pool;
 };
