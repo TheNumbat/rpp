@@ -8,8 +8,10 @@
 namespace rpp::Math {
 
 constexpr f32 EPS_F = (16.0f * Limits<f32>::epsilon());
-constexpr f32 PI32 = 3.14159265358979323846264338327950288f;
-constexpr f64 PI64 = 3.14159265358979323846264338327950288;
+constexpr f32 PI32 = 3.141592653589793f;
+constexpr f64 PI64 = 3.141592653589793;
+constexpr f32 PHI32 = 1.618033988749895f;
+constexpr f64 PHI64 = 1.618033988749895;
 
 template<typename T>
 constexpr T min(T a, T b) {
@@ -85,6 +87,8 @@ f64 sqrt(f64 v);
 i32 abs(i32 v);
 i64 abs(i64 v);
 
+u32 popcount(u32 val);
+u64 popcount(u64 val);
 u32 ctlz(u32 val);
 u64 ctlz(u64 val);
 u32 log2(u32 val);

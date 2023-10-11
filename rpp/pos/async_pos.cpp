@@ -94,7 +94,6 @@ u64 Event::wait_any(Slice<Event> events) {
 
     for(u64 i = 0; i < events.length(); ++i) {
         if(events[i].fd == ev.data.fd) {
-            info("event % signaled", i);
             return i;
         }
     }

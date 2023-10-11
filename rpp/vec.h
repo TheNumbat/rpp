@@ -10,13 +10,24 @@ namespace rpp {
 template<typename T>
 struct Slice;
 
-template<Movable T, Allocator A = Mdefault>
+template<typename T, Allocator A = Mdefault>
 struct Vec {
 
     Vec() = default;
     explicit Vec(u64 capacity)
         : data_(reinterpret_cast<T*>(A::alloc(capacity * sizeof(T)))), capacity_(capacity),
           length_(0) {
+    }
+
+    static Vec make(u64 length)
+        requires Default_Constructable<T>
+    {
+        Vec ret;
+        ret.data_ = reinterpret_cast<T*>(A::alloc(length * sizeof(T)));
+        new T[length]{};
+        ret.capacity_ = length;
+        ret.length_ = length;
+        return ret;
     }
 
     template<typename... Ss>

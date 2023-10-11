@@ -87,6 +87,22 @@ i64 abs(i64 v) {
     return std::abs(v);
 }
 
+u32 popcount(u32 val) {
+#ifdef COMPILER_MSVC
+    return __popcnt(val);
+#else
+    return __builtin_popcount(val);
+#endif
+}
+
+u64 popcount(u64 val) {
+#ifdef COMPILER_MSVC
+    return __popcnt64(val);
+#else
+    return __builtin_popcountll(val);
+#endif
+}
+
 u32 ctlz(u32 val) {
 #ifdef COMPILER_MSVC
     return __lzcnt(val);

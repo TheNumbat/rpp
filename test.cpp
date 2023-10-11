@@ -1097,8 +1097,7 @@ i32 main() {
 
         Vec<Thread::Future<void>> tasks;
         for(u64 i = 0; i < Thread::hardware_threads(); i++) {
-            tasks.push(
-                pool.single(Thread::Priority::normal, []() { info("Hello from thread pool"); }));
+            tasks.push(pool.single([]() { info("Hello from thread pool"); }));
         }
 
         for(auto& task : tasks) {
@@ -1160,9 +1159,9 @@ i32 main() {
     [] {
         Thread::Pool pool;
         {
-            auto job = [&pool](i32 ms) -> Async::Task<i32> {
+            auto job = [&pool](i32 ms, u64 mask) -> Async::Task<i32> {
                 info("5.2 begin %", ms);
-                co_await pool.suspend();
+                co_await pool.suspend(Thread::Priority::normal, mask);
                 info("5.2 on thread %", ms);
                 Thread::sleep(ms);
                 info("5.2 done %", ms);
@@ -1170,19 +1169,19 @@ i32 main() {
             };
             auto job2 = [&pool, &job]() -> Async::Task<i32> {
                 info("5.1 begin");
-                co_await pool.suspend();
+                co_await pool.suspend(Thread::Priority::normal, 0b1);
                 info("5.1 on thread");
                 info("5.1: wait on 0.99s job");
-                i32 i = job(99).block(); // has to run on another thread, blocks this thread
+                i32 i = job(99, 0b10).block(); // has to run on another thread, blocks this thread
                 // continue on same thread, wait does not swap out
                 info("5.1: co_await 1ms job");
-                auto j = co_await job(1); // likely runs on this thread as we yield immediately
+                auto j = co_await job(1, 0); // likely runs on this thread as we yield immediately
                 // should continue on same thread because we had time to install the continuation
                 info("5.1: launch 0s job");
                 auto wait =
-                    job(0); // should run on another thread, we don't yield until the next await
+                    job(0, 0); // should run on another thread, we don't yield until the next await
                 info("5.1: co_await 100ms job");
-                i32 k = co_await job(100);
+                i32 k = co_await job(100, 0);
                 // same thread should pick up the job as we wait immediately
                 // continues on the same thread via continuation
                 info("5.1: co_await 0s job");
