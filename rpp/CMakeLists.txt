@@ -95,7 +95,3 @@ if(MSVC)
 else()
     target_compile_options(rpp PRIVATE -mavx2 -Wall -Wextra -Werror -Wno-reorder -Wno-missing-braces -Wno-unused-parameter -fno-exceptions -fno-rtti)
 endif()
-
-if(WIN32)
-    target_link_libraries(rpp_test PRIVATE ws2_32)
-endif()
