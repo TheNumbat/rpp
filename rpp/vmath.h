@@ -971,6 +971,25 @@ u64 hash(Math::Vect<T, N> v) {
 
 } // namespace Hash
 
+using Math::Vec2;
+using Math::Vec3;
+using Math::Vec4;
+using Math::VecN;
+
+using Math::Vec2i;
+using Math::Vec3i;
+using Math::Vec4i;
+using Math::VecNi;
+
+using Math::Vec2u;
+using Math::Vec3u;
+using Math::Vec4u;
+using Math::VecNu;
+
+using Math::BBox;
+using Math::Mat4;
+using Math::Quat;
+
 namespace Format {
 
 template<Float F, u64 N>

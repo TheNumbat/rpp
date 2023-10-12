@@ -322,6 +322,9 @@ struct Slice {
 private:
     const T* data_;
     u64 length_;
+
+    template<typename T>
+    friend struct Slice;
     friend struct Reflect<Slice<T>>;
 };
 

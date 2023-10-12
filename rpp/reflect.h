@@ -1020,6 +1020,7 @@ using detail::Literal;
 using detail::Record;
 using detail::Reflect;
 using detail::Reflectable;
+using detail::Type_List;
 
 using detail::iterate_enum;
 using detail::iterate_record;
