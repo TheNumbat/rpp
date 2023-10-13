@@ -585,7 +585,7 @@ concept Clone = Move_Constructable<T> && requires(T value) {
 
 namespace detail {
 struct Literal {
-    static constexpr u64 max_len = 16;
+    static constexpr u64 max_len = 24;
     template<size_t N>
     constexpr Literal(const char (&literal)[N]) {
         static_assert(N <= max_len);
@@ -1021,6 +1021,7 @@ using detail::Record;
 using detail::Reflect;
 using detail::Reflectable;
 using detail::Type_List;
+using detail::Type_List_All;
 
 using detail::iterate_enum;
 using detail::iterate_record;

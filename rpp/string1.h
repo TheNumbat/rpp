@@ -41,6 +41,12 @@ String<A> String_View::terminate() const {
     return ret;
 }
 
+inline String_View String_View::sub(u64 start, u64 end) const {
+    assert(start <= end);
+    assert(end <= length_);
+    return String_View{data_ + start, end - start};
+}
+
 inline const u8& String_View::operator[](u64 idx) const {
     assert(idx < length_);
     return data_[idx];

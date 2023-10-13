@@ -21,6 +21,11 @@ struct Array {
     explicit Array(Ss&&... init) : data_{std::move(init)...} {
     }
 
+    template<typename... Ss>
+        requires Length<N, Ss...> && All<T, Ss...> && Copy_Constructable<T>
+    explicit Array(const Ss&... init) : data_{init...} {
+    }
+
     ~Array() = default;
 
     Array(const Array& src)

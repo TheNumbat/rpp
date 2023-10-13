@@ -73,7 +73,7 @@ struct Vec {
 
     template<Allocator B = A>
     Vec<T, B> clone() const
-        requires Clone<T> || Trivial<T>
+        requires Clone<T> || Copy_Constructable<T>
     {
         Vec<T, B> ret(capacity_);
         ret.length_ = length_;
@@ -82,7 +82,7 @@ struct Vec {
                 new(&ret.data_[i]) T{data_[i].clone()};
             }
         } else {
-            static_assert(Trivial<T>);
+            static_assert(Copy_Constructable<T>);
             Std::memcpy(ret.data_, data_, length_ * sizeof(T));
         }
         return ret;
@@ -151,7 +151,7 @@ struct Vec {
     }
 
     T& push(const T& value)
-        requires Trivial<T>
+        requires Copy_Constructable<T>
     {
         return push(T{value});
     }
@@ -262,17 +262,25 @@ struct Slice {
         data_ = a.data();
         length_ = a.length();
     }
+    explicit Slice(const T& data) {
+        data_ = &data;
+        length_ = 1;
+    }
+    explicit Slice(const T* data, u64 length) {
+        data_ = data;
+        length_ = length;
+    }
+
+    explicit Slice(std::initializer_list<T> init) {
+        data_ = init.begin();
+        length_ = init.size();
+    }
 
     Slice(const Slice& src) = default;
     Slice& operator=(const Slice& src) = default;
 
     Slice(Slice&& src) = default;
     Slice& operator=(Slice&& src) = default;
-
-    Slice(std::initializer_list<T> init) {
-        data_ = init.begin();
-        length_ = static_cast<u64>(init.size());
-    }
 
     ~Slice() = default;
 
@@ -323,7 +331,7 @@ private:
     const T* data_;
     u64 length_;
 
-    template<typename T>
+    template<typename>
     friend struct Slice;
     friend struct Reflect<Slice<T>>;
 };

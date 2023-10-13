@@ -5,25 +5,28 @@
 #error "Include base.h instead."
 #endif
 
-#define Here Log::Location::make(std::source_location::current())
-#define Log_Scope Log::Scope log_scope__##__COUNTER__
+#define Here rpp::Log::Location::make(std::source_location::current())
+#define Log_Scope rpp::Log::Scope log_scope__##__COUNTER__
 
-#define info(fmt, ...) (void)(Log::log(Log::Level::info, Here, fmt##_v, ##__VA_ARGS__), 0)
+#define info(fmt, ...) (void)(rpp::Log::log(rpp::Log::Level::info, Here, fmt##_v, ##__VA_ARGS__), 0)
 
-#define warn(fmt, ...) (void)(Log::log(Log::Level::warn, Here, fmt##_v, ##__VA_ARGS__), 0)
+#define warn(fmt, ...) (void)(rpp::Log::log(rpp::Log::Level::warn, Here, fmt##_v, ##__VA_ARGS__), 0)
 
 #define die(fmt, ...)                                                                              \
-    (void)(Log::log(Log::Level::fatal, Here, fmt##_v, ##__VA_ARGS__), DEBUG_BREAK, ::exit(1), 0)
+    (void)(rpp::Log::log(rpp::Log::Level::fatal, Here, fmt##_v, ##__VA_ARGS__), DEBUG_BREAK,       \
+           ::exit(1), 0)
 
 #undef assert
 #define assert(expr)                                                                               \
-    (void)((!!(expr)) || (Log::log(Log::Level::fatal, Here, "Assert: %"_v, #expr##_v),             \
+    (void)((!!(expr)) || (rpp::Log::log(rpp::Log::Level::fatal, Here,                              \
+                                        rpp::String_View{"Assert: %"}, rpp::String_View{#expr}),   \
                           DEBUG_BREAK, ::exit(1), 0))
 
 #define UNREACHABLE                                                                                \
-    (void)(Log::log(Log::Level::fatal, Here, "Unreachable"_v), DEBUG_BREAK, ::exit(1), 0)
+    (void)(rpp::Log::log(rpp::Log::Level::fatal, Here, rpp::String_View{"Unreachable"}),           \
+           DEBUG_BREAK, ::exit(1), 0)
 
-#define DEBUG_BREAK (Log::debug_break())
+#define DEBUG_BREAK (rpp::Log::debug_break())
 
 namespace rpp {
 namespace Log {
@@ -48,6 +51,11 @@ struct Location {
                         static_cast<u64>(source_location.line()),
                         static_cast<u64>(source_location.column())};
     }
+
+    bool operator==(const Log::Location& other) const {
+        return function == other.function && file == other.file && line == other.line &&
+               column == other.column;
+    }
 };
 
 struct Scope {
@@ -56,6 +64,7 @@ struct Scope {
 };
 
 u64 sys_time();
+String_View sys_time_string(u64 time);
 String_View sys_error();
 
 void debug_break();
@@ -68,8 +77,6 @@ void log(Level level, const Location& loc, String_View fmt, const Ts&... args) {
 }
 
 } // namespace Log
-
-bool operator==(const Log::Location& a, const Log::Location& b);
 
 template<>
 struct Reflect<Log::Level> {

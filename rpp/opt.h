@@ -31,10 +31,10 @@ struct Opt {
     }
 
     Opt(const Opt& src)
-        requires Trivial<T>
+        requires Copy_Constructable<T>
     = default;
     Opt& operator=(const Opt& src)
-        requires Trivial<T>
+        requires Copy_Constructable<T>
     = default;
 
     Opt(Opt&& src)
@@ -69,7 +69,7 @@ struct Opt {
     }
 
     Opt clone() const
-        requires Clone<T> || Trivial<T>
+        requires Clone<T> || Copy_Constructable<T>
     {
         if(!ok_) return Opt{};
         if constexpr(Clone<T>)

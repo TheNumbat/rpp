@@ -38,14 +38,14 @@ struct Tuple<T, Ts...> {
 
     template<typename... Args>
     explicit Tuple(const T& first, Args&&... rest)
-        requires Trivial<T> && Constructable<Tuple<Ts...>, Args...>
-        : first(T{first}), rest(std::forward<Ts>(rest)...) {
+        requires Copy_Constructable<T> && Constructable<Tuple<Ts...>, Args...>
+        : first(T{first}), rest(std::forward<Args>(rest)...) {
     }
 
     template<typename... Args>
     explicit Tuple(T&& first, Args&&... rest)
         requires Move_Constructable<T> && Constructable<Tuple<Ts...>, Args...>
-        : first(std::move(first)), rest(std::forward<Ts>(rest)...) {
+        : first(std::move(first)), rest(std::forward<Args>(rest)...) {
     }
 
     ~Tuple() = default;

@@ -89,6 +89,7 @@ i32 strncmp(const char* a, const char* b, u64 bytes);
 u64 strlen(const char* str);
 void* memset(void* dest, i32 value, u64 bytes);
 void* memcpy(void* dest, const void* src, u64 bytes);
+i32 memcmp(const void* a, const void* b, u64 bytes);
 i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...);
 
 } // namespace Std

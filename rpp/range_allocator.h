@@ -9,6 +9,7 @@ namespace rpp {
 template<Allocator A, u64 Buckets = 24, u64 Bias = 8>
 struct Range_Allocator {
 
+    Range_Allocator() = default;
     explicit Range_Allocator(u64 heap_size) {
         assert(heap_size);
         Block* primary = blocks.make(Block{0, 0, heap_size, null, null});
@@ -29,7 +30,7 @@ struct Range_Allocator {
         *this = std::move(src);
     }
     Range_Allocator& operator=(Range_Allocator&& src) {
-        ~Range_Allocator();
+        this->~Range_Allocator();
 
         Thread::Lock lock(src.mutex);
 
@@ -44,7 +45,7 @@ struct Range_Allocator {
 
     struct Block {
         u64 offset;
-        u64 len() const {
+        u64 length() const {
             return size - (offset - start);
         }
         u64 padding() const {

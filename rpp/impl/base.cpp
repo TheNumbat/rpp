@@ -15,6 +15,10 @@ u64 strlen(const char* str) {
     return std::strlen(str);
 }
 
+i32 memcmp(const void* a, const void* b, u64 bytes) {
+    return std::memcmp(a, b, bytes);
+}
+
 void* memset(void* dest, i32 value, u64 bytes) {
     return std::memset(dest, value, bytes);
 }

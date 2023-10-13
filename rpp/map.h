@@ -43,17 +43,17 @@ struct Map_Slot {
     }
 
     Map_Slot clone() const
-        requires(Clone<K> || Trivial<K>) && (Clone<V> || Trivial<K>)
+        requires(Clone<K> || Copy_Constructable<K>) && (Clone<V> || Copy_Constructable<K>)
     {
         if(hash == EMPTY) return Map_Slot{};
         if constexpr(Clone<K> && Clone<V>) {
             return Map_Slot{data->first.clone(), data->second.clone()};
-        } else if constexpr(Clone<K> && Trivial<V>) {
+        } else if constexpr(Clone<K> && Copy_Constructable<V>) {
             return Map_Slot{data->first.clone(), data->second};
-        } else if constexpr(Trivial<K> && Clone<V>) {
+        } else if constexpr(Copy_Constructable<K> && Clone<V>) {
             return Map_Slot{data->first, data->second.clone()};
         } else {
-            static_assert(Trivial<K> && Trivial<V>);
+            static_assert(Copy_Constructable<K> && Copy_Constructable<V>);
             return Map_Slot{data->first, data->second};
         }
     }
@@ -131,11 +131,11 @@ struct Map {
 
     template<Allocator B = A>
     Map<K, V, B> clone() const
-        requires(Clone<K> || Trivial<K>) && (Clone<V> || Trivial<V>)
+        requires(Clone<K> || Copy_Constructable<K>) && (Clone<V> || Copy_Constructable<V>)
     {
         Map<K, V, B> ret(capacity_);
         ret.length_ = length_;
-        if constexpr(Trivial<K> && Trivial<V>) {
+        if constexpr(Copy_Constructable<K> && Copy_Constructable<V>) {
             Std::memcpy(ret.data_, data_, capacity_ * sizeof(Slot));
         } else {
             for(u64 i = 0; i < length_; i++) {
@@ -189,13 +189,13 @@ struct Map {
     }
 
     V& insert(const K& key, const V& value)
-        requires Trivial<K> && Trivial<V>
+        requires Copy_Constructable<K> && Copy_Constructable<V>
     {
         return insert(K{key}, V{value});
     }
 
     V& insert(const K& key, V&& value)
-        requires Trivial<K>
+        requires Copy_Constructable<K>
     {
         return insert(K{key}, std::move(value));
     }
@@ -298,7 +298,7 @@ struct Map {
     }
 
     V& get_or_insert(const K& key)
-        requires Trivial<K> && Default_Constructable<V>
+        requires Copy_Constructable<K> && Default_Constructable<V>
     {
         Opt<Ref<V>> entry = try_get(key);
         if(entry) {

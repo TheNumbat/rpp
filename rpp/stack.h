@@ -27,7 +27,7 @@ struct Stack {
 
     template<Allocator B = A>
     Stack<T, B> clone() const
-        requires Clone<T> || Trivial<T>
+        requires Clone<T> || Copy_Constructable<T>
     {
         Stack<T, B> ret;
         ret.data_ = data_.clone();
@@ -45,7 +45,7 @@ struct Stack {
     }
 
     T& push(const T& value)
-        requires Trivial<T>
+        requires Copy_Constructable<T>
     {
         return push(T{value});
     }

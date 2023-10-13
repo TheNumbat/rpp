@@ -59,6 +59,8 @@ struct String_View {
     template<Allocator A>
     String<A> terminate() const;
 
+    String_View sub(u64 start, u64 end) const;
+
 private:
     const u8* data_;
     u64 length_;

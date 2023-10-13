@@ -3,10 +3,6 @@
 
 #include "base.h"
 
-#ifdef __SSE4_2__
-#error "lol"
-#endif
-
 namespace rpp::SIMD {
 
 struct F32x4 {

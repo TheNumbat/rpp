@@ -60,7 +60,7 @@ struct Queue {
 
     template<Allocator B = A>
     Queue<T, B> clone() const
-        requires Clone<T> || Trivial<T>
+        requires Clone<T> || Copy_Constructable<T>
     {
         Queue<T, B> ret;
         ret.data_ = reinterpret_cast<T*>(B::alloc(capacity_ * sizeof(T)));
@@ -75,7 +75,7 @@ struct Queue {
                 new(&ret.data_[i]) T{data_[i].clone()};
             }
         } else {
-            static_assert(Trivial<T>);
+            static_assert(Copy_Constructable<T>);
             Std::memcpy(ret.data_, data_, capacity_ * sizeof(T));
         }
         return ret;
@@ -124,7 +124,7 @@ struct Queue {
     }
 
     T& push(const T& value)
-        requires Trivial<T>
+        requires Copy_Constructable<T>
     {
         return push(T{value});
     }

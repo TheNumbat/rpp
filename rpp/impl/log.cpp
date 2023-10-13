@@ -91,7 +91,7 @@ u64 sys_time() {
     return std::time(null);
 }
 
-static String_View time_string(std::time_t timestamp) {
+String_View sys_time_string(std::time_t timestamp) {
 
     constexpr u64 buffer_size = 64;
     static thread_local char buffer[buffer_size];
@@ -135,7 +135,7 @@ void output(Level level, const Location& loc, String_View msg) {
 
     Thread::Lock lock(g_log_data.lock);
 
-    String_View time = time_string(timer);
+    String_View time = sys_time_string(timer);
 
     printf(format_str, time.length(), time.data(), level_str, thread, loc.file.length(),
            loc.file.data(), loc.line, loc.column, g_log_indent * INDENT_SIZE, "", msg.length(),
@@ -160,9 +160,5 @@ Scope::~Scope() {
 }
 
 } // namespace Log
-
-bool operator==(const Log::Location& a, const Log::Location& b) {
-    return a.function == b.function && a.file == b.file && a.line == b.line && a.column == b.column;
-}
 
 } // namespace rpp

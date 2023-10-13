@@ -411,15 +411,15 @@ i32 main() {
         assert(s4.length() == 2);
         Slice<SV> s5 = s4;
 
-        Slice<i32> s6 = {1, 2, 3};
+        Slice<i32> s6{1, 2, 3};
         assert(s6.length() == 3);
 
-        Slice<SV> s7 = {"Hello"_v, "World"_v};
+        Slice<SV> s7{"Hello"_v, "World"_v};
         assert(s7.length() == 2);
 
         Slice<M> smm;
         (void)smm;
-        Slice<M> sm = {M{}};
+        Slice<M> sm{M{}};
 
         Slice<M> m2{};
 
