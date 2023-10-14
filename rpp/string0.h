@@ -59,6 +59,9 @@ struct String_View {
     template<Allocator A>
     String<A> terminate() const;
 
+    template<Allocator A>
+    String<A> append(String_View next) const;
+
     String_View sub(u64 start, u64 end) const;
 
 private:

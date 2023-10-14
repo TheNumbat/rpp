@@ -17,29 +17,29 @@ struct Array {
     = default;
 
     template<typename... Ss>
-        requires Length<N, Ss...> && All<T, Ss...> && Move_Constructable<T>
-    explicit Array(Ss&&... init) : data_{std::move(init)...} {
+        requires(sizeof...(Ss) == N) && All<T, Ss...>
+    explicit Array(Ss&&... init) : data_{std::forward<Ss>(init)...} {
     }
 
     template<typename... Ss>
-        requires Length<N, Ss...> && All<T, Ss...> && Copy_Constructable<T>
-    explicit Array(const Ss&... init) : data_{init...} {
+        requires(sizeof...(Ss) == N) && All<T, Ss...> && Copy_Constructable<T>
+    explicit Array(const Ss&... init) : data_{T{init}...} {
     }
 
     ~Array() = default;
 
     Array(const Array& src)
-        requires Trivial<T>
+        requires Copy_Constructable<T>
     = default;
     Array& operator=(const Array& src)
-        requires Trivial<T>
+        requires Copy_Constructable<T>
     = default;
 
     Array(Array&& src) = default;
     Array& operator=(Array&& src) = default;
 
     Array clone() const
-        requires(Clone<T> || Trivial<T>) && Default_Constructable<T>
+        requires(Clone<T> || Copy_Constructable<T>) && Default_Constructable<T>
     {
         Array result;
         if constexpr(Clone<T>) {

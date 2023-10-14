@@ -90,6 +90,15 @@ u64 String<A>::write(u64 i, String_View text) {
     return i + text.length();
 }
 
+template<Allocator A>
+String<A> String_View::append(String_View next) const {
+    String<A> ret{length_ + next.length()};
+    ret.set_length(length_ + next.length());
+    Std::memcpy(ret.data(), data_, length_);
+    Std::memcpy(ret.data() + length_, next.data(), next.length());
+    return ret;
+}
+
 namespace Format {
 
 template<>
