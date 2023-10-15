@@ -87,11 +87,16 @@ void debug_break() {
 
 #endif
 
+static_assert(sizeof(std::time_t) == sizeof(u64));
+static_assert(alignof(std::time_t) <= alignof(u64));
+
 u64 sys_time() {
     return std::time(null);
 }
 
-String_View sys_time_string(std::time_t timestamp) {
+String_View sys_time_string(u64 timestamp_) {
+
+    std::time_t timestamp = static_cast<std::time_t>(timestamp_);
 
     constexpr u64 buffer_size = 64;
     static thread_local char buffer[buffer_size];

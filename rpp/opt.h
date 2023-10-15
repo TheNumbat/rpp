@@ -78,6 +78,11 @@ struct Opt {
             return Opt{*value_};
     }
 
+    T& value_or(T& other) {
+        if(ok_) return *value_;
+        return other;
+    }
+
     T& operator*() {
         assert(ok_);
         return *value_;
