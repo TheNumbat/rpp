@@ -168,7 +168,7 @@ template<Allocator A = Alloc, typename F, typename... Args>
 auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
 
     using Result = Invoke_Result<F, Args...>;
-    auto future = Future<Result, A>{};
+    auto future = Future<Result, A>::make();
 
     Thread thread{[future = future.dup(), f = std::forward<F>(f),
                    ... args = std::forward<Args>(args)]() mutable {

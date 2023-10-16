@@ -120,6 +120,15 @@ struct Arc {
         new(data_) Data{T{std::forward<Args>(args)...}, Thread::Atomic{1}};
     }
 
+    static Arc make()
+        requires Default_Constructable<T>
+    {
+        Arc ret;
+        ret.data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
+        new(ret.data_) Data{T{}, Thread::Atomic{1}};
+        return ret;
+    }
+
     Arc(const Arc& src) = delete;
     Arc& operator=(const Arc& src) = delete;
 
