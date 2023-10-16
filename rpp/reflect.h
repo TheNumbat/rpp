@@ -271,13 +271,28 @@ template<typename T, typename... Args>
 concept Constructable = std::is_constructible_v<T, Args...>;
 
 template<typename T>
-concept Default_Constructable = std::is_default_constructible_v<T>;
+struct Default_Constructable_Impl {
+    static constexpr bool value = std::is_default_constructible_v<T>;
+};
 
 template<typename T>
-concept Copy_Constructable = std::is_copy_constructible_v<T>;
+struct Move_Constructable_Impl {
+    static constexpr bool value = std::is_move_constructible_v<T>;
+};
 
 template<typename T>
-concept Move_Constructable = std::is_move_constructible_v<T>;
+struct Copy_Constructable_Impl {
+    static constexpr bool value = std::is_copy_constructible_v<T>;
+};
+
+template<typename T>
+concept Default_Constructable = Default_Constructable_Impl<T>::value;
+
+template<typename T>
+concept Move_Constructable = Move_Constructable_Impl<T>::value;
+
+template<typename T>
+concept Copy_Constructable = Copy_Constructable_Impl<T>::value;
 
 template<typename T>
 concept Trivially_Copyable = std::is_trivially_copyable_v<T>;
@@ -557,12 +572,12 @@ struct Limits<f64> {
 };
 
 template<typename T>
-concept Equality = requires(T l, T r) {
+concept Equality = requires(const T& l, const T& r) {
     { l == r } -> Same<bool>;
 };
 
 template<typename T>
-concept Ordered = requires(T l, T r) {
+concept Ordered = requires(const T& l, const T& r) {
     { l < r } -> Same<bool>;
 };
 
@@ -576,7 +591,7 @@ template<u64 N, typename... Ts>
 concept Length = sizeof...(Ts) == N;
 
 template<typename T>
-concept Clone = Move_Constructable<T> && requires(T value) {
+concept Clone = Move_Constructable<T> && requires(const T& value) {
     { value.clone() } -> Same<T>;
 };
 

@@ -206,7 +206,7 @@ private:
         -> Future<Invoke_Result<F, Args...>, Alloc> {
 
         using Ret = Invoke_Result<F, Args...>;
-        auto future = Future<Ret>::make();
+        auto future = Future<Ret>{};
 
         auto func = [future = future.dup(), f = std::move(f),
                      ... args = std::forward<Args>(args)]() mutable {

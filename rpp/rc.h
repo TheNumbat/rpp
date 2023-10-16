@@ -120,15 +120,6 @@ struct Arc {
         new(data_) Data{T{std::forward<Args>(args)...}, Thread::Atomic{1}};
     }
 
-    static Arc make()
-        requires Default_Constructable<T>
-    {
-        Arc ret;
-        ret.data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(ret.data_) Data{T{}, Thread::Atomic{1}};
-        return ret;
-    }
-
     Arc(const Arc& src) = delete;
     Arc& operator=(const Arc& src) = delete;
 
@@ -194,6 +185,42 @@ private:
 
     friend struct Reflect<Arc<T>>;
 };
+
+#ifdef COMPILER_CLANG
+
+// Weird workaround for clang too eagerly evaluating concepts for member pointers.
+
+template<typename T, typename A>
+struct Default_Constructable_Impl<Rc<T, A>> {
+    static constexpr bool value = true;
+};
+
+template<typename T, typename A>
+struct Default_Constructable_Impl<Arc<T, A>> {
+    static constexpr bool value = true;
+};
+
+template<typename T, typename A>
+struct Move_Constructable_Impl<Rc<T, A>> {
+    static constexpr bool value = true;
+};
+
+template<typename T, typename A>
+struct Move_Constructable_Impl<Arc<T, A>> {
+    static constexpr bool value = true;
+};
+
+template<typename T, typename A>
+struct Copy_Constructable_Impl<Rc<T, A>> {
+    static constexpr bool value = false;
+};
+
+template<typename T, typename A>
+struct Copy_Constructable_Impl<Arc<T, A>> {
+    static constexpr bool value = false;
+};
+
+#endif
 
 template<typename R>
 struct Reflect<detail::Rc_Data<R>> {

@@ -21,17 +21,17 @@ struct Storage {
     ~Storage() = default;
 
     Storage(const Storage& src)
-        requires Trivial<T>
+        requires Trivially_Copyable<T>
     = default;
     Storage& operator=(const Storage&)
-        requires Trivial<T>
+        requires Trivially_Copyable<T>
     = default;
 
     Storage(Storage&& src)
-        requires Trivial<T>
+        requires Trivially_Movable<T>
     = default;
     Storage& operator=(Storage&&)
-        requires Trivial<T>
+        requires Trivially_Movable<T>
     = default;
 
     template<typename... Args>
