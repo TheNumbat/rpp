@@ -24,6 +24,8 @@ Supported configurations
 - Windows / x86_64 / Clang
 - Linux / x86_64 / Clang
 
+Due to a compiler bug, `clang-15` is not able to build the project. Use `clang-17` instead.
+
 Pointers
 - Raw pointer: non owning
 - Ref: non owning

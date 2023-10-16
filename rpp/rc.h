@@ -186,42 +186,6 @@ private:
     friend struct Reflect<Arc<T>>;
 };
 
-#ifdef COMPILER_CLANG
-
-// Weird workaround for clang too eagerly evaluating concepts for member pointers.
-
-template<typename T, typename A>
-struct Default_Constructable_Impl<Rc<T, A>> {
-    static constexpr bool value = true;
-};
-
-template<typename T, typename A>
-struct Default_Constructable_Impl<Arc<T, A>> {
-    static constexpr bool value = true;
-};
-
-template<typename T, typename A>
-struct Move_Constructable_Impl<Rc<T, A>> {
-    static constexpr bool value = true;
-};
-
-template<typename T, typename A>
-struct Move_Constructable_Impl<Arc<T, A>> {
-    static constexpr bool value = true;
-};
-
-template<typename T, typename A>
-struct Copy_Constructable_Impl<Rc<T, A>> {
-    static constexpr bool value = false;
-};
-
-template<typename T, typename A>
-struct Copy_Constructable_Impl<Arc<T, A>> {
-    static constexpr bool value = false;
-};
-
-#endif
-
 template<typename R>
 struct Reflect<detail::Rc_Data<R>> {
     using T = detail::Rc_Data<R>;

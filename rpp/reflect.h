@@ -271,28 +271,13 @@ template<typename T, typename... Args>
 concept Constructable = std::is_constructible_v<T, Args...>;
 
 template<typename T>
-struct Default_Constructable_Impl {
-    static constexpr bool value = std::is_default_constructible_v<T>;
-};
+concept Default_Constructable = std::is_default_constructible_v<T>;
 
 template<typename T>
-struct Move_Constructable_Impl {
-    static constexpr bool value = std::is_move_constructible_v<T>;
-};
+concept Move_Constructable = std::is_move_constructible_v<T>;
 
 template<typename T>
-struct Copy_Constructable_Impl {
-    static constexpr bool value = std::is_copy_constructible_v<T>;
-};
-
-template<typename T>
-concept Default_Constructable = Default_Constructable_Impl<T>::value;
-
-template<typename T>
-concept Move_Constructable = Move_Constructable_Impl<T>::value;
-
-template<typename T>
-concept Copy_Constructable = Copy_Constructable_Impl<T>::value;
+concept Copy_Constructable = std::is_copy_constructible_v<T>;
 
 template<typename T>
 concept Trivially_Copyable = std::is_trivially_copyable_v<T>;
