@@ -1159,7 +1159,8 @@ i32 main() {
     [] {
         Thread::Pool pool;
         {
-            auto job = [&pool](i32 ms, u64 mask) -> Async::Task<i32> {
+            auto job = [&pool_ = pool](i32 ms, u64 mask) -> Async::Task<i32> {
+                auto& pool = pool_;
                 info("5.2 begin %", ms);
                 co_await pool.suspend(Thread::Priority::normal, mask);
                 info("5.2 on thread %", ms);
@@ -1167,7 +1168,9 @@ i32 main() {
                 info("5.2 done %", ms);
                 co_return 1;
             };
-            auto job2 = [&pool, &job]() -> Async::Task<i32> {
+            auto job2 = [&pool_ = pool, &job_ = job]() -> Async::Task<i32> {
+                auto& pool = pool_;
+                auto& job = job_;
                 info("5.1 begin");
                 co_await pool.suspend(Thread::Priority::normal, 0b1);
                 info("5.1 on thread");
@@ -1196,26 +1199,29 @@ i32 main() {
             // if all but one thread shut down it deadlocks itself
         }
         {
-            Function<Async::Task<void>(Thread::Pool<>&, u64)> lots_of_jobs =
-                [&lots_of_jobs](Thread::Pool<>& pool, u64 depth) -> Async::Task<void> {
+            Function<Async::Task<void>(u64)> lots_of_jobs =
+                [&pool_ = pool, &lots_of_jobs_ = lots_of_jobs](u64 depth) -> Async::Task<void> {
+                auto& pool = pool_;
+                auto& lots_of_jobs = lots_of_jobs_;
                 if(depth == 0) {
                     co_return;
                 }
                 co_await pool.suspend();
-                auto job0 = lots_of_jobs(pool, depth - 1);
-                auto job1 = lots_of_jobs(pool, depth - 1);
+                auto job0 = lots_of_jobs(depth - 1);
+                auto job1 = lots_of_jobs(depth - 1);
                 co_await job0;
                 co_await job1;
             };
 
-            lots_of_jobs(pool, 14).block();
+            lots_of_jobs(14).block();
         }
     }();
 
     [] {
         Thread::Pool pool;
         {
-            auto job = [&pool]() -> Async::Task<void> {
+            auto job = [&pool_ = pool]() -> Async::Task<void> {
+                auto& pool = pool_;
                 info("coWaiting 100ms.");
                 co_await AsyncIO::wait(pool, 100);
                 info("coWaited 100ms.");
@@ -1238,11 +1244,12 @@ i32 main() {
             info("Read file: %", file->length());
         }
         {
-            auto job = [&pool]() -> Async::Task<Vec<u8, AsyncIO::Alloc>> {
+            auto job = [&pool_ = pool]() -> Async::Task<Vec<u8, AsyncIO::Alloc>> {
+                auto& pool = pool_;
                 info("coReading file.");
                 auto file = co_await AsyncIO::read(pool, "large_file"_v);
                 info("coRead file: %", file->length());
-                co_return std::move(*file);
+                co_return std::move(*file); // dies access violation resuming coroutine
             };
 
             auto file = job().block();

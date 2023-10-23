@@ -24,7 +24,7 @@ struct Vec {
     {
         Vec ret;
         ret.data_ = reinterpret_cast<T*>(A::alloc(length * sizeof(T)));
-        new T[length]{};
+        new(ret.data_) T[length]{};
         ret.capacity_ = length;
         ret.length_ = length;
         return ret;
