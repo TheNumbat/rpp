@@ -47,10 +47,15 @@ struct Final_Suspend {
 
     std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
         auto& promise = handle.promise();
-        Thread::Lock lock{promise.mutex};
-        promise.done = true;
-        promise.cond.broadcast();
-        return promise.continuation ? promise.continuation : std::noop_coroutine();
+        std::coroutine_handle<> ret = std::noop_coroutine();
+        {
+            Thread::Lock lock{promise.mutex};
+            promise.done = true;
+            promise.cond.broadcast();
+            if(promise.continuation) ret = promise.continuation;
+        }
+        Thread::sleep(10);
+        return ret;
     }
 };
 
