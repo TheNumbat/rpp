@@ -41,7 +41,7 @@ private:
 #ifdef OS_WINDOWS
     i16 value_ = 0;
 #else
-
+    i32 value_ = 0;
 #endif
 };
 

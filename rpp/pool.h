@@ -58,20 +58,28 @@ private:
 template<Allocator A = Alloc>
 struct Pool {
 
-    explicit Pool() : thread_states{Vec<Thread_State, A>::make(hardware_threads())} {
+    static constexpr u64 N = 2;
 
-        auto n_threads = hardware_threads();
+    explicit Pool() : thread_states{Vec<Thread_State, A>::make(N)} {
+
+        auto n_threads = N;
         assert(n_threads <= 64);
         affinity_mask = (1ll << n_threads) - 1;
 
         for(u64 i = 0; i < n_threads; i++) {
             threads.push(Thread([this, i] {
+                startup.block();
                 set_affinity(i);
                 do_work(i);
             }));
         }
         pending_events.push(Async::Event{});
-        event_thread = Thread([this] { do_events(); });
+        event_thread = Thread([this] {
+            startup.block();
+            do_events();
+        });
+
+        startup.signal();
     }
     ~Pool() {
         shutdown.exchange(true);
@@ -130,12 +138,12 @@ private:
 
     template<typename R, typename RA>
     struct Co_Job : public Job_Base {
-        Co_Job(std::coroutine_handle<Async::Promise<R, RA>> coroutine_)
-            : coroutine{std::move(coroutine_)} {
+        Co_Job(std::coroutine_handle<Async::Promise<R, RA>> coroutine) : coroutine{coroutine} {
         }
         ~Co_Job() {
         }
         void operator()() {
+            assert(coroutine);
             coroutine.resume();
         }
         std::coroutine_handle<Async::Promise<R, RA>> coroutine;
@@ -153,24 +161,30 @@ private:
             affinity_bits = Math::popcount(affinity);
         }
 
-        // We are not locking the queues: empty may not be accurate.
-        if(p == Priority::critical) {
+        if(p == Priority::critical || p == Priority::high) {
             for(u64 i = 0; i < thread_states.length(); i++) {
-                if((affinity & (1ll << i)) && thread_states[i].important_jobs.empty()) {
-                    idx = i;
-                    break;
+                Thread_State& state = thread_states[i];
+                Lock lock(state.mut);
+                if((affinity & (1ll << i)) && state.important_jobs.empty()) {
+                    state.important_jobs.push(std::move(job));
+                    state.cond.signal();
+                    return;
                 }
             }
         } else {
             for(u64 i = 0; i < thread_states.length(); i++) {
-                if((affinity & (1ll << i)) && thread_states[i].important_jobs.empty() &&
-                   thread_states[i].normal_jobs.empty()) {
-                    idx = i;
-                    break;
+                Thread_State& state = thread_states[i];
+                Lock lock(state.mut);
+                if((affinity & (1ll << i)) && state.important_jobs.empty() &&
+                   state.normal_jobs.empty()) {
+                    state.normal_jobs.push(std::move(job));
+                    state.cond.signal();
+                    return;
                 }
             }
         }
 
+        // All queues more or less busy, choose next from low descrepency sequence
         if(idx == Limits<u64>::max()) {
             idx = static_cast<u64>(sequence.incr() * Math::PHI32) % affinity_bits;
             for(u64 i = 0; i < thread_states.length(); i++) {
@@ -180,8 +194,8 @@ private:
                 }
             }
         }
-        Thread_State& state = thread_states[idx];
 
+        Thread_State& state = thread_states[idx];
         Lock lock(state.mut);
         switch(p) {
         case Priority::critical:
@@ -296,6 +310,7 @@ private:
         }
     }
 
+    Flag startup;
     Atomic shutdown, sequence;
     u64 affinity_mask = 0;
 

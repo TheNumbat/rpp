@@ -43,10 +43,8 @@ i32 main() {
 
         for(u64 i = 0; i < 1000; i++) {
             info("lol");
-            lots_of_jobs(pool, 10);
+            lots_of_jobs(pool, 10).block();
         }
-
-        Thread::sleep(10000);
     }
 
     Profile::end_frame();

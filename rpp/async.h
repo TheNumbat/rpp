@@ -56,7 +56,7 @@ struct Final_Suspend {
         i64 state = promise.state.exchange(TASK_DONE);
         assert(state != TASK_DONE);
 
-        // promise.done.signal();
+        promise.done_.signal();
 
         if(state == TASK_START) {
             return std::noop_coroutine();
@@ -92,11 +92,9 @@ struct Promise_Base {
         die("Unhandled exception in coroutine.");
     }
 
-    // void block() {
-    // done.block();
-    // auto handle = std::coroutine_handle<D>::from_promise(*static_cast<D*>(this));
-    // while(!handle.done()) continue;
-    // }
+    void block() {
+        done_.block();
+    }
 
     void* operator new(size_t size) {
         return A::alloc(size);
@@ -105,9 +103,13 @@ struct Promise_Base {
         A::free(ptr);
     }
 
+    bool done() {
+        return state.load() == TASK_DONE;
+    }
+
 protected:
     Thread::Atomic state{TASK_START};
-    // Thread::Flag done;
+    Thread::Flag done_;
 
     template<typename, Allocator>
     friend struct Task;
@@ -121,11 +123,14 @@ struct Promise : Promise_Base<Promise<R, A>, R, A> {
         return Task<R, A>{*this};
     }
     void return_value(const R& val) {
+        Thread::Lock lock(mut);
         data = val;
     }
     void return_value(R&& val) {
+        Thread::Lock lock(mut);
         data = std::move(val);
     }
+    Thread::Mutex mut;
     R data;
 };
 
@@ -139,7 +144,10 @@ struct Task {
     }
 
     ~Task() {
-        if(handle) {
+        // MSVC BUG:
+        // https://developercommunity.visualstudio.com/t/destroy-coroutine-from-final_suspend-r/10096047
+        // TODO(max): shouldn't actually need this
+        if(deleted.compare_and_swap(0, 1) == 0) {
             auto& promise = handle.promise();
 
             i64 state = promise.state.exchange(TASK_ABANDONED);
@@ -148,10 +156,6 @@ struct Task {
             if(state == TASK_DONE) {
                 handle.destroy();
             }
-
-            // MSVC BUG:
-            // https://developercommunity.visualstudio.com/t/destroy-coroutine-from-final_suspend-r/10096047
-            handle = null;
         }
     }
 
@@ -162,7 +166,7 @@ struct Task {
     Task& operator=(Task&& src) = delete;
 
     bool await_ready() {
-        return handle.done();
+        return handle.promise().done();
     }
     std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) {
         auto& promise = handle.promise();
@@ -180,23 +184,26 @@ struct Task {
         if constexpr(Same<R, void>) {
             return;
         } else {
-            return std::move(handle.promise().data);
+            auto& promise = handle.promise();
+            Thread::Lock lock(promise.mut);
+            R ret{std::move(promise.data)};
+            return ret;
         }
     }
 
     void resume() {
-        assert(!handle.done());
         handle.resume();
     }
     bool done() {
         return await_ready();
     }
-    // auto block() {
-    //     handle.promise().block();
-    //     return await_resume();
-    // }
+    auto block() {
+        handle.promise().block();
+        return await_resume();
+    }
 
 private:
+    Thread::Atomic deleted;
     std::coroutine_handle<promise_type> handle;
 };
 

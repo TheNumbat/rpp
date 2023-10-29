@@ -1,6 +1,9 @@
 
 #include "../thread.h"
 
+#include <limits.h>
+#include <linux/futex.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 namespace rpp::Thread {
@@ -101,6 +104,23 @@ void set_affinity(u64 core) {
     int ret = pthread_setaffinity_np(pthread_self(), sizeof(set), &set);
     if(ret) {
         die("Failed to set pthread affinity to %: %", core, ret);
+    }
+}
+
+void Flag::block() {
+    while(__atomic_load_n(&value_, __ATOMIC_SEQ_CST) == 0) {
+        int ret = syscall(SYS_futex, &value_, FUTEX_WAIT, 0, NULL, NULL, 0);
+        if(ret == -1 && errno != EAGAIN) {
+            die("Failed to wait on futex: %", errno);
+        }
+    }
+}
+
+void Flag::signal() {
+    __atomic_exchange_n(&value_, 1, __ATOMIC_SEQ_CST);
+    int ret = syscall(SYS_futex, &value_, FUTEX_WAKE, INT_MAX, NULL, NULL, 0);
+    if(ret == -1) {
+        die("Failed to wake futex: %", errno);
     }
 }
 
