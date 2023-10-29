@@ -41,7 +41,7 @@ i32 main() {
     {
         Thread::Pool pool;
 
-        for(u64 i = 0; i < 10; i++) {
+        for(u64 i = 0; i < 1000; i++) {
             info("lol");
             lots_of_jobs(pool, 10);
         }

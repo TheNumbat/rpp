@@ -139,13 +139,19 @@ struct Task {
     }
 
     ~Task() {
-        auto& promise = handle.promise();
+        if(handle) {
+            auto& promise = handle.promise();
 
-        i64 state = promise.state.exchange(TASK_ABANDONED);
-        assert(state != TASK_ABANDONED);
+            i64 state = promise.state.exchange(TASK_ABANDONED);
+            assert(state != TASK_ABANDONED);
 
-        if(state == TASK_DONE) {
-            handle.destroy();
+            if(state == TASK_DONE) {
+                handle.destroy();
+            }
+
+            // MSVC BUG:
+            // https://developercommunity.visualstudio.com/t/destroy-coroutine-from-final_suspend-r/10096047
+            handle = null;
         }
     }
 
