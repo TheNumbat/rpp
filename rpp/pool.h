@@ -132,12 +132,8 @@ private:
     struct Co_Job : public Job_Base {
         Co_Job(std::coroutine_handle<Async::Promise<R, RA>> coroutine_)
             : coroutine{std::move(coroutine_)} {
-            coroutine.promise().reference();
         }
         ~Co_Job() {
-            if(coroutine.promise().unreference()) {
-                coroutine.destroy();
-            }
         }
         void operator()() {
             coroutine.resume();

@@ -8,6 +8,11 @@
 
 namespace rpp::Async {
 
+constexpr i64 TASK_START = 0;
+constexpr i64 TASK_DONE = 1;
+constexpr i64 TASK_ABANDONED = 2;
+// Other: awaiter continuation
+
 using Alloc = Mallocator<"Async">;
 
 struct Suspend {
@@ -47,19 +52,25 @@ struct Final_Suspend {
 
     std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
         auto& promise = handle.promise();
-        std::coroutine_handle<> ret = std::noop_coroutine();
-        {
-            Thread::Lock lock{promise.mutex};
-            promise.done = true;
-            promise.cond.broadcast();
-            if(promise.continuation) ret = promise.continuation;
+
+        i64 state = promise.state.exchange(TASK_DONE);
+        assert(state != TASK_DONE);
+
+        // promise.done.signal();
+
+        if(state == TASK_START) {
+            return std::noop_coroutine();
         }
-        Thread::sleep(10);
-        return ret;
+        if(state == TASK_ABANDONED) {
+            handle.destroy();
+            return std::noop_coroutine();
+        }
+
+        return std::coroutine_handle<>::from_address(reinterpret_cast<void*>(state));
     }
 };
 
-template<typename R, Allocator A>
+template<typename D, typename R, Allocator A>
 struct Promise_Base {
 
     Promise_Base() = default;
@@ -81,10 +92,11 @@ struct Promise_Base {
         die("Unhandled exception in coroutine.");
     }
 
-    void block() {
-        Thread::Lock lock{mutex};
-        while(!done) cond.wait(mutex);
-    }
+    // void block() {
+    // done.block();
+    // auto handle = std::coroutine_handle<D>::from_promise(*static_cast<D*>(this));
+    // while(!handle.done()) continue;
+    // }
 
     void* operator new(size_t size) {
         return A::alloc(size);
@@ -93,20 +105,9 @@ struct Promise_Base {
         A::free(ptr);
     }
 
-    void reference() {
-        references.incr();
-    }
-    bool unreference() {
-        return references.decr() == 0;
-    }
-
 protected:
-    Thread::Mutex mutex;
-    Thread::Cond cond;
-    bool done = false;
-
-    std::coroutine_handle<> continuation;
-    Thread::Atomic references;
+    Thread::Atomic state{TASK_START};
+    // Thread::Flag done;
 
     template<typename, Allocator>
     friend struct Task;
@@ -115,16 +116,14 @@ protected:
 };
 
 template<typename R, Allocator A>
-struct Promise : Promise_Base<R, A> {
+struct Promise : Promise_Base<Promise<R, A>, R, A> {
     Task<R, A> get_return_object() {
         return Task<R, A>{*this};
     }
     void return_value(const R& val) {
-        assert(!this->done);
         data = val;
     }
     void return_value(R&& val) {
-        assert(!this->done);
         data = std::move(val);
     }
     R data;
@@ -135,39 +134,38 @@ struct Task {
 
     using promise_type = Promise<R, A>;
 
-    Task() = default;
-    ~Task() {
-        if(handle && handle.promise().unreference()) {
-            handle.destroy();
-        }
+    explicit Task(promise_type& promise) {
+        handle = std::coroutine_handle<promise_type>::from_promise(promise);
     }
 
-    explicit Task(promise_type& promise) {
-        promise.reference();
-        handle = std::coroutine_handle<promise_type>::from_promise(promise);
+    ~Task() {
+        auto& promise = handle.promise();
+
+        i64 state = promise.state.exchange(TASK_ABANDONED);
+        assert(state != TASK_ABANDONED);
+
+        if(state == TASK_DONE) {
+            handle.destroy();
+        }
     }
 
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&& src) : handle{src.handle} {
-        src.handle = null;
-    }
-    Task& operator=(Task&& src) {
-        this->~Task();
-        handle = src.handle;
-        src.handle = null;
-        return *this;
-    }
+    Task(Task&& src) = delete;
+    Task& operator=(Task&& src) = delete;
 
     bool await_ready() {
-        return !handle || handle.done();
+        return handle.done();
     }
     std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) {
         auto& promise = handle.promise();
-        Thread::Lock lock{promise.mutex};
-        promise.continuation = continuation;
-        if(promise.done) {
+        i64 cont = reinterpret_cast<i64>(continuation.address());
+
+        i64 state = promise.state.compare_and_swap(TASK_START, cont);
+        assert(state == TASK_START || state == TASK_DONE);
+
+        if(state == TASK_DONE) {
             return continuation;
         }
         return std::noop_coroutine();
@@ -181,28 +179,27 @@ struct Task {
     }
 
     void resume() {
-        assert(handle);
+        assert(!handle.done());
         handle.resume();
     }
     bool done() {
         return await_ready();
     }
-    auto block() {
-        handle.promise().block();
-        return await_resume();
-    }
+    // auto block() {
+    //     handle.promise().block();
+    //     return await_resume();
+    // }
 
 private:
     std::coroutine_handle<promise_type> handle;
 };
 
 template<Allocator A>
-struct Promise<void, A> : Promise_Base<void, A> {
+struct Promise<void, A> : Promise_Base<Promise<void, A>, void, A> {
     Task<void, A> get_return_object() {
         return Task<void, A>{*this};
     }
     void return_void() {
-        assert(!this->done);
     }
 };
 

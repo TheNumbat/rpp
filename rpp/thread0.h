@@ -24,6 +24,27 @@ u64 perf_counter();
 u64 perf_frequency();
 u64 hardware_threads();
 
+struct Flag {
+    Flag() = default;
+    ~Flag() = default;
+
+    Flag(const Flag&) = delete;
+    Flag(Flag&&) = delete;
+
+    Flag& operator=(const Flag&) = delete;
+    Flag& operator=(Flag&&) = delete;
+
+    void block();
+    void signal();
+
+private:
+#ifdef OS_WINDOWS
+    i16 value_ = 0;
+#else
+
+#endif
+};
+
 struct Mutex {
 
     Mutex();

@@ -31,5 +31,5 @@ else()
 endif()
 
 if(WIN32)
-    target_link_libraries(rpp_test PRIVATE ws2_32)
+    target_link_libraries(rpp_test PRIVATE ws2_32 Synchronization)
 endif()
