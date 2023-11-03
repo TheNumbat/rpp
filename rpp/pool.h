@@ -58,7 +58,7 @@ private:
 template<Allocator A = Alloc>
 struct Pool {
 
-    static constexpr u64 N = 2;
+    static constexpr u64 N = 1;
 
     explicit Pool() : thread_states{Vec<Thread_State, A>::make(N)} {
 

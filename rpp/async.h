@@ -10,7 +10,6 @@ namespace rpp::Async {
 
 constexpr i64 TASK_START = 0;
 constexpr i64 TASK_DONE = 1;
-constexpr i64 TASK_ABANDONED = 2;
 // Other: awaiter continuation
 
 using Alloc = Mallocator<"Async">;
@@ -54,15 +53,8 @@ struct Final_Suspend {
         auto& promise = handle.promise();
 
         i64 state = promise.state.exchange(TASK_DONE);
-        assert(state != TASK_DONE);
-
-        promise.done_.signal();
 
         if(state == TASK_START) {
-            return std::noop_coroutine();
-        }
-        if(state == TASK_ABANDONED) {
-            handle.destroy();
             return std::noop_coroutine();
         }
 
@@ -73,7 +65,9 @@ struct Final_Suspend {
 template<typename D, typename R, Allocator A>
 struct Promise_Base {
 
-    Promise_Base() = default;
+    Promise_Base() {
+        fut = Thread::Future<R, A>::make();
+    }
     ~Promise_Base() = default;
 
     Promise_Base(const Promise_Base&) = delete;
@@ -92,10 +86,6 @@ struct Promise_Base {
         die("Unhandled exception in coroutine.");
     }
 
-    void block() {
-        done_.block();
-    }
-
     void* operator new(size_t size) {
         return A::alloc(size);
     }
@@ -107,9 +97,13 @@ struct Promise_Base {
         return state.load() == TASK_DONE;
     }
 
+    Thread::Future<R, A> future() {
+        return fut.dup();
+    }
+
 protected:
     Thread::Atomic state{TASK_START};
-    Thread::Flag done_;
+    Thread::Future<R, A> fut;
 
     template<typename, Allocator>
     friend struct Task;
@@ -123,15 +117,11 @@ struct Promise : Promise_Base<Promise<R, A>, R, A> {
         return Task<R, A>{*this};
     }
     void return_value(const R& val) {
-        Thread::Lock lock(mut);
-        data = val;
+        this->fut->fill(val);
     }
     void return_value(R&& val) {
-        Thread::Lock lock(mut);
-        data = std::move(val);
+        this->fut->fill(std::move(val));
     }
-    Thread::Mutex mut;
-    R data;
 };
 
 template<typename R, Allocator A>
@@ -141,22 +131,11 @@ struct Task {
 
     explicit Task(promise_type& promise) {
         handle = std::coroutine_handle<promise_type>::from_promise(promise);
+        fut = promise.future();
     }
 
     ~Task() {
-        // MSVC BUG:
-        // https://developercommunity.visualstudio.com/t/destroy-coroutine-from-final_suspend-r/10096047
-        // TODO(max): shouldn't actually need this
-        if(deleted.compare_and_swap(0, 1) == 0) {
-            auto& promise = handle.promise();
-
-            i64 state = promise.state.exchange(TASK_ABANDONED);
-            assert(state != TASK_ABANDONED);
-
-            if(state == TASK_DONE) {
-                handle.destroy();
-            }
-        }
+        assert(deleted.compare_and_swap(0, 1) == 0);
     }
 
     Task(const Task&) = delete;
@@ -166,15 +145,13 @@ struct Task {
     Task& operator=(Task&& src) = delete;
 
     bool await_ready() {
-        return handle.promise().done();
+        return fut->ready();
     }
     std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) {
         auto& promise = handle.promise();
         i64 cont = reinterpret_cast<i64>(continuation.address());
 
         i64 state = promise.state.compare_and_swap(TASK_START, cont);
-        assert(state == TASK_START || state == TASK_DONE);
-
         if(state == TASK_DONE) {
             return continuation;
         }
@@ -184,10 +161,7 @@ struct Task {
         if constexpr(Same<R, void>) {
             return;
         } else {
-            auto& promise = handle.promise();
-            Thread::Lock lock(promise.mut);
-            R ret{std::move(promise.data)};
-            return ret;
+            return fut->block();
         }
     }
 
@@ -198,13 +172,13 @@ struct Task {
         return await_ready();
     }
     auto block() {
-        handle.promise().block();
-        return await_resume();
+        return fut->block();
     }
 
 private:
-    Thread::Atomic deleted;
     std::coroutine_handle<promise_type> handle;
+    Thread::Future<R, A> fut;
+    Thread::Atomic deleted;
 };
 
 template<Allocator A>
@@ -213,6 +187,7 @@ struct Promise<void, A> : Promise_Base<Promise<void, A>, void, A> {
         return Task<void, A>{*this};
     }
     void return_void() {
+        this->fut->fill();
     }
 };
 

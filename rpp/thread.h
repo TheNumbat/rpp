@@ -42,10 +42,11 @@ struct Promise {
         cond.broadcast();
     }
 
-    T& block() {
+    T block() {
         Lock lock(mut);
         while(!value) cond.wait(mut);
-        return *value;
+        T v = std::move(*value);
+        return v;
     }
 
     bool ready() {
