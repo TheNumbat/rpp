@@ -178,8 +178,9 @@ i64 Atomic::exchange(i64 value) {
 }
 
 i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {
-    return __atomic_compare_exchange(&value_, &compare_with, &set_to, false, __ATOMIC_SEQ_CST,
-                                     __ATOMIC_SEQ_CST);
+    __atomic_compare_exchange_n(&value_, &compare_with, set_to, false, __ATOMIC_SEQ_CST,
+                                __ATOMIC_SEQ_CST);
+    return compare_with;
 }
 
 Cond::Cond() {

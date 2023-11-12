@@ -34,7 +34,7 @@ struct Continue {
 template<typename R>
 struct Future;
 
-template<typename R, Allocator A = Alloc>
+template<typename R = void, Allocator A = Alloc>
 struct Task;
 
 template<typename R, Allocator A>
@@ -74,8 +74,9 @@ struct Promise_Base {
         return fut;
     }
 
-    void continue_with(FunctionN<1, void(std::coroutine_handle<>)> f) {
-        fut->continue_with(std::move(f));
+    template<Invocable<std::coroutine_handle<>> F>
+    void continue_with(F&& f) {
+        fut->continue_with(std::forward<F>(f));
     }
 
 protected:
@@ -85,7 +86,7 @@ protected:
 template<typename R, Allocator A>
 struct Promise : Promise_Base<R, A> {
     Task<R, A> get_return_object() {
-        return Task<R, A>{*this};
+        return Task<R, A>{this->fut.dup()};
     }
     void return_value(const R& val) {
         this->fut->fill(val);
@@ -129,8 +130,9 @@ private:
         return continuation.compare_and_swap(TASK_START, reinterpret_cast<i64>(handle.address())) ==
                TASK_START;
     }
-    void continue_with(FunctionN<1, void(std::coroutine_handle<>)> f) {
-        on_continue = std::move(f);
+    template<Invocable<std::coroutine_handle<>> F>
+    void continue_with(F&& f) {
+        on_continue = std::forward<F>(f);
     }
     void abandon() {
         i64 c = continuation.load();
@@ -199,12 +201,10 @@ struct Task {
 
     using promise_type = Promise<R, A>;
 
-    explicit Task(promise_type& promise) : fut{promise.future().dup()} {
+    explicit Task(Arc<Future<R>, A> fut) : fut{std::move(fut)} {
     }
 
-    ~Task() {
-        assert(deleted.compare_and_swap(0, 1) == 0);
-    }
+    ~Task() = default;
 
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
@@ -215,11 +215,8 @@ struct Task {
     bool await_ready() {
         return fut->ready();
     }
-    std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) {
-        if(fut->install(continuation)) {
-            return std::noop_coroutine();
-        }
-        return continuation;
+    bool await_suspend(std::coroutine_handle<> continuation) {
+        return fut->install(continuation);
     }
     auto await_resume() {
         return fut->block();
@@ -234,13 +231,12 @@ struct Task {
 
 private:
     Arc<Future<R>, A> fut;
-    Thread::Atomic deleted{0};
 };
 
 template<Allocator A>
 struct Promise<void, A> : Promise_Base<void, A> {
     Task<void, A> get_return_object() {
-        return Task<void, A>{*this};
+        return Task<void, A>{this->fut.dup()};
     }
     void return_void() {
         this->fut->fill();

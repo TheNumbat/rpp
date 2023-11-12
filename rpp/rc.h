@@ -9,14 +9,14 @@ namespace detail {
 
 template<typename T>
 struct Rc_Data {
-    T value;
     u64 references = 0;
+    T value;
 };
 
 template<typename T>
 struct Arc_Data {
-    T value;
     Thread::Atomic references;
+    T value;
 };
 
 } // namespace detail
@@ -117,7 +117,7 @@ struct Arc {
         requires Constructable<T, Args...>
     explicit Arc(Args&&... args) {
         data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(data_) Data{T{std::forward<Args>(args)...}, Thread::Atomic{1}};
+        new(data_) Data{Thread::Atomic{1}, T{std::forward<Args>(args)...}};
     }
 
     static Arc make()
@@ -125,7 +125,7 @@ struct Arc {
     {
         Arc ret;
         ret.data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(ret.data_) Data{T{}, Thread::Atomic{1}};
+        new(ret.data_) Data{Thread::Atomic{1}, T{}};
         return ret;
     }
 

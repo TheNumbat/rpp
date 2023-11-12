@@ -21,16 +21,16 @@
 
 using namespace rpp;
 
-auto lots_of_jobs(Thread::Pool<>& pool, u64 depth) -> Async::Task<u64> {
+auto lots_of_jobs(Thread::Pool<>& pool, u64 depth) -> Async::Task<> {
     if(depth == 0) {
-        co_return 1;
+        co_return;
     }
     co_await pool.suspend();
     auto job0 = lots_of_jobs(pool, depth - 1);
     auto job1 = lots_of_jobs(pool, depth - 1);
-    auto _0 = co_await job0;
-    auto _1 = co_await job1;
-    co_return _0 + _1;
+    co_await job0;
+    co_await job1;
+    co_return;
 };
 
 i32 main() {

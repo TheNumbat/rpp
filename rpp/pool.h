@@ -109,9 +109,6 @@ private:
     using Job = std::coroutine_handle<>;
 
     void enqueue(Job job) {
-
-        u64 idx = Limits<u64>::max();
-
         for(u64 i = 0; i < thread_states.length(); i++) {
             Thread_State& state = thread_states[i];
             Lock lock(state.mut);
@@ -123,11 +120,9 @@ private:
         }
 
         // All queues more or less busy, choose next from low discrepancy sequence
-        if(idx == Limits<u64>::max()) {
-            idx = static_cast<u64>(sequence.incr() * Math::PHI32) % thread_states.length();
-        }
+        u64 i = static_cast<u64>(sequence.incr() * Math::PHI32) % thread_states.length();
+        Thread_State& state = thread_states[i];
 
-        Thread_State& state = thread_states[idx];
         Lock lock(state.mut);
         state.jobs.push(std::move(job));
         state.cond.signal();
@@ -146,14 +141,13 @@ private:
             {
                 Lock lock(state.mut);
 
-                while(state.jobs.empty() && !shutdown.load()) state.cond.wait(state.mut);
-
+                while(state.jobs.empty() && !shutdown.load()) {
+                    state.cond.wait(state.mut);
+                }
                 if(shutdown.load()) return;
 
-                if(!state.jobs.empty()) {
-                    job = std::move(state.jobs.front());
-                    state.jobs.pop();
-                }
+                job = std::move(state.jobs.front());
+                state.jobs.pop();
             }
             job.resume();
         }

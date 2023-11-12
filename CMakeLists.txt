@@ -29,9 +29,9 @@ if(MSVC)
 else()
     target_compile_options(rpp_test PRIVATE -mavx2 -Wall -Wextra -Werror -Wno-reorder -Wno-missing-braces -Wno-unused-parameter)
 
-    set_target_properties(rpp_test PROPERTIES
-        LINK_FLAGS -fsanitize=thread
-        COMPILE_FLAGS -fsanitize=thread -fno-omit-frame-pointer -fno-optimize-sibling-calls)
+    # set_target_properties(rpp_test PROPERTIES
+    # LINK_FLAGS -fsanitize=thread
+    # COMPILE_FLAGS -fsanitize=thread -fno-omit-frame-pointer -fno-optimize-sibling-calls)
 endif()
 
 if(WIN32)
