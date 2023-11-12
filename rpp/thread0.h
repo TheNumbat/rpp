@@ -68,7 +68,7 @@ private:
 #endif
 
     friend struct Cond;
-    friend struct Reflect<Mutex>;
+    friend struct rpp::detail::Reflect<Mutex>;
 };
 
 struct Lock {
@@ -89,7 +89,7 @@ struct Lock {
 private:
     Ref<Mutex> mutex_;
 
-    friend struct Reflect<Lock>;
+    friend struct rpp::detail::Reflect<Lock>;
 };
 
 struct Atomic {
@@ -119,7 +119,7 @@ struct Atomic {
 private:
     i64 value_ = 0;
 
-    friend struct Reflect<Atomic>;
+    friend struct rpp::detail::Reflect<Atomic>;
 };
 
 struct Cond {
@@ -144,13 +144,13 @@ private:
     pthread_cond_t cond_ = PTHREAD_COND_INITIALIZER;
 #endif
 
-    friend struct Reflect<Cond>;
+    friend struct rpp::detail::Reflect<Cond>;
 };
 
 } // namespace Thread
 
 template<>
-struct Reflect<Thread::Atomic> {
+struct rpp::detail::Reflect<Thread::Atomic> {
     using T = Thread::Atomic;
     static constexpr Literal name = "Atomic";
     static constexpr Kind kind = Kind::record_;
@@ -158,7 +158,7 @@ struct Reflect<Thread::Atomic> {
 };
 
 template<>
-struct Reflect<Thread::Priority> {
+struct rpp::detail::Reflect<Thread::Priority> {
     using T = Thread::Priority;
     using underlying = u8;
     static constexpr Literal name = "Priority";

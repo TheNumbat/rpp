@@ -109,11 +109,11 @@ protected:
     bool ok_ = false;
     Storage<T> value_;
 
-    friend struct Reflect<Opt>;
+    friend struct rpp::detail::Reflect<Opt>;
 };
 
 template<typename O>
-struct Reflect<Opt<O>> {
+struct rpp::detail::Reflect<Opt<O>> {
     using T = Opt<O>;
     static constexpr Literal name = "Opt";
     static constexpr Kind kind = Kind::record_;

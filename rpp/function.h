@@ -105,7 +105,7 @@ private:
     alignas(MAX_ALIGN) u8 storage[Words * 8] = {};
     VoidFn* vtable = null;
 
-    friend struct Reflect<Function<Words, Fn>>;
+    friend struct rpp::detail::Reflect<Function<Words, Fn>>;
 };
 
 } // namespace detail
@@ -117,7 +117,7 @@ template<u64 Words, typename F>
 using FunctionN = detail::Function<Words, F>;
 
 template<u64 Words, typename Fn>
-struct Reflect<detail::Function<Words, Fn>> {
+struct rpp::detail::Reflect<detail::Function<Words, Fn>> {
     using T = detail::Function<Words, Fn>;
     static constexpr Literal name = "Function";
     static constexpr Kind kind = Kind::record_;

@@ -5,8 +5,11 @@
 #define COMPILER_MSVC
 #elif defined __clang__
 #define COMPILER_CLANG
+#elif defined __GNUC__
+#define COMPILER_GCC
+#define offsetof __builtin_offsetof
 #else
-#error "Unsupported compiler."
+// #error "Unsupported compiler."
 #endif
 
 #ifdef _WIN64
@@ -34,7 +37,7 @@
 #define FORCE_INLINE __forceinline
 #endif
 
-#ifdef COMPILER_CLANG
+#if defined COMPILER_CLANG || defined COMPILER_GCC
 #define FORCE_INLINE __attribute__((always_inline))
 #include <new>
 #include <stddef.h>

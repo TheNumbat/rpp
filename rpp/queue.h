@@ -338,13 +338,13 @@ private:
     u64 last_ = 0;
     u64 capacity_ = 0;
 
-    friend struct Reflect<Queue>;
+    friend struct rpp::detail::Reflect<Queue>;
     template<bool>
     friend struct Iterator;
 };
 
 template<typename Q, Allocator A>
-struct Reflect<Queue<Q, A>> {
+struct rpp::detail::Reflect<Queue<Q, A>> {
     using T = Queue<Q, A>;
     static constexpr Literal name = "Queue";
     static constexpr Kind kind = Kind::record_;

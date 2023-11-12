@@ -41,11 +41,11 @@ struct Ref {
 
 private:
     T* value_ = null;
-    friend struct Reflect<Ref<T>>;
+    friend struct rpp::detail::Reflect<Ref<T>>;
 };
 
 template<typename R>
-struct Reflect<Ref<R>> {
+struct rpp::detail::Reflect<Ref<R>> {
     using T = Ref<R>;
     static constexpr Literal name = "Ref";
     static constexpr Kind kind = Kind::record_;

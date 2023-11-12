@@ -244,7 +244,7 @@ private:
     u64 length_ = 0;
     u64 capacity_ = 0;
 
-    friend struct Reflect<Vec>;
+    friend struct rpp::detail::Reflect<Vec>;
 };
 
 template<typename T>
@@ -333,13 +333,13 @@ private:
 
     template<typename>
     friend struct Slice;
-    friend struct Reflect<Slice<T>>;
+    friend struct rpp::detail::Reflect<Slice<T>>;
 };
 
 static_assert(Trivial<Slice<u8>>);
 
 template<typename V, Allocator A>
-struct Reflect<Vec<V, A>> {
+struct rpp::detail::Reflect<Vec<V, A>> {
     using T = Vec<V, A>;
     static constexpr Literal name = "Vec";
     static constexpr Kind kind = Kind::record_;
@@ -347,7 +347,7 @@ struct Reflect<Vec<V, A>> {
 };
 
 template<typename T>
-struct Reflect<Slice<T>> {
+struct rpp::detail::Reflect<Slice<T>> {
     static constexpr Literal name = "Slice";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_)>;

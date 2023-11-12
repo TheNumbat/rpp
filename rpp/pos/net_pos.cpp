@@ -25,7 +25,7 @@ Address::Address(u16 port) {
 }
 
 Udp::Udp() {
-    fd = fd = socket(AF_INET, SOCK_DGRAM, 0);
+    fd = socket(AF_INET, SOCK_DGRAM, 0);
     if(fd < 0) {
         die("Failed to open socket: %", Log::sys_error());
     }

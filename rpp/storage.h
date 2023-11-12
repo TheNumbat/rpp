@@ -63,11 +63,11 @@ struct Storage {
 protected:
     alignas(alignof(T)) u8 value_[sizeof(T)] = {};
 
-    friend struct Reflect<Storage>;
+    friend struct rpp::detail::Reflect<Storage>;
 };
 
 template<typename S>
-struct Reflect<Storage<S>> {
+struct rpp::detail::Reflect<Storage<S>> {
     using T = Storage<S>;
     static constexpr Literal name = "Storage";
     static constexpr Kind kind = Kind::record_;

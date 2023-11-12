@@ -429,13 +429,13 @@ private:
     u64 usable_ = 0;
     u64 shift_ = 0;
 
-    friend struct Reflect<Map>;
+    friend struct rpp::detail::Reflect<Map>;
     template<bool>
     friend struct Iterator;
 };
 
 template<Key K, typename V>
-struct Reflect<detail::Map_Slot<K, V>> {
+struct rpp::detail::Reflect<detail::Map_Slot<K, V>> {
     using T = detail::Map_Slot<K, V>;
     static constexpr Literal name = "Map_Slot";
     static constexpr Kind kind = Kind::record_;
@@ -443,7 +443,7 @@ struct Reflect<detail::Map_Slot<K, V>> {
 };
 
 template<Key K, typename V, Allocator A>
-struct Reflect<Map<K, V, A>> {
+struct rpp::detail::Reflect<Map<K, V, A>> {
     using T = Map<K, V, A>;
     static constexpr Literal name = "Map";
     static constexpr Kind kind = Kind::record_;

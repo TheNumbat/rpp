@@ -69,7 +69,7 @@ private:
     const u8* data_;
     u64 length_;
 
-    friend struct Reflect<String_View>;
+    friend struct rpp::detail::Reflect<String_View>;
 };
 
 static_assert(Trivial<String_View>);
@@ -169,7 +169,7 @@ private:
     u64 capacity_ = 0;
 
     friend struct String_View;
-    friend struct Reflect<String>;
+    friend struct rpp::detail::Reflect<String>;
 };
 
 template<Allocator A>
@@ -235,7 +235,7 @@ constexpr bool is_whitespace(u8 c) {
 } // namespace ascii
 
 template<>
-struct Reflect<String_View> {
+struct rpp::detail::Reflect<String_View> {
     using T = String_View;
     static constexpr Literal name = "String_View";
     static constexpr Kind kind = Kind::record_;
@@ -243,7 +243,7 @@ struct Reflect<String_View> {
 };
 
 template<Allocator A>
-struct Reflect<String<A>> {
+struct rpp::detail::Reflect<String<A>> {
     using T = String<A>;
     static constexpr Literal name = "String";
     static constexpr Kind kind = Kind::record_;

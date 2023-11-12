@@ -13,12 +13,13 @@ struct Pool;
 template<Allocator A = Alloc>
 struct Schedule {
 
-    explicit Schedule(Priority priority_, u64 affinity_, Pool<A>& pool_)
-        : priority{priority_}, affinity{affinity_}, pool{pool_} {
+    explicit Schedule(Pool<A>& pool) : pool{pool} {
     }
     template<typename R, typename RA>
     void await_suspend(std::coroutine_handle<Async::Promise<R, RA>> task) {
-        pool.enqueue_coroutine(priority, affinity, task);
+        task.promise().continue_with(
+            [&pool = this->pool](std::coroutine_handle<> handle) { pool.enqueue(handle); });
+        pool.enqueue(task);
     }
     void await_resume() {
     }
@@ -27,20 +28,20 @@ struct Schedule {
     }
 
 private:
-    Priority priority = Priority::normal;
-    u64 affinity = 0;
     Pool<A>& pool;
 };
 
 template<Allocator A = Alloc>
 struct Schedule_Event {
 
-    explicit Schedule_Event(Priority priority_, u64 affinity_, Async::Event event_, Pool<A>& pool_)
-        : priority{priority_}, affinity{affinity_}, event{std::move(event_)}, pool{pool_} {
+    explicit Schedule_Event(Async::Event event, Pool<A>& pool)
+        : event{std::move(event)}, pool{pool} {
     }
     template<typename R, typename RA>
     void await_suspend(std::coroutine_handle<Async::Promise<R, RA>> task) {
-        pool.enqueue_event(priority, affinity, std::move(event), task);
+        task.promise().continue_with(
+            [&pool = this->pool](std::coroutine_handle<> handle) { pool.enqueue(handle); });
+        pool.enqueue_event(std::move(event), task);
     }
     void await_resume() {
     }
@@ -49,8 +50,6 @@ struct Schedule_Event {
     }
 
 private:
-    Priority priority = Priority::normal;
-    u64 affinity = 0;
     Async::Event event;
     Pool<A>& pool;
 };
@@ -58,28 +57,19 @@ private:
 template<Allocator A = Alloc>
 struct Pool {
 
-    static constexpr u64 N = 1;
+    explicit Pool() : thread_states{Vec<Thread_State, A>::make(hardware_threads())} {
 
-    explicit Pool() : thread_states{Vec<Thread_State, A>::make(N)} {
-
-        auto n_threads = N;
+        u64 n_threads = thread_states.length();
         assert(n_threads <= 64);
-        affinity_mask = (1ll << n_threads) - 1;
 
         for(u64 i = 0; i < n_threads; i++) {
             threads.push(Thread([this, i] {
-                startup.block();
                 set_affinity(i);
                 do_work(i);
             }));
         }
         pending_events.push(Async::Event{});
-        event_thread = Thread([this] {
-            startup.block();
-            do_events();
-        });
-
-        startup.signal();
+        event_thread = Thread([this] { do_events(); });
     }
     ~Pool() {
         shutdown.exchange(true);
@@ -94,185 +84,78 @@ struct Pool {
         event_thread.join();
         threads.clear();
         pending_events.clear();
+
+        for(auto& state : thread_states) {
+            for(auto& job : state.jobs) {
+                job.destroy();
+            }
+        }
     }
 
-    template<typename F, typename... Args>
-        requires Invocable<F, Args...>
-    auto single(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, Alloc> {
-        return enqueue(Priority::normal, 0, std::forward<F>(f), std::forward<Args>(args)...);
-    }
+    Pool(const Pool&) = delete;
+    Pool& operator=(const Pool&) = delete;
 
-    template<typename F, typename... Args>
-        requires Invocable<F, Args...>
-    auto single(Priority p, u64 affinity, F&& f, Args&&... args)
-        -> Future<Invoke_Result<F, Args...>, Alloc> {
-        assert((affinity & affinity_mask) == affinity);
-        return enqueue(p, affinity, std::forward<F>(f), std::forward<Args>(args)...);
-    }
+    Pool(Pool&&) = delete;
+    Pool& operator=(Pool&&) = delete;
 
-    Schedule<A> suspend(Priority p = Priority::normal, u64 affinity = 0) {
-        assert((affinity & affinity_mask) == affinity);
-        return Schedule<A>{p, affinity, *this};
+    Schedule<A> suspend() {
+        return Schedule<A>{*this};
     }
-    Schedule_Event<A> event(Async::Event event, Priority p = Priority::normal, u64 affinity = 0) {
-        assert((affinity & affinity_mask) == affinity);
-        return Schedule_Event<A>{p, affinity, std::move(event), *this};
+    Schedule_Event<A> event(Async::Event event) {
+        return Schedule_Event<A>{std::move(event), *this};
     }
 
 private:
-    struct Job_Base {
-        virtual ~Job_Base() {
-        }
-        virtual void operator()() = 0;
-    };
+    using Job = std::coroutine_handle<>;
 
-    template<Invocable F>
-    struct Job : public Job_Base {
-        Job(F&& f) : func{std::move(f)} {
-        }
-        void operator()() {
-            func();
-        }
-        F func;
-    };
+    void enqueue(Job job) {
 
-    template<typename R, typename RA>
-    struct Co_Job : public Job_Base {
-        Co_Job(std::coroutine_handle<Async::Promise<R, RA>> coroutine) : coroutine{coroutine} {
-        }
-        ~Co_Job() {
-        }
-        void operator()() {
-            assert(coroutine);
-            coroutine.resume();
-        }
-        std::coroutine_handle<Async::Promise<R, RA>> coroutine;
-    };
-
-    void push_job(Priority p, u64 affinity, Box<Job_Base, Alloc> job) {
-
-        u64 affinity_bits = 0;
         u64 idx = Limits<u64>::max();
 
-        if(affinity == 0) {
-            affinity = affinity_mask;
-            affinity_bits = thread_states.length();
-        } else {
-            affinity_bits = Math::popcount(affinity);
-        }
-
-        if(p == Priority::critical || p == Priority::high) {
-            for(u64 i = 0; i < thread_states.length(); i++) {
-                Thread_State& state = thread_states[i];
-                Lock lock(state.mut);
-                if((affinity & (1ll << i)) && state.important_jobs.empty()) {
-                    state.important_jobs.push(std::move(job));
-                    state.cond.signal();
-                    return;
-                }
-            }
-        } else {
-            for(u64 i = 0; i < thread_states.length(); i++) {
-                Thread_State& state = thread_states[i];
-                Lock lock(state.mut);
-                if((affinity & (1ll << i)) && state.important_jobs.empty() &&
-                   state.normal_jobs.empty()) {
-                    state.normal_jobs.push(std::move(job));
-                    state.cond.signal();
-                    return;
-                }
+        for(u64 i = 0; i < thread_states.length(); i++) {
+            Thread_State& state = thread_states[i];
+            Lock lock(state.mut);
+            if(state.jobs.empty()) {
+                state.jobs.push(std::move(job));
+                state.cond.signal();
+                return;
             }
         }
 
-        // All queues more or less busy, choose next from low descrepency sequence
+        // All queues more or less busy, choose next from low discrepancy sequence
         if(idx == Limits<u64>::max()) {
-            idx = static_cast<u64>(sequence.incr() * Math::PHI32) % affinity_bits;
-            for(u64 i = 0; i < thread_states.length(); i++) {
-                if((affinity & (1ll << i)) && idx-- == 0) {
-                    idx = i;
-                    break;
-                }
-            }
+            idx = static_cast<u64>(sequence.incr() * Math::PHI32) % thread_states.length();
         }
 
         Thread_State& state = thread_states[idx];
         Lock lock(state.mut);
-        switch(p) {
-        case Priority::critical:
-        case Priority::high: {
-            state.important_jobs.push(std::move(job));
-        } break;
-        case Priority::normal:
-        case Priority::low: {
-            state.normal_jobs.push(std::move(job));
-        } break;
-        }
+        state.jobs.push(std::move(job));
         state.cond.signal();
     }
 
-    template<typename F, typename... Args>
-        requires Invocable<F, Args...>
-    auto enqueue(Priority p, u64 affinity, F&& f, Args&&... args)
-        -> Future<Invoke_Result<F, Args...>, Alloc> {
-
-        using Ret = Invoke_Result<F, Args...>;
-        auto future = Future<Ret>::make();
-
-        auto func = [future = future.dup(), f = std::move(f),
-                     ... args = std::forward<Args>(args)]() mutable {
-            if constexpr(Same<Ret, void>) {
-                f(std::forward<Args>(args)...);
-                future->fill();
-            } else {
-                future->fill(f(std::forward<Args>(args)...));
-            }
-        };
-        Box<Job<decltype(func)>, Alloc> job{std::move(func)};
-        push_job(p, affinity, Box<Job_Base, Alloc>{std::move(job)});
-        return future;
-    }
-
-    template<typename R, typename RA>
-    void enqueue_coroutine(Priority p, u64 affinity,
-                           std::coroutine_handle<Async::Promise<R, RA>> coroutine) {
-        Box<Co_Job<R, RA>, Alloc> job{coroutine};
-        push_job(p, affinity, Box<Job_Base, Alloc>{std::move(job)});
-    }
-
-    template<typename R, typename RA>
-    void enqueue_event(Priority p, u64 affinity, Async::Event event,
-                       std::coroutine_handle<Async::Promise<R, RA>> coroutine) {
-        Box<Co_Job<R, RA>, Alloc> job{coroutine};
-        {
-            Lock lock(events_mut);
-            events_to_enqueue.emplace(
-                std::move(event),
-                Pending_Event_State{p, affinity, Box<Job_Base, Alloc>{std::move(job)}});
-        }
+    void enqueue_event(Async::Event event, Job job) {
+        Lock lock(events_mut);
+        events_to_enqueue.emplace(std::move(event), std::move(job));
         pending_events[0].signal();
     }
 
     void do_work(u64 thread_idx) {
         Thread_State& state = thread_states[thread_idx];
         for(;;) {
-            auto job = Box<Job_Base, Alloc>{};
+            Job job;
             {
                 Lock lock(state.mut);
 
-                while(state.important_jobs.empty() && state.normal_jobs.empty() && !shutdown.load())
-                    state.cond.wait(state.mut);
+                while(state.jobs.empty() && !shutdown.load()) state.cond.wait(state.mut);
 
                 if(shutdown.load()) return;
 
-                if(state.important_jobs.empty()) {
-                    job = std::move(state.normal_jobs.front());
-                    state.normal_jobs.pop();
-                } else {
-                    job = std::move(state.important_jobs.front());
-                    state.important_jobs.pop();
+                if(!state.jobs.empty()) {
+                    job = std::move(state.jobs.front());
+                    state.jobs.pop();
                 }
             }
-            (*job)();
+            job.resume();
         }
     }
 
@@ -287,50 +170,41 @@ private:
 
                     for(auto& [event, state] : events_to_enqueue) {
                         pending_events.push(std::move(event));
-                        pending_event_states.push(std::move(state));
+                        pending_event_jobs.push(std::move(state));
                     }
                     events_to_enqueue.clear();
 
                     pending_events[0].reset();
                 } else {
-                    auto job = std::move(pending_event_states[idx - 1].continuation);
-                    auto p = pending_event_states[idx - 1].p;
-                    auto affinity = pending_event_states[idx - 1].affinity;
+                    auto job = std::move(pending_event_jobs[idx - 1]);
 
                     if(pending_events.length() > 2) {
-                        swap(pending_events[idx], pending_events.back());
-                        swap(pending_event_states[idx - 1], pending_event_states.back());
+                        rpp::swap(pending_events[idx], pending_events.back());
+                        rpp::swap(pending_event_jobs[idx - 1], pending_event_jobs.back());
                     }
                     pending_events.pop();
-                    pending_event_states.pop();
+                    pending_event_jobs.pop();
 
-                    push_job(p, affinity, std::move(job));
+                    enqueue(job);
                 }
             }
         }
     }
 
-    Flag startup;
     Atomic shutdown, sequence;
-    u64 affinity_mask = 0;
 
     struct Thread_State {
         Mutex mut;
         Cond cond;
-        Queue<Box<Job_Base, A>, A> normal_jobs;
-        Queue<Box<Job_Base, A>, A> important_jobs;
+        Queue<Job, A> jobs;
     };
     Vec<Thread_State, A> thread_states;
     Vec<Thread<A>, A> threads;
 
-    struct Pending_Event_State {
-        Priority p;
-        u64 affinity;
-        Box<Job_Base, A> continuation;
-    };
     Vec<Async::Event, A> pending_events;
-    Vec<Pending_Event_State, A> pending_event_states;
-    Vec<Pair<Async::Event, Pending_Event_State>, A> events_to_enqueue;
+    Vec<Job, A> pending_event_jobs;
+    Vec<Pair<Async::Event, Job>, A> events_to_enqueue;
+
     Thread<A> event_thread;
     Mutex events_mut;
 

@@ -242,11 +242,11 @@ private:
     u64 length_ = 0;
     u64 capacity_ = 0;
 
-    friend struct Reflect<Heap>;
+    friend struct rpp::detail::Reflect<Heap>;
 };
 
 template<typename H, Allocator A>
-struct Reflect<Heap<H, A>> {
+struct rpp::detail::Reflect<Heap<H, A>> {
     using T = Heap<H, A>;
     static constexpr Literal name = "Heap";
     static constexpr Kind kind = Kind::record_;

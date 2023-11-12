@@ -101,7 +101,7 @@ private:
 
     Data* data_ = null;
 
-    friend struct Reflect<Rc<T>>;
+    friend struct rpp::detail::Reflect<Rc<T>>;
 };
 
 template<typename T, Allocator A = Mdefault>
@@ -192,11 +192,11 @@ private:
 
     Data* data_ = null;
 
-    friend struct Reflect<Arc<T>>;
+    friend struct rpp::detail::Reflect<Arc<T>>;
 };
 
 template<typename R>
-struct Reflect<detail::Rc_Data<R>> {
+struct rpp::detail::Reflect<detail::Rc_Data<R>> {
     using T = detail::Rc_Data<R>;
     static constexpr Literal name = "Rc_Data";
     static constexpr Kind kind = Kind::record_;
@@ -204,7 +204,7 @@ struct Reflect<detail::Rc_Data<R>> {
 };
 
 template<typename R>
-struct Reflect<Rc<R>> {
+struct rpp::detail::Reflect<Rc<R>> {
     using T = Rc<R>;
     static constexpr Literal name = "Rc";
     static constexpr Kind kind = Kind::record_;
@@ -212,7 +212,7 @@ struct Reflect<Rc<R>> {
 };
 
 template<typename R>
-struct Reflect<detail::Arc_Data<R>> {
+struct rpp::detail::Reflect<detail::Arc_Data<R>> {
     using T = detail::Arc_Data<R>;
     static constexpr Literal name = "Arc_Data";
     static constexpr Kind kind = Kind::record_;
@@ -220,7 +220,7 @@ struct Reflect<detail::Arc_Data<R>> {
 };
 
 template<typename R>
-struct Reflect<Arc<R>> {
+struct rpp::detail::Reflect<Arc<R>> {
     using T = Arc<R>;
     static constexpr Literal name = "Arc";
     static constexpr Kind kind = Kind::record_;

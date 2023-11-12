@@ -28,7 +28,9 @@ auto lots_of_jobs(Thread::Pool<>& pool, u64 depth) -> Async::Task<u64> {
     co_await pool.suspend();
     auto job0 = lots_of_jobs(pool, depth - 1);
     auto job1 = lots_of_jobs(pool, depth - 1);
-    co_return co_await job0 + co_await job1;
+    auto _0 = co_await job0;
+    auto _1 = co_await job1;
+    co_return _0 + _1;
 };
 
 i32 main() {
@@ -43,10 +45,8 @@ i32 main() {
 
         for(u64 i = 0; i < 1000; i++) {
             info("lol");
-            lots_of_jobs(pool, 4).block();
+            lots_of_jobs(pool, 10).block();
         }
-
-        Thread::sleep(1000);
     }
 
     Profile::end_frame();

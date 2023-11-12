@@ -87,11 +87,11 @@ struct Array {
 
 private:
     T data_[N] = {};
-    friend struct Reflect<Array>;
+    friend struct rpp::detail::Reflect<Array>;
 };
 
 template<typename T, u64 N>
-struct Reflect<Array<T, N>> {
+struct rpp::detail::Reflect<Array<T, N>> {
     using underlying = T;
     static constexpr Literal name = "Array";
     static constexpr Kind kind = Kind::array_;

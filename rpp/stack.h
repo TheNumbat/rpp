@@ -93,11 +93,11 @@ struct Stack {
 private:
     Vec<T, A> data_;
 
-    friend struct Reflect<Stack>;
+    friend struct rpp::detail::Reflect<Stack>;
 };
 
 template<typename S, Allocator A>
-struct Reflect<Stack<S, A>> {
+struct rpp::detail::Reflect<Stack<S, A>> {
     using T = Stack<S, A>;
     static constexpr Literal name = "Stack";
     static constexpr Kind kind = Kind::record_;

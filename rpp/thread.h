@@ -59,7 +59,7 @@ private:
     Cond cond;
     Opt<T> value;
 
-    friend struct Reflect<Promise<T>>;
+    friend struct rpp::detail::Reflect<Promise<T>>;
 };
 
 template<>
@@ -95,7 +95,7 @@ private:
     Cond cond;
     bool done = false;
 
-    friend struct Reflect<Promise<void>>;
+    friend struct rpp::detail::Reflect<Promise<void>>;
 };
 
 template<typename T, Allocator A = Alloc>
@@ -161,7 +161,7 @@ private:
         return OS_Thread_Ret_Null;
     }
 
-    friend struct Reflect<Thread<A>>;
+    friend struct rpp::detail::Reflect<Thread<A>>;
 };
 
 template<Allocator A = Alloc, typename F, typename... Args>
@@ -188,7 +188,7 @@ auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
 } // namespace Thread
 
 template<typename P>
-struct Reflect<Thread::Promise<P>> {
+struct rpp::detail::Reflect<Thread::Promise<P>> {
     using T = Thread::Promise<P>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
@@ -196,7 +196,7 @@ struct Reflect<Thread::Promise<P>> {
 };
 
 template<>
-struct Reflect<Thread::Promise<void>> {
+struct rpp::detail::Reflect<Thread::Promise<void>> {
     using T = Thread::Promise<void>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
@@ -204,7 +204,7 @@ struct Reflect<Thread::Promise<void>> {
 };
 
 template<Allocator A>
-struct Reflect<Thread::Thread<A>> {
+struct rpp::detail::Reflect<Thread::Thread<A>> {
     using T = Thread::Thread<A>;
     static constexpr Literal name = "Thread";
     static constexpr Kind kind = Kind::record_;
