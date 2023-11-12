@@ -112,7 +112,7 @@ private:
 };
 
 template<typename B, Allocator A>
-struct Reflect<Box<B, A>> {
+struct rpp::detail::Reflect<Box<B, A>> {
     using T = Box<B, A>;
     static constexpr Literal name = "Box";
     static constexpr Kind kind = Kind::record_;

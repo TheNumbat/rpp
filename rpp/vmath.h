@@ -359,16 +359,21 @@ struct Vec3_base {
         struct {
             T x, y, z;
         };
-        struct {
-            Vect<T, 2> xy;
-            T _z;
-        };
-        struct {
-            T _x;
-            Vect<T, 2> yz;
-        };
         T data[3];
     };
+
+    Vect<T, 2>& xy() {
+        return *reinterpret_cast<Vect<T, 2>*>(&x);
+    }
+    Vect<T, 2>& yz() {
+        return *reinterpret_cast<Vect<T, 2>*>(&y);
+    }
+    const Vect<T, 2>& xy() const {
+        return *reinterpret_cast<const Vect<T, 2>*>(&x);
+    }
+    const Vect<T, 2>& yz() const {
+        return *reinterpret_cast<const Vect<T, 2>*>(&y);
+    }
 };
 template<typename T>
 struct Vec4_base {
@@ -376,25 +381,40 @@ struct Vec4_base {
         struct {
             T x, y, z, w;
         };
-        struct {
-            Vect<T, 2> xy;
-            Vect<T, 2> zw;
-        };
-        struct {
-            T _x;
-            Vect<T, 2> yz;
-            T _w;
-        };
-        struct {
-            Vect<T, 3> xyz;
-            T __w;
-        };
-        struct {
-            T __x;
-            Vect<T, 3> yzw;
-        };
         T data[4];
     };
+
+    Vect<T, 2>& xy() {
+        return *reinterpret_cast<Vect<T, 2>*>(&x);
+    }
+    Vect<T, 2>& yz() {
+        return *reinterpret_cast<Vect<T, 2>*>(&y);
+    }
+    Vect<T, 2>& zw() {
+        return *reinterpret_cast<Vect<T, 2>*>(&z);
+    }
+    const Vect<T, 2>& xy() const {
+        return *reinterpret_cast<const Vect<T, 2>*>(&x);
+    }
+    const Vect<T, 2>& yz() const {
+        return *reinterpret_cast<const Vect<T, 2>*>(&y);
+    }
+    const Vect<T, 2>& zw() const {
+        return *reinterpret_cast<const Vect<T, 2>*>(&z);
+    }
+
+    Vect<T, 3>& xyz() {
+        return *reinterpret_cast<Vect<T, 3>*>(&x);
+    }
+    Vect<T, 3>& yzw() {
+        return *reinterpret_cast<Vect<T, 3>*>(&y);
+    }
+    const Vect<T, 3>& xyz() const {
+        return *reinterpret_cast<const Vect<T, 3>*>(&x);
+    }
+    const Vect<T, 3>& yzw() const {
+        return *reinterpret_cast<const Vect<T, 3>*>(&y);
+    }
 };
 template<>
 struct Vec4_base<f32> {
@@ -402,26 +422,41 @@ struct Vec4_base<f32> {
         struct {
             f32 x, y, z, w;
         };
-        struct {
-            Vect<f32, 2> xy;
-            Vect<f32, 2> zw;
-        };
-        struct {
-            f32 _x;
-            Vect<f32, 2> yz;
-            f32 _w;
-        };
-        struct {
-            Vect<f32, 3> xyz;
-            f32 __w;
-        };
-        struct {
-            f32 __x;
-            Vect<f32, 3> yzw;
-        };
         f32 data[4];
         SIMD::F32x4 pack;
     };
+
+    Vect<f32, 2>& xy() {
+        return *reinterpret_cast<Vect<f32, 2>*>(&x);
+    }
+    Vect<f32, 2>& yz() {
+        return *reinterpret_cast<Vect<f32, 2>*>(&y);
+    }
+    Vect<f32, 2>& zw() {
+        return *reinterpret_cast<Vect<f32, 2>*>(&z);
+    }
+    const Vect<f32, 2>& xy() const {
+        return *reinterpret_cast<const Vect<f32, 2>*>(&x);
+    }
+    const Vect<f32, 2>& yz() const {
+        return *reinterpret_cast<const Vect<f32, 2>*>(&y);
+    }
+    const Vect<f32, 2>& zw() const {
+        return *reinterpret_cast<const Vect<f32, 2>*>(&z);
+    }
+
+    Vect<f32, 3>& xyz() {
+        return *reinterpret_cast<Vect<f32, 3>*>(&x);
+    }
+    Vect<f32, 3>& yzw() {
+        return *reinterpret_cast<Vect<f32, 3>*>(&y);
+    }
+    const Vect<f32, 3>& xyz() const {
+        return *reinterpret_cast<const Vect<f32, 3>*>(&x);
+    }
+    const Vect<f32, 3>& yzw() const {
+        return *reinterpret_cast<const Vect<f32, 3>*>(&y);
+    }
 };
 template<typename T, u64 N>
 struct VecN_base {
@@ -745,7 +780,7 @@ struct BBox {
 
     void transform(const Mat4& T) {
         Vec3 amin = min, amax = max;
-        min = max = T[3].xyz;
+        min = max = Vec3{T[3].x, T[3].y, T[3].z};
         for(u64 i = 0; i < 3; i++) {
             for(u64 j = 0; j < 3; j++) {
                 f32 a = T[j][i] * amin[j];
@@ -841,7 +876,7 @@ Math::Vect<T, N> operator/(T s, Math::Vect<T, N> v) {
 }
 
 template<>
-struct Reflect<Math::Vec2> {
+struct rpp::detail::Reflect<Math::Vec2> {
     using T = Math::Vec2;
     static constexpr Literal name = "Vec2";
     static constexpr Kind kind = Kind::record_;
@@ -849,7 +884,7 @@ struct Reflect<Math::Vec2> {
 };
 
 template<>
-struct Reflect<Math::Vec3> {
+struct rpp::detail::Reflect<Math::Vec3> {
     using T = Math::Vec3;
     static constexpr Literal name = "Vec3";
     static constexpr Kind kind = Kind::record_;
@@ -857,7 +892,7 @@ struct Reflect<Math::Vec3> {
 };
 
 template<>
-struct Reflect<Math::Vec4> {
+struct rpp::detail::Reflect<Math::Vec4> {
     using T = Math::Vec4;
     static constexpr Literal name = "Vec4";
     static constexpr Kind kind = Kind::record_;
@@ -865,7 +900,7 @@ struct Reflect<Math::Vec4> {
 };
 
 template<>
-struct Reflect<Math::Vec2i> {
+struct rpp::detail::Reflect<Math::Vec2i> {
     using T = Math::Vec2i;
     static constexpr Literal name = "Vec2i";
     static constexpr Kind kind = Kind::record_;
@@ -873,7 +908,7 @@ struct Reflect<Math::Vec2i> {
 };
 
 template<>
-struct Reflect<Math::Vec3i> {
+struct rpp::detail::Reflect<Math::Vec3i> {
     using T = Math::Vec3i;
     static constexpr Literal name = "Vec3i";
     static constexpr Kind kind = Kind::record_;
@@ -881,7 +916,7 @@ struct Reflect<Math::Vec3i> {
 };
 
 template<>
-struct Reflect<Math::Vec4i> {
+struct rpp::detail::Reflect<Math::Vec4i> {
     using T = Math::Vec4i;
     static constexpr Literal name = "Vec4i";
     static constexpr Kind kind = Kind::record_;
@@ -889,7 +924,7 @@ struct Reflect<Math::Vec4i> {
 };
 
 template<>
-struct Reflect<Math::Vec2u> {
+struct rpp::detail::Reflect<Math::Vec2u> {
     using T = Math::Vec2u;
     static constexpr Literal name = "Vec2u";
     static constexpr Kind kind = Kind::record_;
@@ -897,7 +932,7 @@ struct Reflect<Math::Vec2u> {
 };
 
 template<>
-struct Reflect<Math::Vec3u> {
+struct rpp::detail::Reflect<Math::Vec3u> {
     using T = Math::Vec3u;
     static constexpr Literal name = "Vec3u";
     static constexpr Kind kind = Kind::record_;
@@ -905,7 +940,7 @@ struct Reflect<Math::Vec3u> {
 };
 
 template<>
-struct Reflect<Math::Vec4u> {
+struct rpp::detail::Reflect<Math::Vec4u> {
     using T = Math::Vec4u;
     static constexpr Literal name = "Vec4u";
     static constexpr Kind kind = Kind::record_;
@@ -913,7 +948,7 @@ struct Reflect<Math::Vec4u> {
 };
 
 template<u64 N>
-struct Reflect<Math::VecN<N>> {
+struct rpp::detail::Reflect<Math::VecN<N>> {
     using T = Math::VecN<N>;
     static constexpr Literal name = "VecN";
     static constexpr Kind kind = Kind::record_;
@@ -921,7 +956,7 @@ struct Reflect<Math::VecN<N>> {
 };
 
 template<u64 N>
-struct Reflect<Math::VecNi<N>> {
+struct rpp::detail::Reflect<Math::VecNi<N>> {
     using T = Math::VecNi<N>;
     static constexpr Literal name = "VecNi";
     static constexpr Kind kind = Kind::record_;
@@ -929,7 +964,7 @@ struct Reflect<Math::VecNi<N>> {
 };
 
 template<u64 N>
-struct Reflect<Math::VecNu<N>> {
+struct rpp::detail::Reflect<Math::VecNu<N>> {
     using T = Math::VecNu<N>;
     static constexpr Literal name = "VecNu";
     static constexpr Kind kind = Kind::record_;
@@ -937,7 +972,7 @@ struct Reflect<Math::VecNu<N>> {
 };
 
 template<>
-struct Reflect<Math::Mat4> {
+struct rpp::detail::Reflect<Math::Mat4> {
     using T = Math::Mat4;
     static constexpr Literal name = "Mat4";
     static constexpr Kind kind = Kind::record_;
@@ -945,7 +980,7 @@ struct Reflect<Math::Mat4> {
 };
 
 template<>
-struct Reflect<Math::Quat> {
+struct rpp::detail::Reflect<Math::Quat> {
     using T = Math::Quat;
     static constexpr Literal name = "Quat";
     static constexpr Kind kind = Kind::record_;
@@ -953,7 +988,7 @@ struct Reflect<Math::Quat> {
 };
 
 template<>
-struct Reflect<Math::BBox> {
+struct rpp::detail::Reflect<Math::BBox> {
     using T = Math::BBox;
     static constexpr Literal name = "BBox";
     static constexpr Kind kind = Kind::record_;

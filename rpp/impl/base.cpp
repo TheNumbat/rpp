@@ -30,7 +30,7 @@ void* memcpy(void* dest, const void* src, u64 bytes) {
 i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    i32 written = std::vsnprintf(reinterpret_cast<char* const>(buffer), buffer_size, fmt, args);
+    i32 written = std::vsnprintf(reinterpret_cast<char*>(buffer), buffer_size, fmt, args);
     va_end(args);
     return written;
 }

@@ -180,7 +180,7 @@ private:
 };
 
 template<Literal N, typename NT>
-struct Reflect<Named<N, NT>> {
+struct rpp::detail::Reflect<Named<N, NT>> {
     using T = Named<N, NT>;
     static constexpr Literal name = N;
     static constexpr Kind kind = Kind::record_;
@@ -188,7 +188,7 @@ struct Reflect<Named<N, NT>> {
 };
 
 template<typename... Ts>
-struct Reflect<Variant<Ts...>> {
+struct rpp::detail::Reflect<Variant<Ts...>> {
     using T = Variant<Ts...>;
     static constexpr Literal name = "Variant";
     static constexpr Kind kind = Kind::record_;

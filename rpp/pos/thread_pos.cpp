@@ -1,6 +1,9 @@
 
 #include "../thread.h"
 
+#include <limits.h>
+#include <linux/futex.h>
+#include <sys/syscall.h>
 #include <unistd.h>
 
 namespace rpp::Thread {
@@ -104,6 +107,27 @@ void set_affinity(u64 core) {
     }
 }
 
+void Flag::block() {
+    while(__atomic_load_n(&value_, __ATOMIC_SEQ_CST) == 0) {
+        int ret = syscall(SYS_futex, &value_, FUTEX_WAIT, 0, NULL, NULL, 0);
+        if(ret == -1 && errno != EAGAIN) {
+            die("Failed to wait on futex: %", errno);
+        }
+    }
+}
+
+void Flag::signal() {
+    __atomic_exchange_n(&value_, 1, __ATOMIC_SEQ_CST);
+    int ret = syscall(SYS_futex, &value_, FUTEX_WAKE, INT_MAX, NULL, NULL, 0);
+    if(ret == -1) {
+        die("Failed to wake futex: %", errno);
+    }
+}
+
+bool Flag::ready() {
+    return __atomic_load_n(&value_, __ATOMIC_SEQ_CST) != 0;
+}
+
 Mutex::Mutex() {
     int ret = pthread_mutex_init(&lock_, null);
     if(ret) {
@@ -158,8 +182,9 @@ i64 Atomic::exchange(i64 value) {
 }
 
 i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {
-    return __atomic_compare_exchange(&value_, &compare_with, &set_to, false, __ATOMIC_SEQ_CST,
-                                     __ATOMIC_SEQ_CST);
+    __atomic_compare_exchange_n(&value_, &compare_with, set_to, false, __ATOMIC_SEQ_CST,
+                                __ATOMIC_SEQ_CST);
+    return compare_with;
 }
 
 Cond::Cond() {

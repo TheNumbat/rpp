@@ -102,7 +102,7 @@ private:
 };
 
 template<>
-struct Reflect<Tuple<>> {
+struct rpp::detail::Reflect<Tuple<>> {
     using T = Tuple<>;
     static constexpr Literal name = "Tuple";
     static constexpr Kind kind = Kind::record_;
@@ -110,7 +110,7 @@ struct Reflect<Tuple<>> {
 };
 
 template<typename F, typename... Ts>
-struct Reflect<Tuple<F, Ts...>> {
+struct rpp::detail::Reflect<Tuple<F, Ts...>> {
     using T = Tuple<F, Ts...>;
     static constexpr Literal name = "Tuple";
     static constexpr Kind kind = Kind::record_;

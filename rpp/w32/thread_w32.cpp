@@ -74,6 +74,25 @@ static_assert(sizeof(SRWLOCK) == sizeof(void*));
 static_assert(sizeof(CONDITION_VARIABLE) == sizeof(void*));
 static_assert(sizeof(HANDLE) == sizeof(OS_Thread));
 
+void Flag::block() {
+    u16 zero = 0;
+    while(value_ == 0) {
+        bool ret = WaitOnAddress(&value_, &zero, sizeof(value_), INFINITE);
+        if(!ret) {
+            die("Failed to wait on address: %", Log::sys_error());
+        }
+    }
+}
+
+void Flag::signal() {
+    InterlockedIncrement16(&value_);
+    WakeByAddressAll(&value_);
+}
+
+bool Flag::ready() {
+    return value_ != 0;
+}
+
 Mutex::Mutex() {
     InitializeSRWLock(reinterpret_cast<PSRWLOCK>(&lock_));
 }

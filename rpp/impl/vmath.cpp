@@ -143,7 +143,7 @@ Mat4 Mat4::rotate(f32 a, Vec3 axis) {
 
 Mat4 Mat4::translate(Vec3 v) {
     Mat4 ret;
-    ret[3].xyz = v;
+    ret[3].xyz() = v;
     return ret;
 }
 
@@ -287,14 +287,14 @@ Vec3 Mat4::operator*(Vec3 v) const {
     return Vec4{F32x4::add(F32x4::add(F32x4::mul(pack[0], F32x4::set1(v.x)),
                                       F32x4::mul(pack[1], F32x4::set1(v.y))),
                            F32x4::add(F32x4::mul(pack[2], F32x4::set1(v.z)), pack[3]))}
-        .xyz;
+        .xyz();
 }
 
 Vec3 Mat4::rotate(Vec3 v) const {
     return Vec4{F32x4::add(F32x4::add(F32x4::mul(pack[0], F32x4::set1(v.x)),
                                       F32x4::mul(pack[1], F32x4::set1(v.y))),
                            F32x4::mul(pack[2], F32x4::set1(v.z)))}
-        .xyz;
+        .xyz();
 }
 
 Mat4 Mat4::T() const {

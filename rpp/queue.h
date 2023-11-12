@@ -344,7 +344,7 @@ private:
 };
 
 template<typename Q, Allocator A>
-struct Reflect<Queue<Q, A>> {
+struct rpp::detail::Reflect<Queue<Q, A>> {
     using T = Queue<Q, A>;
     static constexpr Literal name = "Queue";
     static constexpr Kind kind = Kind::record_;

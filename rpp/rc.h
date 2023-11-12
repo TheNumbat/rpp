@@ -9,14 +9,14 @@ namespace detail {
 
 template<typename T>
 struct Rc_Data {
-    T value;
     u64 references = 0;
+    T value;
 };
 
 template<typename T>
 struct Arc_Data {
-    T value;
     Thread::Atomic references;
+    T value;
 };
 
 } // namespace detail
@@ -34,7 +34,7 @@ struct Rc {
         requires Constructable<T, Args...>
     explicit Rc(Args&&... args) {
         data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(data_) Data{T{std::forward<Args>(args)...}, 1};
+        new(data_) Data{1, T{std::forward<Args>(args)...}};
     }
 
     Rc(const Rc& src) = delete;
@@ -117,7 +117,7 @@ struct Arc {
         requires Constructable<T, Args...>
     explicit Arc(Args&&... args) {
         data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(data_) Data{T{std::forward<Args>(args)...}, Thread::Atomic{1}};
+        new(data_) Data{Thread::Atomic{1}, T{std::forward<Args>(args)...}};
     }
 
     static Arc make()
@@ -125,7 +125,7 @@ struct Arc {
     {
         Arc ret;
         ret.data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(ret.data_) Data{T{}, Thread::Atomic{1}};
+        new(ret.data_) Data{Thread::Atomic{1}, T{}};
         return ret;
     }
 
@@ -196,7 +196,7 @@ private:
 };
 
 template<typename R>
-struct Reflect<detail::Rc_Data<R>> {
+struct rpp::detail::Reflect<detail::Rc_Data<R>> {
     using T = detail::Rc_Data<R>;
     static constexpr Literal name = "Rc_Data";
     static constexpr Kind kind = Kind::record_;
@@ -204,7 +204,7 @@ struct Reflect<detail::Rc_Data<R>> {
 };
 
 template<typename R>
-struct Reflect<Rc<R>> {
+struct rpp::detail::Reflect<Rc<R>> {
     using T = Rc<R>;
     static constexpr Literal name = "Rc";
     static constexpr Kind kind = Kind::record_;
@@ -212,7 +212,7 @@ struct Reflect<Rc<R>> {
 };
 
 template<typename R>
-struct Reflect<detail::Arc_Data<R>> {
+struct rpp::detail::Reflect<detail::Arc_Data<R>> {
     using T = detail::Arc_Data<R>;
     static constexpr Literal name = "Arc_Data";
     static constexpr Kind kind = Kind::record_;
@@ -220,7 +220,7 @@ struct Reflect<detail::Arc_Data<R>> {
 };
 
 template<typename R>
-struct Reflect<Arc<R>> {
+struct rpp::detail::Reflect<Arc<R>> {
     using T = Arc<R>;
     static constexpr Literal name = "Arc";
     static constexpr Kind kind = Kind::record_;

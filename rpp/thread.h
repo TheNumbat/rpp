@@ -36,27 +36,22 @@ struct Promise {
     Promise& operator=(Promise&&) = delete;
 
     void fill(T&& val) {
-        Lock lock(mut);
-        assert(!value);
         value = std::move(val);
-        cond.broadcast();
+        flag.signal();
     }
 
-    T& block() {
-        Lock lock(mut);
-        while(!value) cond.wait(mut);
-        return *value;
+    T block() {
+        flag.block();
+        return std::move(value);
     }
 
     bool ready() {
-        Lock lock(mut);
-        return value;
+        return flag.ready();
     }
 
 private:
-    Mutex mut;
-    Cond cond;
-    Opt<T> value;
+    Flag flag;
+    T value;
 
     friend struct Reflect<Promise<T>>;
 };
@@ -73,26 +68,19 @@ struct Promise<void> {
     Promise& operator=(Promise&&) = delete;
 
     void fill() {
-        Lock lock(mut);
-        assert(!done);
-        done = true;
-        cond.broadcast();
+        flag.signal();
     }
 
     void block() {
-        Lock lock(mut);
-        while(!done) cond.wait(mut);
+        flag.block();
     }
 
     bool ready() {
-        Lock lock(mut);
-        return done;
+        return flag.ready();
     }
 
 private:
-    Mutex mut;
-    Cond cond;
-    bool done = false;
+    Flag flag;
 
     friend struct Reflect<Promise<void>>;
 };
@@ -187,23 +175,23 @@ auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
 } // namespace Thread
 
 template<typename P>
-struct Reflect<Thread::Promise<P>> {
+struct rpp::detail::Reflect<Thread::Promise<P>> {
     using T = Thread::Promise<P>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(mut), FIELD(cond), FIELD(value)>;
+    using members = List<FIELD(flag), FIELD(value)>;
 };
 
 template<>
-struct Reflect<Thread::Promise<void>> {
+struct rpp::detail::Reflect<Thread::Promise<void>> {
     using T = Thread::Promise<void>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(mut), FIELD(cond), FIELD(done)>;
+    using members = List<FIELD(flag)>;
 };
 
 template<Allocator A>
-struct Reflect<Thread::Thread<A>> {
+struct rpp::detail::Reflect<Thread::Thread<A>> {
     using T = Thread::Thread<A>;
     static constexpr Literal name = "Thread";
     static constexpr Kind kind = Kind::record_;

@@ -2,6 +2,7 @@
 #pragma once
 
 #include "base.h"
+#include "function.h"
 #include "thread.h"
 
 #include <coroutine>
@@ -30,28 +31,53 @@ struct Continue {
     }
 };
 
-template<typename R, Allocator A = Alloc>
-struct Task;
-
-template<typename R, Allocator A = Alloc>
+template<typename R = void, Allocator A = Alloc>
 struct Promise;
 
-template<typename R, Allocator A = Alloc>
-struct Final_Suspend {
+template<typename R = void, Allocator A = Alloc>
+struct Task;
 
+constexpr i64 TASK_START = 0;
+constexpr i64 TASK_DONE = 1;
+constexpr i64 TASK_ABANDONED = 2;
+
+struct Final_Suspend {
     bool await_ready() noexcept {
         return false;
     }
     void await_resume() noexcept {
     }
 
-    std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
-        auto& promise = handle.promise();
-        Thread::Lock lock{promise.mutex};
-        promise.done = true;
-        promise.cond.broadcast();
-        return promise.continuation ? promise.continuation : std::noop_coroutine();
+#ifdef COMPILER_MSVC
+    // Compiler bug: remove this when fix released
+    // https://developercommunity.visualstudio.com/t/destroy-coroutine-from-final_suspend-r/10096047
+    template<typename R, Allocator A>
+    void await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
+
+        i64 state = handle.promise().state.exchange(TASK_DONE);
+
+        if(state == TASK_ABANDONED) {
+            handle.destroy();
+        } else if(state != TASK_START) {
+            // Can stack overflow
+            std::coroutine_handle<>::from_address(reinterpret_cast<void*>(state)).resume();
+        }
     }
+#else
+    template<typename R, Allocator A>
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
+
+        i64 state = handle.promise().state.exchange(TASK_DONE);
+
+        if(state == TASK_ABANDONED) {
+            handle.destroy();
+        } else if(state != TASK_START) {
+            return std::coroutine_handle<>::from_address(reinterpret_cast<void*>(state));
+        }
+
+        return std::noop_coroutine();
+    }
+#endif
 };
 
 template<typename R, Allocator A>
@@ -69,16 +95,11 @@ struct Promise_Base {
     Continue initial_suspend() noexcept {
         return {};
     }
-    Final_Suspend<R, A> final_suspend() noexcept {
-        return Final_Suspend<R, A>{};
+    Final_Suspend final_suspend() noexcept {
+        return Final_Suspend{};
     }
     void unhandled_exception() {
         die("Unhandled exception in coroutine.");
-    }
-
-    void block() {
-        Thread::Lock lock{mutex};
-        while(!done) cond.wait(mutex);
     }
 
     void* operator new(size_t size) {
@@ -88,24 +109,15 @@ struct Promise_Base {
         A::free(ptr);
     }
 
-    void reference() {
-        references.incr();
-    }
-    bool unreference() {
-        return references.decr() == 0;
+    void block() {
+        flag.block();
     }
 
 protected:
-    Thread::Mutex mutex;
-    Thread::Cond cond;
-    bool done = false;
+    Thread::Atomic state{TASK_START};
+    Thread::Flag flag;
 
-    std::coroutine_handle<> continuation;
-    Thread::Atomic references;
-
-    template<typename, Allocator>
-    friend struct Task;
-    template<typename, Allocator>
+    friend struct Task<R, A>;
     friend struct Final_Suspend;
 };
 
@@ -115,14 +127,17 @@ struct Promise : Promise_Base<R, A> {
         return Task<R, A>{*this};
     }
     void return_value(const R& val) {
-        assert(!this->done);
-        data = val;
+        value = val;
+        this->flag.signal();
     }
     void return_value(R&& val) {
-        assert(!this->done);
-        data = std::move(val);
+        value = std::move(val);
+        this->flag.signal();
     }
-    R data;
+
+private:
+    R value;
+    friend struct Task<R, A>;
 };
 
 template<typename R, Allocator A>
@@ -130,53 +145,38 @@ struct Task {
 
     using promise_type = Promise<R, A>;
 
-    Task() = default;
-    ~Task() {
-        if(handle && handle.promise().unreference()) {
-            handle.destroy();
-        }
+    explicit Task(Promise<R, A>& promise)
+        : handle{std::coroutine_handle<promise_type>::from_promise(promise)} {
     }
 
-    explicit Task(promise_type& promise) {
-        promise.reference();
-        handle = std::coroutine_handle<promise_type>::from_promise(promise);
+    ~Task() {
+        if(handle.promise().state.exchange(TASK_ABANDONED) == TASK_DONE) {
+            handle.destroy();
+        }
     }
 
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&& src) : handle{src.handle} {
-        src.handle = null;
-    }
-    Task& operator=(Task&& src) {
-        this->~Task();
-        handle = src.handle;
-        src.handle = null;
-        return *this;
-    }
+    Task(Task&& src) = delete;
+    Task& operator=(Task&& src) = delete;
 
     bool await_ready() {
-        return !handle || handle.done();
+        return handle.promise().state.load() == TASK_DONE;
     }
-    std::coroutine_handle<> await_suspend(std::coroutine_handle<> continuation) {
-        auto& promise = handle.promise();
-        Thread::Lock lock{promise.mutex};
-        promise.continuation = continuation;
-        if(promise.done) {
-            return continuation;
-        }
-        return std::noop_coroutine();
+    bool await_suspend(std::coroutine_handle<> continuation) {
+        i64 cont = reinterpret_cast<i64>(continuation.address());
+        return handle.promise().state.compare_and_swap(TASK_START, cont) == TASK_START;
     }
-    auto await_resume() {
+    R await_resume() {
         if constexpr(Same<R, void>) {
             return;
         } else {
-            return std::move(handle.promise().data);
+            return std::move(handle.promise().value);
         }
     }
 
     void resume() {
-        assert(handle);
         handle.resume();
     }
     bool done() {
@@ -188,7 +188,7 @@ struct Task {
     }
 
 private:
-    std::coroutine_handle<promise_type> handle;
+    std::coroutine_handle<Promise<R, A>> handle;
 };
 
 template<Allocator A>
@@ -197,7 +197,7 @@ struct Promise<void, A> : Promise_Base<void, A> {
         return Task<void, A>{*this};
     }
     void return_void() {
-        assert(!this->done);
+        this->flag.signal();
     }
 };
 

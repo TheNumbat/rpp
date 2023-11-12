@@ -142,7 +142,7 @@ private:
 };
 
 template<>
-struct Reflect<Profile::Alloc> {
+struct rpp::detail::Reflect<Profile::Alloc> {
     using T = Profile::Alloc;
     static constexpr Literal name = "Alloc";
     static constexpr Kind kind = Kind::record_;

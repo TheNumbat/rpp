@@ -246,7 +246,7 @@ private:
 };
 
 template<typename H, Allocator A>
-struct Reflect<Heap<H, A>> {
+struct rpp::detail::Reflect<Heap<H, A>> {
     using T = Heap<H, A>;
     static constexpr Literal name = "Heap";
     static constexpr Kind kind = Kind::record_;

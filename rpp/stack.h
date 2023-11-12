@@ -97,7 +97,7 @@ private:
 };
 
 template<typename S, Allocator A>
-struct Reflect<Stack<S, A>> {
+struct rpp::detail::Reflect<Stack<S, A>> {
     using T = Stack<S, A>;
     static constexpr Literal name = "Stack";
     static constexpr Kind kind = Kind::record_;

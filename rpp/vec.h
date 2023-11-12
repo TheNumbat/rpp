@@ -339,7 +339,7 @@ private:
 static_assert(Trivial<Slice<u8>>);
 
 template<typename V, Allocator A>
-struct Reflect<Vec<V, A>> {
+struct rpp::detail::Reflect<Vec<V, A>> {
     using T = Vec<V, A>;
     static constexpr Literal name = "Vec";
     static constexpr Kind kind = Kind::record_;
@@ -347,7 +347,7 @@ struct Reflect<Vec<V, A>> {
 };
 
 template<typename T>
-struct Reflect<Slice<T>> {
+struct rpp::detail::Reflect<Slice<T>> {
     static constexpr Literal name = "Slice";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_)>;

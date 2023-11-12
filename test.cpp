@@ -31,20 +31,30 @@ struct Vecs {
 };
 namespace rpp {
 template<>
-struct Reflect<Ints> {
+struct rpp::detail::Reflect<Ints> {
     using T = Ints;
     static constexpr Literal name = "Ints";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
 };
 template<>
-struct Reflect<Vecs> {
+struct rpp::detail::Reflect<Vecs> {
     using T = Vecs;
     static constexpr Literal name = "Vecs";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
 };
 } // namespace rpp
+
+auto lots_of_jobs(Thread::Pool<>& pool, u64 depth) -> Async::Task<u64> {
+    if(depth == 0) {
+        co_return 1;
+    }
+    co_await pool.suspend();
+    auto job0 = lots_of_jobs(pool, depth - 1);
+    auto job1 = lots_of_jobs(pool, depth - 1);
+    co_return co_await job0 + co_await job1;
+};
 
 i32 main() {
 
@@ -1022,15 +1032,6 @@ i32 main() {
             task.block();
         }
         {
-            auto co = []() -> Async::Task<void> {
-                co_await Async::Suspend{};
-                info("Hello from coroutine 3");
-                co_return;
-            };
-            Async::Task<void> task = co();
-            assert(!task.done());
-        }
-        {
             auto co1 = []() -> Async::Task<i32> {
                 info("Hello from coroutine 4");
                 co_return 1;
@@ -1091,18 +1092,29 @@ i32 main() {
         }
     }();
 
-    // Thread pool
+    // Threads
     [] {
-        Thread::Pool pool;
-
         Vec<Thread::Future<void>> tasks;
         for(u64 i = 0; i < Thread::hardware_threads(); i++) {
-            tasks.push(pool.single([]() { info("Hello from thread pool"); }));
+            tasks.push(Thread::spawn([]() { info("Hello from thread"); }));
         }
 
         for(auto& task : tasks) {
             task->block();
         }
+    }();
+
+    // Thread pool
+    [] {
+        Thread::Pool pool;
+
+        for(u64 i = 0; i < 100; i++) {
+            assert(lots_of_jobs(pool, 10).block() == 1024);
+        }
+    }();
+
+    [] {
+        Thread::Pool pool;
 
         {
             auto job = [&pool]() -> Async::Task<i32> {
@@ -1156,13 +1168,16 @@ i32 main() {
             // no job can deadlock itself
         }
     }();
+
+    // Scheduling
     [] {
         Thread::Pool pool;
+
         {
-            auto job = [&pool_ = pool](i32 ms, u64 mask) -> Async::Task<i32> {
+            auto job = [&pool_ = pool](i32 ms) -> Async::Task<i32> {
                 auto& pool = pool_;
                 info("5.2 begin %", ms);
-                co_await pool.suspend(Thread::Priority::normal, mask);
+                co_await pool.suspend();
                 info("5.2 on thread %", ms);
                 Thread::sleep(ms);
                 info("5.2 done %", ms);
@@ -1172,31 +1187,28 @@ i32 main() {
                 auto& pool = pool_;
                 auto& job = job_;
                 info("5.1 begin");
-                co_await pool.suspend(Thread::Priority::normal, 0b1);
+                co_await pool.suspend();
                 info("5.1 on thread");
-                info("5.1: wait on 0.99s job");
-                i32 i = job(99, 0b10).block(); // has to run on another thread, blocks this thread
-                // continue on same thread, wait does not swap out
+                // TODO: to be able to block on a job in a coroutine, the scheduler
+                // needs to support CPU affinity again.
                 info("5.1: co_await 1ms job");
-                auto j = co_await job(1, 0); // likely runs on this thread as we yield immediately
-                // should continue on same thread because we had time to install the continuation
+                i32 i = co_await job(1);
                 info("5.1: launch 0s job");
-                auto wait =
-                    job(0, 0); // should run on another thread, we don't yield until the next await
+                auto wait = job(0); // should run on another thread, we don't yield until the next
                 info("5.1: co_await 100ms job");
-                i32 k = co_await job(100, 0);
+                i32 j = co_await job(100);
                 // same thread should pick up the job as we wait immediately
                 // continues on the same thread via continuation
                 info("5.1: co_await 0s job");
-                i32 l = co_await wait;
+                i32 k = co_await wait;
                 // does not wait or use continuation because already done
-                info("5.1 done: % % % %", i, j, k, l);
-                co_return i + j + k + l;
+                info("5.1 done: % % %", i, j, k);
+                co_return i + j + k;
             };
 
-            assert(job2().block() == 4);
-            // cannot start and drop another job2 because it blocks on another job -
-            // if all but one thread shut down it deadlocks itself
+            assert(job2().block() == 3);
+            // cannot start and drop another job2 because pending continuations
+            // are leaked
         }
         {
             Function<Async::Task<void>(u64)> lots_of_jobs =
@@ -1217,6 +1229,7 @@ i32 main() {
         }
     }();
 
+    // Async IO
     [] {
         Thread::Pool pool;
         {

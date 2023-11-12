@@ -45,7 +45,7 @@ private:
 };
 
 template<typename R>
-struct Reflect<Ref<R>> {
+struct rpp::detail::Reflect<Ref<R>> {
     using T = Ref<R>;
     static constexpr Literal name = "Ref";
     static constexpr Kind kind = Kind::record_;

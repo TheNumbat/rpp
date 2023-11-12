@@ -67,7 +67,7 @@ protected:
 };
 
 template<typename S>
-struct Reflect<Storage<S>> {
+struct rpp::detail::Reflect<Storage<S>> {
     using T = Storage<S>;
     static constexpr Literal name = "Storage";
     static constexpr Kind kind = Kind::record_;

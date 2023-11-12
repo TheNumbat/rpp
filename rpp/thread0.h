@@ -24,6 +24,28 @@ u64 perf_counter();
 u64 perf_frequency();
 u64 hardware_threads();
 
+struct Flag {
+    Flag() = default;
+    ~Flag() = default;
+
+    Flag(const Flag&) = delete;
+    Flag(Flag&&) = delete;
+
+    Flag& operator=(const Flag&) = delete;
+    Flag& operator=(Flag&&) = delete;
+
+    void block();
+    void signal();
+    bool ready();
+
+private:
+#ifdef OS_WINDOWS
+    i16 value_ = 0;
+#else
+    i32 value_ = 0;
+#endif
+};
+
 struct Mutex {
 
     Mutex();
@@ -129,7 +151,7 @@ private:
 } // namespace Thread
 
 template<>
-struct Reflect<Thread::Atomic> {
+struct rpp::detail::Reflect<Thread::Atomic> {
     using T = Thread::Atomic;
     static constexpr Literal name = "Atomic";
     static constexpr Kind kind = Kind::record_;
@@ -137,7 +159,7 @@ struct Reflect<Thread::Atomic> {
 };
 
 template<>
-struct Reflect<Thread::Priority> {
+struct rpp::detail::Reflect<Thread::Priority> {
     using T = Thread::Priority;
     using underlying = u8;
     static constexpr Literal name = "Priority";

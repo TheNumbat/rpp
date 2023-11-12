@@ -75,7 +75,7 @@ struct Pair {
 };
 
 template<typename A, typename B>
-struct Reflect<Pair<A, B>> {
+struct rpp::detail::Reflect<Pair<A, B>> {
     using T = Pair<A, B>;
     static constexpr Literal name = "Pair";
     static constexpr Kind kind = Kind::record_;
