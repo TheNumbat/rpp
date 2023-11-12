@@ -87,7 +87,7 @@ struct Array {
 
 private:
     T data_[N] = {};
-    friend struct rpp::detail::Reflect<Array>;
+    friend struct Reflect<Array>;
 };
 
 template<typename T, u64 N>

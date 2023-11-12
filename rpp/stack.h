@@ -93,7 +93,7 @@ struct Stack {
 private:
     Vec<T, A> data_;
 
-    friend struct rpp::detail::Reflect<Stack>;
+    friend struct Reflect<Stack>;
 };
 
 template<typename S, Allocator A>

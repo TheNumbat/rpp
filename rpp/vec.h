@@ -244,7 +244,7 @@ private:
     u64 length_ = 0;
     u64 capacity_ = 0;
 
-    friend struct rpp::detail::Reflect<Vec>;
+    friend struct Reflect<Vec>;
 };
 
 template<typename T>
@@ -333,7 +333,7 @@ private:
 
     template<typename>
     friend struct Slice;
-    friend struct rpp::detail::Reflect<Slice<T>>;
+    friend struct Reflect<Slice<T>>;
 };
 
 static_assert(Trivial<Slice<u8>>);

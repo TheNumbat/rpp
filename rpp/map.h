@@ -429,7 +429,7 @@ private:
     u64 usable_ = 0;
     u64 shift_ = 0;
 
-    friend struct rpp::detail::Reflect<Map>;
+    friend struct Reflect<Map>;
     template<bool>
     friend struct Iterator;
 };

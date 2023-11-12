@@ -242,7 +242,7 @@ private:
     u64 length_ = 0;
     u64 capacity_ = 0;
 
-    friend struct rpp::detail::Reflect<Heap>;
+    friend struct Reflect<Heap>;
 };
 
 template<typename H, Allocator A>

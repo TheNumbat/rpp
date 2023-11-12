@@ -36,6 +36,7 @@ struct Flag {
 
     void block();
     void signal();
+    bool ready();
 
 private:
 #ifdef OS_WINDOWS
@@ -68,7 +69,7 @@ private:
 #endif
 
     friend struct Cond;
-    friend struct rpp::detail::Reflect<Mutex>;
+    friend struct Reflect<Mutex>;
 };
 
 struct Lock {
@@ -89,7 +90,7 @@ struct Lock {
 private:
     Ref<Mutex> mutex_;
 
-    friend struct rpp::detail::Reflect<Lock>;
+    friend struct Reflect<Lock>;
 };
 
 struct Atomic {
@@ -119,7 +120,7 @@ struct Atomic {
 private:
     i64 value_ = 0;
 
-    friend struct rpp::detail::Reflect<Atomic>;
+    friend struct Reflect<Atomic>;
 };
 
 struct Cond {
@@ -144,7 +145,7 @@ private:
     pthread_cond_t cond_ = PTHREAD_COND_INITIALIZER;
 #endif
 
-    friend struct rpp::detail::Reflect<Cond>;
+    friend struct Reflect<Cond>;
 };
 
 } // namespace Thread

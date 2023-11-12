@@ -176,7 +176,7 @@ private:
         }
     };
 
-    friend struct rpp::detail::Reflect<Variant<Ts...>>;
+    friend struct Reflect<Variant<Ts...>>;
 };
 
 template<Literal N, typename NT>

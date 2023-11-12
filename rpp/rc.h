@@ -34,7 +34,7 @@ struct Rc {
         requires Constructable<T, Args...>
     explicit Rc(Args&&... args) {
         data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(data_) Data{T{std::forward<Args>(args)...}, 1};
+        new(data_) Data{1, T{std::forward<Args>(args)...}};
     }
 
     Rc(const Rc& src) = delete;
@@ -101,7 +101,7 @@ private:
 
     Data* data_ = null;
 
-    friend struct rpp::detail::Reflect<Rc<T>>;
+    friend struct Reflect<Rc<T>>;
 };
 
 template<typename T, Allocator A = Mdefault>
@@ -192,7 +192,7 @@ private:
 
     Data* data_ = null;
 
-    friend struct rpp::detail::Reflect<Arc<T>>;
+    friend struct Reflect<Arc<T>>;
 };
 
 template<typename R>

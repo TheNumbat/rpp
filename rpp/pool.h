@@ -15,10 +15,7 @@ struct Schedule {
 
     explicit Schedule(Pool<A>& pool) : pool{pool} {
     }
-    template<typename R, typename RA>
-    void await_suspend(std::coroutine_handle<Async::Promise<R, RA>> task) {
-        task.promise().continue_with(
-            [&pool = this->pool](std::coroutine_handle<> handle) { pool.enqueue(handle); });
+    void await_suspend(std::coroutine_handle<> task) {
         pool.enqueue(task);
     }
     void await_resume() {
@@ -37,10 +34,7 @@ struct Schedule_Event {
     explicit Schedule_Event(Async::Event event, Pool<A>& pool)
         : event{std::move(event)}, pool{pool} {
     }
-    template<typename R, typename RA>
-    void await_suspend(std::coroutine_handle<Async::Promise<R, RA>> task) {
-        task.promise().continue_with(
-            [&pool = this->pool](std::coroutine_handle<> handle) { pool.enqueue(handle); });
+    void await_suspend(std::coroutine_handle<> task) {
         pool.enqueue_event(std::move(event), task);
     }
     void await_resume() {
@@ -87,6 +81,8 @@ struct Pool {
 
         for(auto& state : thread_states) {
             for(auto& job : state.jobs) {
+                // This still leaks pending continuations, as we can't control their destruction
+                // order wrt their waiting tasks.
                 job.destroy();
             }
         }
@@ -111,8 +107,9 @@ private:
     void enqueue(Job job) {
         for(u64 i = 0; i < thread_states.length(); i++) {
             Thread_State& state = thread_states[i];
-            Lock lock(state.mut);
+            // Race on empty
             if(state.jobs.empty()) {
+                Lock lock(state.mut);
                 state.jobs.push(std::move(job));
                 state.cond.signal();
                 return;

@@ -98,7 +98,7 @@ private:
     T first;
     Tuple<Ts...> rest;
 
-    friend struct rpp::detail::Reflect<Tuple<T, Ts...>>;
+    friend struct Reflect<Tuple<T, Ts...>>;
 };
 
 template<>

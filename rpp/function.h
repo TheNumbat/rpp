@@ -105,7 +105,7 @@ private:
     alignas(MAX_ALIGN) u8 storage[Words * 8] = {};
     VoidFn* vtable = null;
 
-    friend struct rpp::detail::Reflect<Function<Words, Fn>>;
+    friend struct Reflect<Function<Words, Fn>>;
 };
 
 } // namespace detail

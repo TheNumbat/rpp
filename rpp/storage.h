@@ -63,7 +63,7 @@ struct Storage {
 protected:
     alignas(alignof(T)) u8 value_[sizeof(T)] = {};
 
-    friend struct rpp::detail::Reflect<Storage>;
+    friend struct Reflect<Storage>;
 };
 
 template<typename S>

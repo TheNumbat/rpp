@@ -105,7 +105,7 @@ struct Box {
 private:
     T* data_ = null;
 
-    friend struct rpp::detail::Reflect<Box>;
+    friend struct Reflect<Box>;
 
     template<typename B, Allocator BA>
     friend struct Box;

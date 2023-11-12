@@ -109,7 +109,7 @@ protected:
     bool ok_ = false;
     Storage<T> value_;
 
-    friend struct rpp::detail::Reflect<Opt>;
+    friend struct Reflect<Opt>;
 };
 
 template<typename O>

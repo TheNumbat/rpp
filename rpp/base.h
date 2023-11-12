@@ -9,7 +9,7 @@
 #define COMPILER_GCC
 #define offsetof __builtin_offsetof
 #else
-// #error "Unsupported compiler."
+#error "Unsupported compiler."
 #endif
 
 #ifdef _WIN64
@@ -41,7 +41,6 @@
 #define FORCE_INLINE __attribute__((always_inline))
 #include <new>
 #include <stddef.h>
-#include <utility>
 #endif
 
 #ifdef OS_LINUX
@@ -56,6 +55,7 @@
 #include <initializer_list>
 #include <source_location>
 #include <type_traits>
+#include <utility>
 
 #define null nullptr
 

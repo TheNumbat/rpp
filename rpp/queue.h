@@ -338,7 +338,7 @@ private:
     u64 last_ = 0;
     u64 capacity_ = 0;
 
-    friend struct rpp::detail::Reflect<Queue>;
+    friend struct Reflect<Queue>;
     template<bool>
     friend struct Iterator;
 };

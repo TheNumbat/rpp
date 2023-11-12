@@ -124,6 +124,10 @@ void Flag::signal() {
     }
 }
 
+bool Flag::ready() {
+    return __atomic_load_n(&value_, __ATOMIC_SEQ_CST) != 0;
+}
+
 Mutex::Mutex() {
     int ret = pthread_mutex_init(&lock_, null);
     if(ret) {

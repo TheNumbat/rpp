@@ -36,30 +36,24 @@ struct Promise {
     Promise& operator=(Promise&&) = delete;
 
     void fill(T&& val) {
-        Lock lock(mut);
-        assert(!value);
         value = std::move(val);
-        cond.broadcast();
+        flag.signal();
     }
 
     T block() {
-        Lock lock(mut);
-        while(!value) cond.wait(mut);
-        T v = std::move(*value);
-        return v;
+        flag.block();
+        return std::move(value);
     }
 
     bool ready() {
-        Lock lock(mut);
-        return value;
+        return flag.ready();
     }
 
 private:
-    Mutex mut;
-    Cond cond;
-    Opt<T> value;
+    Flag flag;
+    T value;
 
-    friend struct rpp::detail::Reflect<Promise<T>>;
+    friend struct Reflect<Promise<T>>;
 };
 
 template<>
@@ -74,28 +68,21 @@ struct Promise<void> {
     Promise& operator=(Promise&&) = delete;
 
     void fill() {
-        Lock lock(mut);
-        assert(!done);
-        done = true;
-        cond.broadcast();
+        flag.signal();
     }
 
     void block() {
-        Lock lock(mut);
-        while(!done) cond.wait(mut);
+        flag.block();
     }
 
     bool ready() {
-        Lock lock(mut);
-        return done;
+        return flag.ready();
     }
 
 private:
-    Mutex mut;
-    Cond cond;
-    bool done = false;
+    Flag flag;
 
-    friend struct rpp::detail::Reflect<Promise<void>>;
+    friend struct Reflect<Promise<void>>;
 };
 
 template<typename T, Allocator A = Alloc>
@@ -161,7 +148,7 @@ private:
         return OS_Thread_Ret_Null;
     }
 
-    friend struct rpp::detail::Reflect<Thread<A>>;
+    friend struct Reflect<Thread<A>>;
 };
 
 template<Allocator A = Alloc, typename F, typename... Args>
@@ -192,7 +179,7 @@ struct rpp::detail::Reflect<Thread::Promise<P>> {
     using T = Thread::Promise<P>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(mut), FIELD(cond), FIELD(value)>;
+    using members = List<FIELD(flag), FIELD(value)>;
 };
 
 template<>
@@ -200,7 +187,7 @@ struct rpp::detail::Reflect<Thread::Promise<void>> {
     using T = Thread::Promise<void>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(mut), FIELD(cond), FIELD(done)>;
+    using members = List<FIELD(flag)>;
 };
 
 template<Allocator A>

@@ -89,6 +89,10 @@ void Flag::signal() {
     WakeByAddressAll(&value_);
 }
 
+bool Flag::ready() {
+    return value_ != 0;
+}
+
 Mutex::Mutex() {
     InitializeSRWLock(reinterpret_cast<PSRWLOCK>(&lock_));
 }

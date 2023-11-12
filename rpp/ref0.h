@@ -41,7 +41,7 @@ struct Ref {
 
 private:
     T* value_ = null;
-    friend struct rpp::detail::Reflect<Ref<T>>;
+    friend struct Reflect<Ref<T>>;
 };
 
 template<typename R>

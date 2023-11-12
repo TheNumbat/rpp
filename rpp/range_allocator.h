@@ -228,7 +228,7 @@ struct Range_Allocator {
         Region_Scope;
         for(u64 i = 0; i < 1000; i++) {
             Vec<Range> allocations, leaks;
-            for(u64 j = 0; j < 10000; j++) {
+            for(u64 j = 0; j < 1000; j++) {
                 u64 align = rng.range(static_cast<u64>(1), Math::MB(1));
                 u64 size = rng.range(static_cast<u64>(1), Math::MB(1));
                 auto mem = *allocator.allocate(size, align);

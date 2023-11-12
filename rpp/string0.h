@@ -69,7 +69,7 @@ private:
     const u8* data_;
     u64 length_;
 
-    friend struct rpp::detail::Reflect<String_View>;
+    friend struct Reflect<String_View>;
 };
 
 static_assert(Trivial<String_View>);
@@ -169,7 +169,7 @@ private:
     u64 capacity_ = 0;
 
     friend struct String_View;
-    friend struct rpp::detail::Reflect<String>;
+    friend struct Reflect<String>;
 };
 
 template<Allocator A>

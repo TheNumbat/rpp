@@ -31,21 +31,60 @@ struct Continue {
     }
 };
 
-template<typename R>
-struct Future;
+template<typename R = void, Allocator A = Alloc>
+struct Promise;
 
 template<typename R = void, Allocator A = Alloc>
 struct Task;
 
+constexpr i64 TASK_START = 0;
+constexpr i64 TASK_DONE = 1;
+constexpr i64 TASK_ABANDONED = 2;
+
+struct Final_Suspend {
+    bool await_ready() noexcept {
+        return false;
+    }
+    void await_resume() noexcept {
+    }
+
+#ifdef COMPILER_MSVC
+    // Compiler bug: remove this when fix released
+    // https://developercommunity.visualstudio.com/t/destroy-coroutine-from-final_suspend-r/10096047
+    template<typename R, Allocator A>
+    void await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
+
+        i64 state = handle.promise().state.exchange(TASK_DONE);
+
+        if(state == TASK_ABANDONED) {
+            handle.destroy();
+        } else if(state != TASK_START) {
+            // Can stack overflow
+            std::coroutine_handle<>::from_address(reinterpret_cast<void*>(state)).resume();
+        }
+    }
+#else
+    template<typename R, Allocator A>
+    std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
+
+        i64 state = handle.promise().state.exchange(TASK_DONE);
+
+        if(state == TASK_ABANDONED) {
+            handle.destroy();
+        } else if(state != TASK_START) {
+            return std::coroutine_handle<>::from_address(reinterpret_cast<void*>(state));
+        }
+
+        return std::noop_coroutine();
+    }
+#endif
+};
+
 template<typename R, Allocator A>
 struct Promise_Base {
 
-    Promise_Base() {
-        fut = Arc<Future<R>, A>::make();
-    }
-    ~Promise_Base() {
-        fut->abandon();
-    }
+    Promise_Base() = default;
+    ~Promise_Base() = default;
 
     Promise_Base(const Promise_Base&) = delete;
     Promise_Base& operator=(const Promise_Base&) = delete;
@@ -56,8 +95,8 @@ struct Promise_Base {
     Continue initial_suspend() noexcept {
         return {};
     }
-    Continue final_suspend() noexcept {
-        return {};
+    Final_Suspend final_suspend() noexcept {
+        return Final_Suspend{};
     }
     void unhandled_exception() {
         die("Unhandled exception in coroutine.");
@@ -70,130 +109,35 @@ struct Promise_Base {
         A::free(ptr);
     }
 
-    Arc<Future<R>, A>& future() {
-        return fut;
-    }
-
-    template<Invocable<std::coroutine_handle<>> F>
-    void continue_with(F&& f) {
-        fut->continue_with(std::forward<F>(f));
+    void block() {
+        flag.block();
     }
 
 protected:
-    Arc<Future<R>, A> fut;
+    Thread::Atomic state{TASK_START};
+    Thread::Flag flag;
+
+    friend struct Task<R, A>;
+    friend struct Final_Suspend;
 };
 
 template<typename R, Allocator A>
 struct Promise : Promise_Base<R, A> {
     Task<R, A> get_return_object() {
-        return Task<R, A>{this->fut.dup()};
+        return Task<R, A>{*this};
     }
     void return_value(const R& val) {
-        this->fut->fill(val);
+        value = val;
+        this->flag.signal();
     }
     void return_value(R&& val) {
-        this->fut->fill(std::move(val));
-    }
-};
-
-template<typename R>
-struct Future_Base {
-
-    Future_Base() = default;
-    ~Future_Base() = default;
-
-    Future_Base(const Future_Base&) = delete;
-    Future_Base& operator=(const Future_Base&) = delete;
-
-    Future_Base(Future_Base&&) = delete;
-    Future_Base& operator=(Future_Base&&) = delete;
-
-    static constexpr i64 TASK_START = 0;
-    static constexpr i64 TASK_DONE = 1;
-
-protected:
-    Thread::Mutex mut;
-    Thread::Cond cond;
-
-    void complete() {
-        i64 c = continuation.exchange(TASK_DONE);
-        if(c != TASK_START && on_continue) {
-            on_continue(std::coroutine_handle<>::from_address(reinterpret_cast<void*>(c)));
-        }
-    }
-
-private:
-    Thread::Atomic continuation;
-    FunctionN<1, void(std::coroutine_handle<>)> on_continue;
-
-    bool install(std::coroutine_handle<> handle) {
-        return continuation.compare_and_swap(TASK_START, reinterpret_cast<i64>(handle.address())) ==
-               TASK_START;
-    }
-    template<Invocable<std::coroutine_handle<>> F>
-    void continue_with(F&& f) {
-        on_continue = std::forward<F>(f);
-    }
-    void abandon() {
-        i64 c = continuation.load();
-        if(c != TASK_START && c != TASK_DONE) {
-            std::coroutine_handle<>::from_address(reinterpret_cast<void*>(c)).destroy();
-        }
-    }
-
-    template<typename, Allocator>
-    friend struct Promise_Base;
-    template<typename, Allocator>
-    friend struct Task;
-};
-
-template<typename R>
-struct Future : Future_Base<R> {
-
-    bool ready() {
-        Thread::Lock lock(this->mut);
-        return value;
-    }
-
-    R block() {
-        Thread::Lock lock(this->mut);
-        while(!value) this->cond.wait(this->mut);
-        return *value;
-    }
-
-    void fill(R&& val) {
-        Thread::Lock lock(this->mut);
         value = std::move(val);
-        this->cond.broadcast();
-        this->complete();
+        this->flag.signal();
     }
 
 private:
-    Opt<R> value;
-};
-
-template<>
-struct Future<void> : Future_Base<void> {
-
-    bool ready() {
-        Thread::Lock lock(this->mut);
-        return value;
-    }
-
-    void block() {
-        Thread::Lock lock(this->mut);
-        while(!value) this->cond.wait(this->mut);
-    }
-
-    void fill() {
-        Thread::Lock lock(this->mut);
-        value = true;
-        this->cond.broadcast();
-        this->complete();
-    }
-
-private:
-    bool value = false;
+    R value;
+    friend struct Task<R, A>;
 };
 
 template<typename R, Allocator A>
@@ -201,10 +145,15 @@ struct Task {
 
     using promise_type = Promise<R, A>;
 
-    explicit Task(Arc<Future<R>, A> fut) : fut{std::move(fut)} {
+    explicit Task(Promise<R, A>& promise)
+        : handle{std::coroutine_handle<promise_type>::from_promise(promise)} {
     }
 
-    ~Task() = default;
+    ~Task() {
+        if(handle.promise().state.exchange(TASK_ABANDONED) == TASK_DONE) {
+            handle.destroy();
+        }
+    }
 
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
@@ -213,33 +162,42 @@ struct Task {
     Task& operator=(Task&& src) = delete;
 
     bool await_ready() {
-        return fut->ready();
+        return handle.promise().state.load() == TASK_DONE;
     }
     bool await_suspend(std::coroutine_handle<> continuation) {
-        return fut->install(continuation);
+        i64 cont = reinterpret_cast<i64>(continuation.address());
+        return handle.promise().state.compare_and_swap(TASK_START, cont) == TASK_START;
     }
-    auto await_resume() {
-        return fut->block();
+    R await_resume() {
+        if constexpr(Same<R, void>) {
+            return;
+        } else {
+            return std::move(handle.promise().value);
+        }
     }
 
+    void resume() {
+        handle.resume();
+    }
     bool done() {
         return await_ready();
     }
     auto block() {
-        return fut->block();
+        handle.promise().block();
+        return await_resume();
     }
 
 private:
-    Arc<Future<R>, A> fut;
+    std::coroutine_handle<Promise<R, A>> handle;
 };
 
 template<Allocator A>
 struct Promise<void, A> : Promise_Base<void, A> {
     Task<void, A> get_return_object() {
-        return Task<void, A>{this->fut.dup()};
+        return Task<void, A>{*this};
     }
     void return_void() {
-        this->fut->fill();
+        this->flag.signal();
     }
 };
 
