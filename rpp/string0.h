@@ -163,6 +163,9 @@ struct String {
         return length_ == 0;
     }
 
+    template<Allocator A>
+    String<A> terminate() const;
+
 private:
     u8* data_ = null;
     u64 length_ = 0;

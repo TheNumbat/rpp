@@ -328,15 +328,13 @@ struct Slice {
     }
 
 private:
-    const T* data_;
-    u64 length_;
+    const T* data_ = null;
+    u64 length_ = 0;
 
     template<typename>
     friend struct Slice;
     friend struct Reflect<Slice<T>>;
 };
-
-static_assert(Trivial<Slice<u8>>);
 
 template<typename V, Allocator A>
 struct rpp::detail::Reflect<Vec<V, A>> {

@@ -199,13 +199,13 @@ struct Range_Allocator {
         void assert_clear() {
             assert(total_allocs == total_frees);
             assert(total_alloc_size == total_free_size);
-            assert(free_blocks == 1);
+            assert(free_blocks == 1 || (free_blocks == 0 && total_capacity == 0));
             assert(free_size == total_capacity);
             assert(allocated_blocks == 0);
             assert(allocated_size == 0);
             u64 sum = 0;
             for(u64 i = 0; i < Buckets; i++) sum += bucket_sizes[i];
-            assert(sum == 1);
+            assert(sum == free_blocks);
         }
     };
 

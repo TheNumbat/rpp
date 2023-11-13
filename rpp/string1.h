@@ -41,6 +41,16 @@ String<A> String_View::terminate() const {
     return ret;
 }
 
+template<Allocator SA>
+template<Allocator RA>
+String<RA> String<SA>::terminate() const {
+    String<RA> ret{length_ + 1};
+    ret.set_length(length_ + 1);
+    Std::memcpy(ret.data(), data_, length_);
+    ret[length_] = '\0';
+    return ret;
+}
+
 inline String_View String_View::sub(u64 start, u64 end) const {
     assert(start <= end);
     assert(end <= length_);
@@ -72,14 +82,16 @@ inline String_View String_View::remove_file_suffix() const {
 
     if(length_ == 0) return String_View{};
 
+    bool found = 0;
     u64 i = length_ - 1;
 
     for(; i != 0; i--) {
         if(data_[i] == '\\' || data_[i] == '/') {
+            found = 1;
             break;
         }
     }
-    return String_View{data_, i};
+    return String_View{data_, i + found};
 }
 
 template<Allocator A>
