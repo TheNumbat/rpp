@@ -376,6 +376,13 @@ struct Write<O, Vec<T, A>> {
         return output.write(idx, ']');
     }
 };
+template<Reflectable T>
+struct Typename<Vec<T>> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("Vec<%>"_v, Typename<T>::name<A>());
+    }
+};
 
 } // namespace Format
 

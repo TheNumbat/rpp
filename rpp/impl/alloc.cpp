@@ -1,6 +1,8 @@
 
 #include "../base.h"
 
+#include <stdio.h>
+
 #ifdef COMPILER_MSVC
 void* operator new(std::size_t, std::align_val_t, void* ptr) noexcept {
     return ptr;
@@ -24,18 +26,20 @@ thread_local u64 Mregion::region_offsets[REGION_COUNT] = {};
 thread_local u8* Mregion::stack_memory = null;
 
 void Mregion::create() {
-    assert(!stack_memory);
     stack_memory = reinterpret_cast<u8*>(calloc(REGION_STACK_SIZE, 1));
 }
 
 void Mregion::destroy() {
-    assert(stack_memory);
     ::free(stack_memory);
     stack_memory = null;
 }
 
 void* Mregion::alloc(u64 size) {
-    assert(stack_memory && current_offset + size < REGION_STACK_SIZE);
+    if(!stack_memory) {
+        ::printf("\033[0;31mAllocation in Mregion after shutdown!\033[0m\n");
+        ::exit(1);
+    }
+    assert(current_offset + size < REGION_STACK_SIZE);
     void* ret = stack_memory + current_offset;
     current_offset += size;
     Std::memset(ret, 0, size);

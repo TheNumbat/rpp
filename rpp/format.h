@@ -244,6 +244,30 @@ inline u64 parse_fmt(String_View fmt, u64& args) {
     return length;
 }
 
+template<Reflectable T>
+struct Typename {
+    template<Allocator A>
+    static String<A> name() {
+        return String_View{Reflect<T>::name}.string<A>();
+    }
+};
+
+template<Reflectable T>
+struct Typename<T*> {
+    template<Allocator A>
+    static String<A> name() {
+        return ::format<A>("%*"_v, Typename<T>::template name<A>());
+    }
+};
+
+template<Reflectable T, u64 N>
+struct Typename<T[N]> {
+    template<Allocator A>
+    static String<A> name() {
+        return ::format<A>("%[]"_v, Typename<T>::template name<A>());
+    }
+};
+
 } // namespace Format
 
 template<typename... Ts>
@@ -270,6 +294,11 @@ String<A> format(String_View fmt, const Ts&... args) {
     u64 idx = Format::write(fmt, 0, output, 0, args...);
     assert(idx == length);
     return output;
+}
+
+template<Reflectable T, Allocator A>
+String<A> format_typename() {
+    return Format::Typename<typename Decay<T>::type>::template name<A>();
 }
 
 } // namespace rpp

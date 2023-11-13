@@ -224,6 +224,10 @@ void Profile::finalize() {
     } else {
         info("No regions leaked.");
     }
+    if(net != 0) {
+        warn("Memory leaked, shutting down now...");
+        ::exit(1);
+    }
 }
 
 } // namespace rpp
