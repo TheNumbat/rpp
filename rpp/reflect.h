@@ -593,6 +593,9 @@ struct Literal {
             c_string[i] = literal[i];
         }
     }
+    operator const char*() const {
+        return c_string;
+    }
     char c_string[max_len] = {};
 };
 
@@ -838,24 +841,6 @@ struct Invoke_Case {
     F f;
 };
 
-template<typename F, typename T>
-concept Field_Iterator = requires(F f, const Literal& name, T& field) {
-    { f.template apply<T>(name, field) } -> Same<void>;
-};
-
-template<typename F>
-struct Invoke_Field {
-    template<typename RF>
-        requires Field_Iterator<F, typename RF::type>
-    void apply() {
-        using T = typename RF::type;
-        const T* field = reinterpret_cast<const T*>(address + RF::offset);
-        f.template apply<T>(RF::name, *field);
-    }
-    F f;
-    const u8* address;
-};
-
 template<Enum E, typename F>
     requires Invocable<F, const Literal&, E>
 void iterate_enum(F&& f) {
@@ -863,11 +848,36 @@ void iterate_enum(F&& f) {
         Invoke_Case<F>{std::forward<F>(f)});
 }
 
+template<typename F, typename T>
+concept Field_Iterator = requires(F f, const Literal& name, T& field) {
+    { f.template apply<T>(name, field) } -> Same<void>;
+};
+
+template<typename F, bool C>
+struct Invoke_Field {
+    template<typename RF>
+        requires Field_Iterator<F, typename RF::type>
+    void apply() {
+        using Ptr = If<C, const typename RF::type*, typename RF::type*>::type;
+        Ptr field = reinterpret_cast<Ptr>(address + RF::offset);
+        f.template apply<decltype(*field)>(RF::name, *field);
+    }
+    F f;
+    typename If<C, const u8*, u8*>::type address;
+};
+
 template<Record R, typename F>
 void iterate_record(F&& f, R& record) {
+    u8* address = reinterpret_cast<u8*>(&record);
+    list::Iter<Invoke_Field<F, false>, typename Reflect<R>::members>::apply(
+        Invoke_Field<F, false>{std::forward<F>(f), address});
+}
+
+template<Record R, typename F>
+void iterate_record(F&& f, const R& record) {
     const u8* address = reinterpret_cast<const u8*>(&record);
-    list::Iter<Invoke_Field<F>, typename Reflect<R>::members>::apply(
-        Invoke_Field<F>{std::forward<F>(f), address});
+    list::Iter<Invoke_Field<F, true>, typename Reflect<R>::members>::apply(
+        Invoke_Field<F, true>{std::forward<F>(f), address});
 }
 
 template<typename T>

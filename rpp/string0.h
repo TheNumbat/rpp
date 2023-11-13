@@ -66,13 +66,11 @@ struct String_View {
     String_View sub(u64 start, u64 end) const;
 
 private:
-    const u8* data_;
-    u64 length_;
+    const u8* data_ = null;
+    u64 length_ = 0;
 
     friend struct Reflect<String_View>;
 };
-
-static_assert(Trivial<String_View>);
 
 template<Allocator A>
 struct String {
