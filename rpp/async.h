@@ -144,6 +144,8 @@ struct Task {
 
     using promise_type = Promise<R, A>;
 
+    Task() : handle{null} {
+    }
     explicit Task(Promise<R, A>& promise)
         : handle{std::coroutine_handle<promise_type>::from_promise(promise)} {
     }
@@ -162,6 +164,7 @@ struct Task {
         src.handle = null;
     }
     Task& operator=(Task&& src) {
+        this->~Task();
         handle = src.handle;
         src.handle = null;
         return *this;
@@ -191,6 +194,9 @@ struct Task {
     auto block() {
         handle.promise().block();
         return await_resume();
+    }
+    operator bool() const {
+        return handle != null;
     }
 
 private:
