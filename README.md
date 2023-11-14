@@ -12,7 +12,7 @@ Headers
 - thread.h: threading primitives
 - async.h: thread-safe coroutine primitives
 - asyncio.h: IO coroutines
-- pool.h: thread pool and coroutine scheduler
+- pool.h: coroutine scheduler thread pool
 - range_allocator.h: generic general purpose allocator
 - simd.h: basic SSE vectors
 - vmath.h: 3D vector and matrix math
@@ -63,12 +63,14 @@ Utilities
 - Hashing and PRNG
 - Logging macros
 - Custom coroutine wrappers
-- Thread pool that can run blocking jobs and coroutines with two priority levels
+- Thread pool that schedules coroutines
 
 To-Do:
-- Thread pool upgrades
+- Thread pool
+    - Priorities & CPU affinity
     - Work stealing
+- IO
     - Proper async file IO on linux
-- Range allocator upgrades
+- Range allocator
     - Second level of linear buckets
     - Reduce memory overhead
