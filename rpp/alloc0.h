@@ -55,7 +55,7 @@ private:
     static void begin();
     static void end();
 
-    static constexpr u64 REGION_COUNT = 64;
+    static constexpr u64 REGION_COUNT = 256;
     static constexpr u64 REGION_STACK_SIZE = Math::MB(16);
 
     static thread_local u64 current_region;
