@@ -191,7 +191,7 @@ struct Task {
     bool done() {
         return await_ready();
     }
-    auto block() {
+    R block() {
         handle.promise().block();
         return await_resume();
     }
