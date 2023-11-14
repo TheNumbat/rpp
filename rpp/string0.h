@@ -65,6 +65,10 @@ struct String_View {
 
     String_View sub(u64 start, u64 end) const;
 
+    String_View clone() const {
+        return String_View{data_, length_};
+    }
+
 private:
     const u8* data_ = null;
     u64 length_ = 0;
@@ -161,8 +165,8 @@ struct String {
         return length_ == 0;
     }
 
-    template<Allocator A>
-    String<A> terminate() const;
+    template<Allocator RA>
+    String<RA> terminate() const;
 
 private:
     u8* data_ = null;

@@ -31,7 +31,7 @@ struct Record_Length {
     void apply(const Literal& name, const T& value) {
         length += String_View{name}.length();
         length += 3;
-        length += Measure<T>::measure(value);
+        length += Measure<typename Decay<T>::type>::measure(value);
         if(n + 1 < N) length += 2;
         n++;
     }
@@ -45,7 +45,7 @@ struct Record_Write {
     void apply(const Literal& name, const T& value) {
         idx = output.write(idx, String_View{name});
         idx = output.write(idx, " : "_v);
-        idx = Write<A, T>::write(output, idx, value);
+        idx = Write<A, typename Decay<T>::type>::write(output, idx, value);
         if(n + 1 < N) idx = output.write(idx, ", "_v);
         n++;
     }
@@ -244,30 +244,6 @@ inline u64 parse_fmt(String_View fmt, u64& args) {
     return length;
 }
 
-template<Reflectable T>
-struct Typename {
-    template<Allocator A>
-    static String<A> name() {
-        return String_View{Reflect<T>::name}.string<A>();
-    }
-};
-
-template<Reflectable T>
-struct Typename<T*> {
-    template<Allocator A>
-    static String<A> name() {
-        return ::format<A>("%*"_v, Typename<T>::template name<A>());
-    }
-};
-
-template<Reflectable T, u64 N>
-struct Typename<T[N]> {
-    template<Allocator A>
-    static String<A> name() {
-        return ::format<A>("%[]"_v, Typename<T>::template name<A>());
-    }
-};
-
 } // namespace Format
 
 template<typename... Ts>
@@ -296,7 +272,115 @@ String<A> format(String_View fmt, const Ts&... args) {
     return output;
 }
 
-template<Reflectable T, Allocator A>
+template<Allocator A, Allocator B, typename... Ss>
+    requires(Same<Ss, String<B>> && ...)
+String<A> concat(String_View sep, const Ss&&... strings) {
+    if constexpr(sizeof...(strings) == 0) {
+        return String<A>{};
+    } else {
+        u64 length = (strings.length() + ...);
+        length += sep.length() * (sizeof...(strings) - 1);
+
+        String<A> output{length};
+        output.set_length(length);
+
+        u64 idx = 0;
+        ((idx = output.write(idx, strings), idx = idx < length ? output.write(idx, sep) : idx),
+         ...);
+        return output;
+    }
+}
+
+namespace Format {
+
+template<Reflectable T>
+struct Typename {
+    template<Allocator A>
+    static String<A> name() {
+        return String_View{Reflect<T>::name}.string<A>();
+    }
+};
+
+template<Reflectable T>
+struct Typename<T*> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("%*"_v, Typename<T>::template name<A>());
+    }
+};
+
+template<Reflectable T, u64 N>
+struct Typename<T[N]> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("%[]"_v, Typename<T>::template name<A>());
+    }
+};
+
+template<template<typename> typename T, Reflectable T0>
+    requires Reflectable<T<T0>>
+struct Typename<T<T0>> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("%<%>"_v, String_View{Reflect<T<T0>>::name},
+                         Typename<T0>::template name<A>());
+    }
+};
+
+template<template<typename, typename> typename T, Reflectable T0, Allocator A0>
+    requires Reflectable<T<T0, A0>>
+struct Typename<T<T0, A0>> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("%<%>"_v, String_View{Reflect<T<T0, A0>>::name},
+                         Typename<T0>::template name<A>());
+    }
+};
+
+template<template<typename, typename, typename> typename T, Reflectable T0, Reflectable T1,
+         Allocator A0>
+    requires Reflectable<T<T0, T1, A0>>
+struct Typename<T<T0, T1, A0>> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("%<%,%>"_v, String_View{Reflect<T<T0, T1, A0>>::name},
+                         Typename<T0>::template name<A>(), Typename<T1>::template name<A>());
+    }
+};
+
+template<template<typename...> typename T, Reflectable... Ts>
+    requires Reflectable<T<Ts...>>
+struct Typename<T<Ts...>> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("%<%>"_v, String_View{Reflect<T<Ts...>>::name},
+                         concat<A, A>(", "_v, Typename<Ts>::template name<A>()...));
+    }
+};
+
+template<template<typename, u64> typename T, Reflectable T0, u64 N>
+    requires Reflectable<T<T0, N>>
+struct Typename<T<T0, N>> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("%<%,%>"_v, String_View{Reflect<T<T0, N>>::name},
+                         Typename<T0>::template name<A>(), N);
+    }
+};
+
+template<template<typename, typename> typename T, Reflectable T0, typename T1>
+    requires(Reflectable<T<T0, T1>> && !Allocator<T1>)
+struct Typename<T<T0, T1>> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("%<%,%>"_v, String_View{Reflect<T<T0, T1>>::name},
+                         Typename<T0>::template name<A>(), Typename<T1>::template name<A>());
+    }
+};
+
+} // namespace Format
+
+template<Reflectable T, Allocator A = Mdefault>
 String<A> format_typename() {
     return Format::Typename<typename Decay<T>::type>::template name<A>();
 }

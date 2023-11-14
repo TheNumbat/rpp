@@ -2,7 +2,6 @@
 #pragma once
 
 #include "base.h"
-#include "function.h"
 #include "thread.h"
 
 #include <coroutine>
@@ -150,7 +149,7 @@ struct Task {
     }
 
     ~Task() {
-        if(handle.promise().state.exchange(TASK_ABANDONED) == TASK_DONE) {
+        if(handle && handle.promise().state.exchange(TASK_ABANDONED) == TASK_DONE) {
             handle.destroy();
         }
     }
@@ -158,8 +157,15 @@ struct Task {
     Task(const Task&) = delete;
     Task& operator=(const Task&) = delete;
 
-    Task(Task&& src) = delete;
-    Task& operator=(Task&& src) = delete;
+    Task(Task&& src) {
+        handle = src.handle;
+        src.handle = null;
+    }
+    Task& operator=(Task&& src) {
+        handle = src.handle;
+        src.handle = null;
+        return *this;
+    }
 
     bool await_ready() {
         return handle.promise().state.load() == TASK_DONE;

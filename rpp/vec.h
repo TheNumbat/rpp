@@ -284,6 +284,10 @@ struct Slice {
 
     ~Slice() = default;
 
+    Slice clone() const {
+        return Slice{data_, length_};
+    }
+
     bool empty() const {
         return length_ == 0;
     }
@@ -374,13 +378,6 @@ struct Write<O, Vec<T, A>> {
             if(i + 1 < vec.length()) idx = output.write(idx, ", "_v);
         }
         return output.write(idx, ']');
-    }
-};
-template<Reflectable T>
-struct Typename<Vec<T>> {
-    template<Allocator A>
-    static String<A> name() {
-        return format<A>("Vec<%>"_v, Typename<T>::name<A>());
     }
 };
 

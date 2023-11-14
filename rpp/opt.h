@@ -73,7 +73,7 @@ struct Opt {
     {
         if(!ok_) return Opt{};
         if constexpr(Clone<T>)
-            return Opt{value_.clone()};
+            return Opt{value_->clone()};
         else
             return Opt{*value_};
     }

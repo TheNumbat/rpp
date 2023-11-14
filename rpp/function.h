@@ -133,10 +133,11 @@ struct Measure<Function<R(Args...)>> {
     static u64 measure(const Function<Fn>& function) {
         u64 length = 10;
         if(function) {
+            Region_Scope;
             length += String_View{Reflect<R>::name}.length();
             length += 2;
             if constexpr(sizeof...(Args) > 0)
-                length += (String_View{Reflect<Args>::name}.length() + ...);
+                length += (format_typename<Args, Mregion>().length() + ...);
             if constexpr(sizeof...(Args) > 1) length += 2 * (sizeof...(Args) - 1);
         } else {
             length += 4;
@@ -150,8 +151,9 @@ template<Allocator O, typename... Ts>
 struct Type_Write {
     template<typename I>
     void apply() {
+        Region_Scope;
         using T = Index<I::value, Ts...>;
-        idx = output.write(idx, String_View{Reflect<T>::name});
+        idx = output.write(idx, format_typename<T, Mregion>());
         if constexpr(I::value + 1 < sizeof...(Ts)) idx = output.write(idx, ", "_v);
     }
     String<O>& output;
@@ -176,6 +178,15 @@ struct Write<O, Function<R(Args...)>> {
             idx = output.write(idx, "null"_v);
         }
         return output.write(idx, '}');
+    }
+};
+
+template<Reflectable R, Reflectable... Args>
+struct Typename<Function<R(Args...)>> {
+    template<Allocator A>
+    static String<A> name() {
+        return format<A>("Function<%(%)>"_v, Typename<R>::template name<A>(),
+                         concat<A, A>(", "_v, Typename<Args>::template name<A>()...));
     }
 };
 
