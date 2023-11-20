@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#define REGION_RESET 0
+
 #ifdef COMPILER_MSVC
 void* operator new(std::size_t, std::align_val_t, void* ptr) noexcept {
     return ptr;
@@ -57,6 +59,10 @@ void Mregion::begin() {
 
 void Mregion::end() {
     assert(current_region > 0);
+#if REGION_RESET == 1
+    Std::memset(stack_memory + region_offsets[current_region], 0,
+                current_offset - region_offsets[current_region]);
+#endif
     current_offset = region_offsets[current_region];
     current_region--;
 }
