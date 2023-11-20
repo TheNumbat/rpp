@@ -20,11 +20,9 @@ Headers
 - function.h, heap.h, rc.h, stack.h, tuple.h, variant.h: see containers
 
 Supported configurations
-- Windows / x86_64 / MSVC
-- Windows / x86_64 / Clang
-- Linux / x86_64 / Clang
-
-Due to a compiler bug, `clang-15` is not able to build the project. Use `clang-17` instead.
+- Windows / x86_64 / MSVC 19.38+
+- Linux / x86_64 / Clang 17+
+- Linux / x86_64 / GCC 11+
 
 Pointers
 - Raw pointer: non owning
