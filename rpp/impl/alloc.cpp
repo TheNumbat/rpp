@@ -29,7 +29,7 @@ struct Chunk {
 };
 static_assert(sizeof(Chunk) == 24);
 
-constexpr u64 MIN_CHUNK_SIZE = Math::MB(2);
+constexpr u64 MIN_CHUNK_SIZE = Math::KB(4);
 constexpr u64 REGION_COUNT = 256;
 
 thread_local u64 current_region = 0;
