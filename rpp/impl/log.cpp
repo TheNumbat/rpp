@@ -1,5 +1,6 @@
 
 #include "../base.h"
+#include "../log_callback.h"
 
 #include <csignal>
 #include <cstdio>
@@ -20,6 +21,9 @@ namespace rpp {
 namespace Log {
 
 struct Static_Data {
+    Token next = 1;
+    Map<Token, Function<Callback>> callbacks;
+
     Thread::Mutex lock;
     FILE* file = null;
 
@@ -147,6 +151,10 @@ void output(Level level, const Location& loc, String_View msg) {
            msg.data());
     fflush(stdout);
 
+    for(auto& [_, callback] : g_log_data.callbacks) {
+        callback(level, thread, timer, loc, msg);
+    }
+
     if(g_log_data.file) {
         fprintf(g_log_data.file, format_str, time.length(), time.data(), level_str, thread,
                 loc.file.length(), loc.file.data(), loc.line, loc.column,
@@ -162,6 +170,21 @@ Scope::Scope() {
 Scope::~Scope() {
     assert(g_log_indent > 0);
     g_log_indent--;
+}
+
+Token subscribe(Function<void(Level, Thread::Id, Time, Location, String_View)> f) {
+    Thread::Lock lock(g_log_data.lock);
+    Token t = g_log_data.next++;
+    g_log_data.callbacks.insert(t, std::move(f));
+    return t;
+}
+
+void unsubscribe(Token token) {
+    Thread::Lock lock(g_log_data.lock);
+    g_log_data.callbacks.erase(token);
+    if(g_log_data.callbacks.empty()) {
+        g_log_data.callbacks.~Map();
+    }
 }
 
 } // namespace Log
