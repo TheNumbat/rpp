@@ -64,8 +64,6 @@ Utilities
 - Thread pool that schedules coroutines
 
 To-Do:
-- Regions
-    - Lazy list of arenas instead of fixed size
 - Thread pool
     - Priorities & CPU affinity
     - Work stealing
