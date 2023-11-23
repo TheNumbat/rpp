@@ -3,6 +3,7 @@
 
 #include <cstdarg>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 namespace rpp::Std {
@@ -33,6 +34,14 @@ i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...) {
     i32 written = std::vsnprintf(reinterpret_cast<char*>(buffer), buffer_size, fmt, args);
     va_end(args);
     return written;
+}
+
+i64 strtoll(const char* str, char** endptr, i32 base) {
+    return std::strtoll(str, endptr, base);
+}
+
+f32 strtof(const char* str, char** endptr) {
+    return std::strtof(str, endptr);
 }
 
 } // namespace rpp::Std

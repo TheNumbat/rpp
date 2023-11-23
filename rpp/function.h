@@ -186,7 +186,7 @@ struct Typename<Function<R(Args...)>> {
     template<Allocator A>
     static String<A> name() {
         return format<A>("Function<%(%)>"_v, Typename<R>::template name<A>(),
-                         concat<A, A>(", "_v, Typename<Args>::template name<A>()...));
+                         concat<A>(", "_v, Typename<Args>::template name<A>()...));
     }
 };
 

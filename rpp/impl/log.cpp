@@ -87,14 +87,14 @@ void debug_break() {
 
 #endif
 
-static_assert(sizeof(std::time_t) == sizeof(u64));
-static_assert(alignof(std::time_t) <= alignof(u64));
+static_assert(sizeof(std::time_t) == sizeof(Time));
+static_assert(alignof(std::time_t) <= alignof(Time));
 
-u64 sys_time() {
+Time sys_time() {
     return std::time(null);
 }
 
-String_View sys_time_string(u64 timestamp_) {
+String_View sys_time_string(Time timestamp_) {
 
     std::time_t timestamp = static_cast<std::time_t>(timestamp_);
 

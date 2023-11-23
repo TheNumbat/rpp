@@ -27,6 +27,11 @@ struct Tuple<> {
     constexpr u64 length() const {
         return 0;
     }
+
+    template<Invocable F>
+    auto invoke(F&& f) -> Invoke_Result<F> {
+        return std::forward<F>(f)();
+    }
 };
 
 template<typename T, typename... Ts>
@@ -40,6 +45,17 @@ struct Tuple<T, Ts...> {
     explicit Tuple(const T& first, Args&&... rest)
         requires Copy_Constructable<T> && Constructable<Tuple<Ts...>, Args...>
         : first(T{first}), rest(std::forward<Args>(rest)...) {
+    }
+
+    template<typename... Args>
+        requires Move_Constructable<T> && Move_Constructable<Tuple<Args...>>
+    explicit Tuple(T&& first, Tuple<Args...>&& rest)
+        : first(std::move(first)), rest(std::move(rest)) {
+    }
+
+    template<typename... Args>
+        requires Copy_Constructable<T> && Move_Constructable<Tuple<Args...>>
+    explicit Tuple(const T& first, Tuple<Args...>&& rest) : first(T{first}), rest(std::move(rest)) {
     }
 
     template<typename... Args>
@@ -90,9 +106,15 @@ struct Tuple<T, Ts...> {
             return rest.template get<Index - 1>();
     }
 
+    template<Invocable<T, Ts...> F>
+    auto invoke(F&& f) -> Invoke_Result<F, T, Ts...> {
+        return invoke_(std::forward<F>(f), std::make_index_sequence<1 + sizeof...(Ts)>());
+    }
+
 private:
-    explicit Tuple(T&& first, Tuple<Ts...>&& rest)
-        : first(std::move(first)), rest(std::move(rest)) {
+    template<Invocable<T, Ts...> F, u64... Is>
+    auto invoke_(F&& f, std::index_sequence<Is...>) -> Invoke_Result<F, T, Ts...> {
+        return std::forward<F>(f)(get<Is>()...);
     }
 
     T first;

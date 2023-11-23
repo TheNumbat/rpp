@@ -63,8 +63,10 @@ struct Scope {
     ~Scope();
 };
 
-u64 sys_time();
-String_View sys_time_string(u64 time);
+using Time = u64;
+
+Time sys_time();
+String_View sys_time_string(Time time);
 String_View sys_error();
 
 void debug_break();

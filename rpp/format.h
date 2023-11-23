@@ -272,8 +272,13 @@ String<A> format(String_View fmt, const Ts&... args) {
     return output;
 }
 
-template<Allocator A, Allocator B, typename... Ss>
-    requires(Same<Ss, String<B>> && ...)
+template<typename T>
+concept Writable = requires(String<> s) {
+    { s.write(0, T{}) } -> Same<u64>;
+};
+
+template<Allocator A, typename... Ss>
+    requires(Writable<typename Decay<Ss>::type> && ...)
 String<A> concat(String_View sep, const Ss&&... strings) {
     if constexpr(sizeof...(strings) == 0) {
         return String<A>{};
@@ -354,7 +359,7 @@ struct Typename<T<Ts...>> {
     template<Allocator A>
     static String<A> name() {
         return format<A>("%<%>"_v, String_View{Reflect<T<Ts...>>::name},
-                         concat<A, A>(", "_v, Typename<Ts>::template name<A>()...));
+                         concat<A>(", "_v, Typename<Ts>::template name<A>()...));
     }
 };
 

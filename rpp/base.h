@@ -94,6 +94,8 @@ void* memset(void* dest, i32 value, u64 bytes);
 void* memcpy(void* dest, const void* src, u64 bytes);
 i32 memcmp(const void* a, const void* b, u64 bytes);
 i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...);
+i64 strtoll(const char* str, char** endptr, i32 base);
+f32 strtof(const char* str, char** endptr);
 
 } // namespace Std
 
@@ -142,3 +144,5 @@ i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...);
 #include "profile.h"
 
 #include "alloc1.h"
+
+#include "format1.h"

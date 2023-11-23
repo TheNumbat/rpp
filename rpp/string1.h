@@ -7,17 +7,6 @@
 
 namespace rpp {
 
-template<Enum E>
-constexpr Literal enum_name(E value) {
-    Literal ret{"Invalid"};
-    iterate_enum<E>([&](const Literal& check, const E& check_value) {
-        if(value == check_value) {
-            ret = check;
-        }
-    });
-    return ret;
-}
-
 template<Allocator A>
 void String<A>::set_length(u64 length) {
     assert(length <= capacity_);
