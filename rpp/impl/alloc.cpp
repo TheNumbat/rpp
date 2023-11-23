@@ -3,8 +3,6 @@
 
 #include <stdio.h>
 
-#define REGION_RESET 0
-
 #ifdef COMPILER_MSVC
 void* operator new(std::size_t, std::align_val_t, void* ptr) noexcept {
     return ptr;
@@ -22,28 +20,39 @@ namespace rpp {
 
 static Thread::Atomic g_net_allocs;
 
-thread_local u64 Mregion::current_region = 0;
-thread_local u64 Mregion::current_offset = 0;
-thread_local u64 Mregion::region_offsets[REGION_COUNT] = {};
-thread_local u8* Mregion::stack_memory = null;
+using Regions = Mallocator<"Regions", false>;
 
-void Mregion::create() {
-    stack_memory = reinterpret_cast<u8*>(calloc(REGION_STACK_SIZE, 1));
-}
+struct Chunk {
+    Chunk* up = null;
+    u32 size = 0;
+    u32 used = 0;
+};
+static_assert(sizeof(Chunk) == 16);
 
-void Mregion::destroy() {
-    ::free(stack_memory);
-    stack_memory = null;
+constexpr u64 MIN_CHUNK_SIZE = Math::MB(2);
+constexpr u64 REGION_COUNT = 256;
+
+thread_local u64 current_region = 0;
+thread_local u64 region_offsets[REGION_COUNT] = {};
+thread_local Chunk* chunks = null;
+
+static void new_chunk(u64 request) {
+    assert(request <= UINT32_MAX);
+    u64 size = Math::max(request + sizeof(Chunk), MIN_CHUNK_SIZE);
+    Chunk* chunk = reinterpret_cast<Chunk*>(Regions::alloc(size));
+    chunk->size = static_cast<u32>(size - sizeof(Chunk));
+    chunk->used = 0;
+    chunk->up = chunks;
+    chunks = chunk;
 }
 
 void* Mregion::alloc(u64 size) {
-    if(!stack_memory) {
-        ::printf("\033[0;31mAllocation in Mregion after shutdown!\033[0m\n");
-        ::exit(1);
+    if(!chunks || chunks->used + size > chunks->size) {
+        new_chunk(size);
     }
-    assert(current_offset + size < REGION_STACK_SIZE);
-    void* ret = stack_memory + current_offset;
-    current_offset += size;
+    u8* ret = reinterpret_cast<u8*>(chunks) + sizeof(Chunk) + chunks->used;
+    chunks->used += static_cast<u32>(size);
+    region_offsets[current_region] += size;
     Std::memset(ret, 0, size);
     return ret;
 }
@@ -52,19 +61,24 @@ void Mregion::free(void* mem) {
 }
 
 void Mregion::begin() {
-    assert(current_region + 1 < REGION_COUNT);
     current_region++;
-    region_offsets[current_region] = current_offset;
+    assert(current_region < REGION_COUNT);
+    region_offsets[current_region] = region_offsets[current_region - 1];
 }
 
 void Mregion::end() {
     assert(current_region > 0);
-#if REGION_RESET == 1
-    Std::memset(stack_memory + region_offsets[current_region], 0,
-                current_offset - region_offsets[current_region]);
-#endif
-    current_offset = region_offsets[current_region];
+    u64 end_offset = region_offsets[current_region];
     current_region--;
+    u64 start_offset = region_offsets[current_region];
+    u64 free_size = end_offset - start_offset;
+    while(free_size && free_size >= chunks->used) {
+        free_size -= chunks->used;
+        Chunk* chunk = chunks;
+        chunks = chunks->up;
+        Regions::free(chunk);
+    }
+    if(free_size) chunks->used -= static_cast<u32>(free_size);
 }
 
 Mregion::Scope::Scope() {
@@ -80,7 +94,7 @@ u64 Mregion::depth() {
 }
 
 u64 Mregion::size() {
-    return current_offset;
+    return region_offsets[current_region];
 }
 
 void* sys_alloc(u64 sz) {

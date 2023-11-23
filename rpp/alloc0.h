@@ -32,7 +32,11 @@ struct Mallocator {
     static void free(void* mem);
 };
 
-#define Region_Scope Mregion::Scope region_scope__##__COUNTER__
+#define REGION_SCOPE_NAME2(counter) region_scope__##counter
+#define REGION_SCOPE_NAME1(counter) REGION_SCOPE_NAME2(counter)
+#define REGION_SCOPE_NAME REGION_SCOPE_NAME1(__COUNTER__)
+
+#define Region_Scope Mregion::Scope REGION_SCOPE_NAME
 
 struct Mregion {
     static constexpr Literal name = "Region";
@@ -48,20 +52,9 @@ struct Mregion {
     static u64 depth();
     static u64 size();
 
-    static void create();
-    static void destroy();
-
 private:
     static void begin();
     static void end();
-
-    static constexpr u64 REGION_COUNT = 256;
-    static constexpr u64 REGION_STACK_SIZE = Math::MB(16);
-
-    static thread_local u64 current_region;
-    static thread_local u64 current_offset;
-    static thread_local u64 region_offsets[REGION_COUNT];
-    static thread_local u8* stack_memory;
 };
 
 using Mdefault = Mallocator<"Default">;

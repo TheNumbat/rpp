@@ -59,9 +59,29 @@ auto lots_of_jobs(Thread::Pool<>& pool, u64 depth) -> Async::Task<u64> {
 i32 main() {
 
     Thread::set_priority(Thread::Priority::high);
-    Mregion::create();
     Profile::start_thread();
     Profile::begin_frame();
+
+    [] {
+        Region_Scope;
+        Vec<u8, Mregion> v0 = Vec<u8, Mregion>::make(Math::MB(2));
+        {
+            Region_Scope;
+            Vec<u8, Mregion> v1 = Vec<u8, Mregion>::make(Math::MB(4));
+            {
+                Region_Scope;
+                Vec<u8, Mregion> v2 = Vec<u8, Mregion>::make(256);
+                Vec<u8, Mregion> v3 = Vec<u8, Mregion>::make(256);
+                Vec<u8, Mregion> v4 = Vec<u8, Mregion>::make(256);
+                {
+                    Region_Scope;
+                    Vec<u8, Mregion> v5 = Vec<u8, Mregion>::make(256);
+                    Vec<u8, Mregion> v6 = Vec<u8, Mregion>::make(256);
+                    Vec<u8, Mregion> v7 = Vec<u8, Mregion>::make(Math::MB(2));
+                }
+            }
+        }
+    }();
 
     [] {
         Region_Scope;
@@ -1278,7 +1298,6 @@ i32 main() {
     Profile::end_frame();
     Profile::end_thread();
     Profile::finalize();
-    Mregion::destroy();
 
     return 0;
 }
