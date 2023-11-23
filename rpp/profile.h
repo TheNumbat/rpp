@@ -70,6 +70,7 @@ struct Profile {
             ret.loc = std::move(loc);
             ret.parent = parent;
             ret.begin = timestamp();
+            ret.calls = 1;
             return ret;
         }
     };
@@ -94,7 +95,7 @@ struct Profile {
             }
 
             for(auto& node : frame->nodes) {
-                f(id, node);
+                if(node.calls) f(id, node);
             }
         }
     }
