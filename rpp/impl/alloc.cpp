@@ -24,10 +24,10 @@ using Regions = Mallocator<"Regions", false>;
 
 struct Chunk {
     Chunk* up = null;
-    u32 size = 0;
-    u32 used = 0;
+    u64 size = 0;
+    u64 used = 0;
 };
-static_assert(sizeof(Chunk) == 16);
+static_assert(sizeof(Chunk) == 24);
 
 constexpr u64 MIN_CHUNK_SIZE = Math::MB(2);
 constexpr u64 REGION_COUNT = 256;
@@ -37,21 +37,20 @@ thread_local u64 region_offsets[REGION_COUNT] = {};
 thread_local Chunk* chunks = null;
 
 static void new_chunk(u64 request) {
-    assert(request <= UINT32_MAX);
     u64 size = Math::max(request + sizeof(Chunk), MIN_CHUNK_SIZE);
     Chunk* chunk = reinterpret_cast<Chunk*>(Regions::alloc(size));
-    chunk->size = static_cast<u32>(size - sizeof(Chunk));
+    chunk->size = size - sizeof(Chunk);
     chunk->used = 0;
     chunk->up = chunks;
     chunks = chunk;
 }
 
 void* Mregion::alloc(u64 size) {
-    if(!chunks || chunks->used + size > chunks->size) {
+    if(!chunks || chunks->size - chunks->used < size) {
         new_chunk(size);
     }
     u8* ret = reinterpret_cast<u8*>(chunks) + sizeof(Chunk) + chunks->used;
-    chunks->used += static_cast<u32>(size);
+    chunks->used += size;
     region_offsets[current_region] += size;
     Std::memset(ret, 0, size);
     return ret;
@@ -78,7 +77,9 @@ void Mregion::end() {
         chunks = chunks->up;
         Regions::free(chunk);
     }
-    if(free_size) chunks->used -= static_cast<u32>(free_size);
+    if(free_size) {
+        chunks->used -= free_size;
+    }
 }
 
 Mregion::Scope::Scope() {
