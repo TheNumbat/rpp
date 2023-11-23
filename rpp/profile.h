@@ -17,8 +17,9 @@ constexpr bool DO_PROFILE = false;
 constexpr bool DO_PROFILE = true;
 #endif
 
-#define Prof_Func Profile::Scope prof_scope__##__LINE__(Here)
-#define Prof_Scope(name) Profile::Scope prof_scope__##__LINE__(name##_v)
+#define PROF_SCOPE2(name, line) Profile::Scope prof_scope__##line(name##_v)
+#define PROF_SCOPE1(name, line) PROF_SCOPE2(name, line)
+#define Prof_Scope(name) PROF_SCOPE1(name, __COUNTER__)
 
 struct Profile {
 
@@ -95,7 +96,7 @@ struct Profile {
             }
 
             for(auto& node : frame->nodes) {
-                if(node.calls) f(id, node);
+                f(id, node);
             }
         }
     }

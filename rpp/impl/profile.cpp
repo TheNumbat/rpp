@@ -36,8 +36,7 @@ void Profile::end_thread() {
 
 Profile::Time_Point Profile::Frame_Profile::begin() {
     assert(current_node == 0 && nodes.empty());
-    Timing_Node& node = nodes.push(Timing_Node::make(Here, 0));
-    node.calls = 0;
+    Timing_Node& node = nodes.push(Timing_Node::make(Log::Location{"Frame"_v, {}, 0, 0}, 0));
     return node.begin;
 }
 
