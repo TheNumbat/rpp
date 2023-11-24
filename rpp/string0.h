@@ -206,8 +206,22 @@ inline bool operator<(String_View l, String_View r) {
     return l.length() < r.length();
 }
 
+template<Allocator A>
+bool operator==(const String<A>& l, String_View r) {
+    if(l.length() != r.length()) return false;
+    return Std::strncmp(reinterpret_cast<const char*>(l.data()),
+                        reinterpret_cast<const char*>(r.data()), l.length()) == 0;
+}
+
+template<Allocator B>
+bool operator==(String_View l, const String<B>& r) {
+    if(l.length() != r.length()) return false;
+    return Std::strncmp(reinterpret_cast<const char*>(l.data()),
+                        reinterpret_cast<const char*>(r.data()), l.length()) == 0;
+}
+
 template<Allocator A, Allocator B>
-bool operator==(const String<A>& l, const String<B>& r) {
+inline bool operator==(const String<A>& l, const String<B>& r) {
     if(l.length() != r.length()) return false;
     return Std::strncmp(reinterpret_cast<const char*>(l.data()),
                         reinterpret_cast<const char*>(r.data()), l.length()) == 0;
@@ -238,6 +252,19 @@ constexpr bool is_whitespace(u8 c) {
 }
 
 } // namespace ascii
+
+template<typename T>
+struct Is_String {
+    static constexpr bool value = false;
+};
+
+template<Allocator A>
+struct Is_String<String<A>> {
+    static constexpr bool value = true;
+};
+
+template<typename T>
+concept Any_String = Is_String<T>::value;
 
 template<>
 struct rpp::detail::Reflect<String_View> {

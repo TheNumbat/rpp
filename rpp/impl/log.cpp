@@ -22,7 +22,7 @@ namespace Log {
 
 struct Static_Data {
     Token next = 1;
-    Map<Token, Function<Callback>> callbacks;
+    Map<Token, Function<Callback>, Mhidden> callbacks;
 
     Thread::Mutex lock;
     FILE* file = null;

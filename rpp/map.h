@@ -43,18 +43,18 @@ struct Map_Slot {
     }
 
     Map_Slot clone() const
-        requires(Clone<K> || Copy_Constructable<K>) && (Clone<V> || Copy_Constructable<K>)
+        requires((Clone<K> || Copy_Constructable<K>) && (Clone<V> || Copy_Constructable<V>))
     {
         if(hash == EMPTY) return Map_Slot{};
         if constexpr(Clone<K> && Clone<V>) {
             return Map_Slot{data->first.clone(), data->second.clone()};
         } else if constexpr(Clone<K> && Copy_Constructable<V>) {
-            return Map_Slot{data->first.clone(), data->second};
+            return Map_Slot{data->first.clone(), V{data->second}};
         } else if constexpr(Copy_Constructable<K> && Clone<V>) {
-            return Map_Slot{data->first, data->second.clone()};
+            return Map_Slot{K{data->first}, data->second.clone()};
         } else {
             static_assert(Copy_Constructable<K> && Copy_Constructable<V>);
-            return Map_Slot{data->first, data->second};
+            return Map_Slot{K{data->first}, V{data->second}};
         }
     }
 
@@ -131,15 +131,15 @@ struct Map {
 
     template<Allocator B = A>
     Map<K, V, B> clone() const
-        requires(Clone<K> || Copy_Constructable<K>) && (Clone<V> || Copy_Constructable<V>)
+        requires((Clone<K> || Copy_Constructable<K>) && (Clone<V> || Copy_Constructable<V>))
     {
         Map<K, V, B> ret(capacity_);
         ret.length_ = length_;
         if constexpr(Trivially_Copyable<K> && Trivially_Copyable<V>) {
             Std::memcpy(ret.data_, data_, capacity_ * sizeof(Slot));
         } else {
-            for(u64 i = 0; i < length_; i++) {
-                new(&ret.data_[i]) Slot{data_[i].clone()};
+            for(u64 i = 0; i < capacity_; i++) {
+                if(data_[i].hash != Slot::EMPTY) new(&ret.data_[i]) Slot{data_[i].clone()};
             }
         }
         return ret;
@@ -194,6 +194,12 @@ struct Map {
         return insert(K{key}, V{value});
     }
 
+    V& insert(K&& key, const V& value)
+        requires Copy_Constructable<V>
+    {
+        return insert(std::move(key), V{value});
+    }
+
     V& insert(const K& key, V&& value)
         requires Copy_Constructable<K>
     {
@@ -220,40 +226,18 @@ struct Map {
 
     Opt<Ref<V>> try_get(const K& key) {
         if(empty()) return {};
-        u64 hash = hash_nonzero(key);
-        u64 idx = hash >> shift_;
-        u64 dist = 0;
-        for(;;) {
-            u64 k = data_[idx].hash;
-            if(k == Slot::EMPTY) return {};
-            if(k == hash && data_[idx].data->first == key) {
-                return Opt{Ref{data_[idx].data->second}};
-            }
-            u64 kidx = k >> shift_;
-            u64 kdist = kidx <= idx ? idx - kidx : capacity_ + idx - kidx;
-            if(kdist < dist) return {};
-            dist++;
-            if(++idx == capacity_) idx = 0;
+        if(auto idx = try_get_<K>(key)) {
+            return Opt{Ref{data_[*idx].data->second}};
         }
+        return {};
     }
 
     Opt<Ref<const V>> try_get(const K& key) const {
         if(empty()) return {};
-        u64 hash = hash_nonzero(key);
-        u64 idx = hash >> shift_;
-        u64 dist = 0;
-        for(;;) {
-            u64 k = data_[idx].hash;
-            if(k == Slot::EMPTY) return {};
-            if(k == hash && data_[idx].data->first == key) {
-                return Opt{Ref<const V>{data_[idx].data->second}};
-            }
-            u64 kidx = k >> shift_;
-            u64 kdist = kidx <= idx ? idx - kidx : capacity_ + idx - kidx;
-            if(kdist < dist) return {};
-            dist++;
-            if(++idx == capacity_) idx = 0;
+        if(auto idx = try_get_<K>(key)) {
+            return Opt{Ref<const V>{data_[*idx].data->second}};
         }
+        return {};
     }
 
     bool try_erase(const K& key) {
@@ -275,6 +259,21 @@ struct Map {
             dist++;
             if(++idx == capacity_) idx = 0;
         }
+    }
+
+    bool contains(String_View key) const
+        requires(Any_String<K>)
+    {
+        return try_get_<String_View>(key);
+    }
+
+    V& get(String_View key)
+        requires(Any_String<K>)
+    {
+        if(auto idx = try_get_<String_View>(key)) {
+            return data_[*idx].data->second;
+        }
+        die("Failed to find key %!", key);
     }
 
     bool contains(const K& key) const {
@@ -420,6 +419,25 @@ private:
             if(next == next_ideal) return;
             data_[idx] = std::move(data_[next]);
             idx = next;
+        }
+    }
+
+    template<Hashable K2>
+    Opt<u64> try_get_(const K2& key) const {
+        u64 hash = hash_nonzero(key);
+        u64 idx = hash >> shift_;
+        u64 dist = 0;
+        for(;;) {
+            u64 k = data_[idx].hash;
+            if(k == Slot::EMPTY) return {};
+            if(k == hash && data_[idx].data->first == key) {
+                return Opt<u64>{idx};
+            }
+            u64 kidx = k >> shift_;
+            u64 kdist = kidx <= idx ? idx - kidx : capacity_ + idx - kidx;
+            if(kdist < dist) return {};
+            dist++;
+            if(++idx == capacity_) idx = 0;
         }
     }
 

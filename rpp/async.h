@@ -8,7 +8,7 @@
 
 namespace rpp::Async {
 
-using Alloc = Mallocator<"Async">;
+using Alloc = Thread::Alloc;
 
 struct Suspend {
     bool await_ready() noexcept {

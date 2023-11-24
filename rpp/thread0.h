@@ -8,7 +8,7 @@
 namespace rpp {
 namespace Thread {
 
-using Alloc = Mallocator<"Threads">;
+using Alloc = Mallocator<"Threading">;
 
 using Id = u64;
 
