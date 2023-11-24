@@ -47,16 +47,18 @@ struct Pair {
     Pair& operator=(Pair&& src) = default;
 
     Pair<A, B> clone() const
-        requires(Clone<A> || Trivial<A>) && (Clone<B> || Trivial<B>)
+        requires(Clone<A> || Copy_Constructable<A>) && (Clone<B> || Copy_Constructable<B>)
     {
-        if constexpr(Clone<A> && Clone<B>)
+        if constexpr(Clone<A> && Clone<B>) {
             return Pair<A, B>{first.clone(), second.clone()};
-        else if constexpr(Clone<A> && Trivial<B>)
+        } else if constexpr(Clone<A> && Copy_Constructable<B>) {
             return Pair<A, B>{first.clone(), second};
-        else if constexpr(Trivial<A> && Clone<B>)
+        } else if constexpr(Copy_Constructable<A> && Clone<B>) {
             return Pair<A, B>{first, second.clone()};
-        else
+        } else {
+            static_assert(Copy_Constructable<A> && Copy_Constructable<B>);
             return Pair<A, B>{first, second};
+        }
     }
 
     template<u64 Index>

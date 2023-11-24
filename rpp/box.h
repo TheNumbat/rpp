@@ -55,18 +55,15 @@ struct Box {
 
     template<Allocator B = A>
     Box<T, B> clone() const
-        requires Clone<T>
+        requires(Clone<T> || Copy_Constructable<T>)
     {
         if(!data_) return Box{};
-        return Box{data_->clone()};
-    }
-
-    template<Allocator B = A>
-    Box<T, B> clone() const
-        requires Trivial<T>
-    {
-        if(!data_) return Box{};
-        return Box{*data_};
+        if constexpr(Clone<T>) {
+            return Box{data_->clone()};
+        } else {
+            static_assert(Copy_Constructable<T>);
+            return Box{*data_};
+        }
     }
 
     template<typename... Args>

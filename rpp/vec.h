@@ -73,17 +73,21 @@ struct Vec {
 
     template<Allocator B = A>
     Vec<T, B> clone() const
-        requires Clone<T> || Copy_Constructable<T>
+        requires(Clone<T> || Copy_Constructable<T>)
     {
         Vec<T, B> ret(capacity_);
         ret.length_ = length_;
-        if constexpr(Clone<T>) {
+        if constexpr(Trivially_Copyable<T>) {
+            Std::memcpy(ret.data_, data_, length_ * sizeof(T));
+        } else if constexpr(Clone<T>) {
             for(u64 i = 0; i < length_; i++) {
                 new(&ret.data_[i]) T{data_[i].clone()};
             }
         } else {
             static_assert(Copy_Constructable<T>);
-            Std::memcpy(ret.data_, data_, length_ * sizeof(T));
+            for(u64 i = 0; i < length_; i++) {
+                new(&ret.data_[i]) T{data_[i]};
+            }
         }
         return ret;
     }

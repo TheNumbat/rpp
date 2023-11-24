@@ -135,7 +135,7 @@ struct Map {
     {
         Map<K, V, B> ret(capacity_);
         ret.length_ = length_;
-        if constexpr(Copy_Constructable<K> && Copy_Constructable<V>) {
+        if constexpr(Trivially_Copyable<K> && Trivially_Copyable<V>) {
             Std::memcpy(ret.data_, data_, capacity_ * sizeof(Slot));
         } else {
             for(u64 i = 0; i < length_; i++) {

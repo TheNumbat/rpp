@@ -59,19 +59,23 @@ struct Heap {
 
     template<Allocator B = A>
     Heap<T, B> clone() const
-        requires Clone<T> || Trivial<T>
+        requires(Clone<T> || Copy_Constructable<T>)
     {
         Heap<T, B> ret;
         ret.data_ = reinterpret_cast<T*>(B::alloc(capacity_ * sizeof(T)));
         ret.length_ = length_;
         ret.capacity_ = capacity_;
-        if constexpr(Clone<T>) {
+        if constexpr(Trivially_Copyable<T>) {
+            Std::memcpy(ret.data_, data_, length_ * sizeof(T));
+        } else if constexpr(Clone<T>) {
             for(u64 i = 0; i < length_; i++) {
                 new(&ret.data_[i]) T{data_[i].clone()};
             }
         } else {
-            static_assert(Trivial<T>);
-            Std::memcpy(ret.data_, data_, length_ * sizeof(T));
+            static_assert(Copy_Constructable<T>);
+            for(u64 i = 0; i < length_; i++) {
+                new(&ret.data_[i]) T{data_[i]};
+            }
         }
         return ret;
     }

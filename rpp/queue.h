@@ -68,7 +68,9 @@ struct Queue {
         ret.last_ = last_;
         ret.capacity_ = capacity_;
 
-        if constexpr(Clone<T>) {
+        if constexpr(Trivially_Copyable<T>) {
+            Std::memcpy(ret.data_, data_, capacity_ * sizeof(T));
+        } else if constexpr(Clone<T>) {
             u64 start = start_idx();
             u64 end = end_idx();
             for(u64 i = start; i != end; i = i == capacity_ - 1 ? 0 : i + 1) {
@@ -76,7 +78,11 @@ struct Queue {
             }
         } else {
             static_assert(Copy_Constructable<T>);
-            Std::memcpy(ret.data_, data_, capacity_ * sizeof(T));
+            u64 start = start_idx();
+            u64 end = end_idx();
+            for(u64 i = start; i != end; i = i == capacity_ - 1 ? 0 : i + 1) {
+                new(&ret.data_[i]) T{data_[i]};
+            }
         }
         return ret;
     }

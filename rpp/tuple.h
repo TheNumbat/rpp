@@ -81,12 +81,12 @@ struct Tuple<T, Ts...> {
     }
 
     Tuple clone() const
-        requires(Clone<T> || Trivial<T>) && (Clone<Tuple<Ts...>>)
+        requires((Clone<T> || Copy_Constructable<T>) && (Clone<Tuple<Ts...>>))
     {
         if constexpr(Clone<T>) {
             return Tuple{first.clone(), rest.clone()};
         } else {
-            static_assert(Trivial<T>);
+            static_assert(Copy_Constructable<T>);
             return Tuple{T{first}, rest.clone()};
         }
     }

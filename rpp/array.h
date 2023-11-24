@@ -42,12 +42,17 @@ struct Array {
         requires(Clone<T> || Copy_Constructable<T>) && Default_Constructable<T>
     {
         Array result;
-        if constexpr(Clone<T>) {
+        if constexpr(Trivially_Copyable<T>) {
+            Std::memcpy(result.data_, data_, sizeof(T) * N);
+        } else if constexpr(Clone<T>) {
             for(u64 i = 0; i < N; i++) {
                 result[i] = data_[i].clone();
             }
         } else {
-            Std::memcpy(result.data_, data_, sizeof(T) * N);
+            static_assert(Copy_Constructable<T>);
+            for(u64 i = 0; i < N; i++) {
+                result[i] = T{data_[i]};
+            }
         }
         return result;
     }

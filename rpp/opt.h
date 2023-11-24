@@ -72,10 +72,12 @@ struct Opt {
         requires Clone<T> || Copy_Constructable<T>
     {
         if(!ok_) return Opt{};
-        if constexpr(Clone<T>)
+        if constexpr(Clone<T>) {
             return Opt{value_->clone()};
-        else
+        } else {
+            static_assert(Copy_Constructable<T>);
             return Opt{*value_};
+        }
     }
 
     T& value_or(T& other) {

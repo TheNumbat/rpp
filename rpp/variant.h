@@ -41,10 +41,10 @@ struct Variant {
     }
 
     Variant(const Variant& src)
-        requires(Trivial<Ts> && ...)
+        requires(Copy_Constructable<Ts> && ...)
     = default;
     Variant& operator=(const Variant& src)
-        requires(Trivial<Ts> && ...)
+        requires(Copy_Constructable<Ts> && ...)
     = default;
 
     Variant(Variant&& src)
