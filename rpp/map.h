@@ -264,6 +264,7 @@ struct Map {
     bool contains(String_View key) const
         requires(Any_String<K>)
     {
+        if(empty()) return false;
         return try_get_<String_View>(key);
     }
 
