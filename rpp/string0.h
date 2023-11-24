@@ -168,6 +168,9 @@ struct String {
     template<Allocator RA>
     String<RA> terminate() const;
 
+    template<Allocator RA, Allocator B>
+    String<RA> append(const String<B>& next) const;
+
 private:
     u8* data_ = null;
     u64 length_ = 0;

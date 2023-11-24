@@ -125,6 +125,7 @@ struct Range_Allocator {
 
         stats.free_size -= size + padding;
         stats.allocated_size += size + padding;
+        stats.high_water = Math::max(stats.high_water, stats.allocated_size);
         stats.allocated_blocks += 1;
         stats.free_blocks -= 1;
 
@@ -189,6 +190,7 @@ struct Range_Allocator {
         u64 free_blocks = 0;
         u64 allocated_blocks = 0;
         u64 bucket_sizes[Buckets] = {};
+        u64 high_water = 0;
 
         u64 total_frees = 0;
         u64 total_allocs = 0;

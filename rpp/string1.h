@@ -125,6 +125,16 @@ String<A> String_View::append(String_View next) const {
     return ret;
 }
 
+template<Allocator A>
+template<Allocator RA, Allocator B>
+String<RA> String<A>::append(const String<B>& next) const {
+    String<RA> ret{length_ + next.length()};
+    ret.set_length(length_ + next.length());
+    Std::memcpy(ret.data(), data_, length_);
+    Std::memcpy(ret.data() + length_, next.data(), next.length());
+    return ret;
+}
+
 namespace Format {
 
 template<>

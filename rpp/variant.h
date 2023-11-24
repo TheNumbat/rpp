@@ -71,7 +71,7 @@ struct Variant {
         return *this;
     }
 
-    Variant clone()
+    Variant clone() const
         requires((Clone<Ts> || Trivial<Ts>) && ...)
     {
         return match([](const auto& v) {
