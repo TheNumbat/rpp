@@ -56,6 +56,12 @@ f32 hypot(f32 x, f32 y) {
 f64 hypot(f64 x, f64 y) {
     return std::hypot(x, y);
 }
+f32 pow(f32 x, f32 y) {
+    return std::pow(x, y);
+}
+f64 pow(f64 x, f64 y) {
+    return std::pow(x, y);
+}
 f32 floor(f32 v) {
     return std::floor(v);
 }
