@@ -51,7 +51,7 @@ private:
 template<Allocator A = Alloc>
 struct Pool {
 
-    explicit Pool() : thread_states{Vec<Thread_State, A>::make(hardware_threads())} {
+    explicit Pool() : thread_states{Vec<Thread_State, A>::make(hardware_threads() - 1)} {
 
         u64 h_threads = hardware_threads();
         u64 n_threads = thread_states.length();
@@ -69,16 +69,19 @@ struct Pool {
     }
     ~Pool() {
         shutdown.exchange(true);
+
         for(auto& state : thread_states) {
             Lock lock(state.mut);
             state.cond.signal();
         }
+        threads.clear();
+
         {
             Lock lock(events_mut);
             pending_events[0].signal();
         }
         event_thread.join();
-        threads.clear();
+
         pending_events.clear();
 
         for(auto& state : thread_states) {
@@ -155,31 +158,28 @@ private:
     void do_events() {
         for(;;) {
             u64 idx = Async::Event::wait_any(Slice<Async::Event>{pending_events});
-            {
-                if(idx == 0) {
-                    Lock lock(events_mut);
+            Lock lock(events_mut);
+            if(idx == 0) {
+                if(shutdown.load()) return;
 
-                    if(shutdown.load()) return;
-
-                    for(auto& [event, state] : events_to_enqueue) {
-                        pending_events.push(std::move(event));
-                        pending_event_jobs.push(std::move(state));
-                    }
-                    events_to_enqueue.clear();
-
-                    pending_events[0].reset();
-                } else {
-                    auto job = std::move(pending_event_jobs[idx - 1]);
-
-                    if(pending_events.length() > 2) {
-                        rpp::swap(pending_events[idx], pending_events.back());
-                        rpp::swap(pending_event_jobs[idx - 1], pending_event_jobs.back());
-                    }
-                    pending_events.pop();
-                    pending_event_jobs.pop();
-
-                    enqueue(job);
+                for(auto& [event, state] : events_to_enqueue) {
+                    pending_events.push(std::move(event));
+                    pending_event_jobs.push(std::move(state));
                 }
+                events_to_enqueue.clear();
+
+                pending_events[0].reset();
+            } else {
+                auto job = std::move(pending_event_jobs[idx - 1]);
+
+                if(pending_events.length() > 2) {
+                    rpp::swap(pending_events[idx], pending_events.back());
+                    rpp::swap(pending_event_jobs[idx - 1], pending_event_jobs.back());
+                }
+                pending_events.pop();
+                pending_event_jobs.pop();
+
+                enqueue(job);
             }
         }
     }
