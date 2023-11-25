@@ -641,9 +641,7 @@ struct Make<> {
 };
 
 template<typename F, typename X>
-concept Predicate = requires() {
-    { F::template value<X> } -> Same<bool>;
-};
+concept Predicate = requires() { Same<bool, decltype(F::template value<X>)>; };
 
 template<typename F, typename X>
 concept Apply = requires(F f) {
