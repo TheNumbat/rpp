@@ -53,12 +53,14 @@ struct Pool {
 
     explicit Pool() : thread_states{Vec<Thread_State, A>::make(hardware_threads())} {
 
+        u64 h_threads = hardware_threads();
         u64 n_threads = thread_states.length();
-        assert(n_threads <= 64);
+        assert(n_threads <= h_threads && n_threads <= 64);
 
         for(u64 i = 0; i < n_threads; i++) {
-            threads.push(Thread([this, i] {
-                set_affinity(i);
+            threads.push(Thread([this, i, h_threads] {
+                u64 j = i < h_threads / 2 ? i * 2 : (i - h_threads / 2) * 2 + 1;
+                set_affinity(j);
                 do_work(i);
             }));
         }
