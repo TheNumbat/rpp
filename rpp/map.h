@@ -268,6 +268,16 @@ struct Map {
         return try_get_<String_View>(key);
     }
 
+    Opt<Ref<V>> try_get(String_View key)
+        requires(Any_String<K>)
+    {
+        if(empty()) return {};
+        if(auto idx = try_get_<String_View>(key)) {
+            return Opt<Ref<V>>{data_[*idx].data->second};
+        }
+        return {};
+    }
+
     V& get(String_View key)
         requires(Any_String<K>)
     {

@@ -67,21 +67,36 @@ inline u64 hash(Log::Location l) {
     return combine(combine(hash(l.file), hash(l.function)), combine(hash(l.line), hash(l.column)));
 }
 
+template<typename K>
+concept Primitive = requires(K k) {
+    { Hash::hash(k) } -> Same<u64>;
+};
+
 } // namespace Hash
 
 template<typename K>
+struct Hasher;
+
+template<Hash::Primitive K>
+struct Hasher<K> {
+    static u64 hash(const K& key) {
+        return Hash::hash(key);
+    }
+};
+
+template<typename K>
 concept Hashable = requires(K k) {
-    { Hash::hash(k) } -> Same<u64>;
+    { Hasher<typename Decay<K>::type>::hash(k) } -> Same<u64>;
 };
 
 template<Hashable T>
 u64 hash(T&& value) {
-    return Hash::hash(std::forward<T>(value));
+    return Hasher<typename Decay<T>::type>::hash(std::forward<T>(value));
 }
 
 template<Hashable T>
 u64 hash_nonzero(T&& value) {
-    return Hash::hash(std::forward<T>(value)) | 1;
+    return Hasher<typename Decay<T>::type>::hash(std::forward<T>(value)) | 1;
 }
 
 } // namespace rpp
