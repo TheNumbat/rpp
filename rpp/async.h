@@ -143,6 +143,7 @@ template<typename R, Allocator A>
 struct Task {
 
     using promise_type = Promise<R, A>;
+    using return_type = R;
 
     Task() : handle{null} {
     }

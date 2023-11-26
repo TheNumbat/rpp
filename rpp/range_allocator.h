@@ -288,6 +288,7 @@ private:
             }
             free_blocks[i] = null;
         }
+        blocks.clear();
     }
 };
 

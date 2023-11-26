@@ -266,10 +266,6 @@ struct Slice {
         data_ = a.data();
         length_ = a.length();
     }
-    explicit Slice(const T& data) {
-        data_ = &data;
-        length_ = 1;
-    }
     explicit Slice(const T* data, u64 length) {
         data_ = data;
         length_ = length;
@@ -326,6 +322,11 @@ struct Slice {
     }
     u64 bytes() const {
         return length_ * sizeof(T);
+    }
+
+    Slice sub(u64 start, u64 length) const {
+        assert(start + length <= length_);
+        return Slice{data_ + start, length};
     }
 
     Slice<u8> to_bytes() {
