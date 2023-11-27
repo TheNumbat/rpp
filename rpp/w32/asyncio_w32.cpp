@@ -27,6 +27,7 @@ Async::Task<Opt<Vec<u8, Alloc>>> read(Thread::Pool<>& pool, String_View path) {
     LARGE_INTEGER full_size;
     if(GetFileSizeEx(handle, &full_size) == FALSE) {
         warn("Failed to size file %: %", path, Log::sys_error());
+        CloseHandle(handle);
         co_return {};
     }
 
@@ -41,6 +42,7 @@ Async::Task<Opt<Vec<u8, Alloc>>> read(Thread::Pool<>& pool, String_View path) {
     HANDLE event = CreateEventEx(null, null, 0, EVENT_ALL_ACCESS);
     if(!event) {
         warn("Failed to create event: %", Log::sys_error());
+        CloseHandle(handle);
         co_return {};
     }
 
@@ -81,6 +83,7 @@ Async::Task<bool> write(Thread::Pool<>& pool, String_View path, Slice<u8> data) 
     HANDLE event = CreateEventEx(null, null, 0, EVENT_ALL_ACCESS);
     if(!event) {
         warn("Failed to create event: %", Log::sys_error());
+        CloseHandle(handle);
         co_return false;
     }
 
