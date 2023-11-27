@@ -106,6 +106,10 @@ struct Pool {
         return Schedule_Event<A>{std::move(event), *this};
     }
 
+    u64 n_threads() const {
+        return thread_states.length();
+    }
+
 private:
     using Job = std::coroutine_handle<>;
 
