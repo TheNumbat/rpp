@@ -212,12 +212,7 @@ struct Range_Allocator {
     };
 
     Stats statistics() {
-        Stats copy;
-        {
-            Thread::Lock lock(mutex);
-            copy = stats;
-        }
-        return copy;
+        return stats;
     }
 
     static void test() {

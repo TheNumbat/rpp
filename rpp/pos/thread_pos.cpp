@@ -1,6 +1,7 @@
 
 #include "../thread.h"
 
+#include <immintrin.h>
 #include <limits.h>
 #include <linux/futex.h>
 #include <sys/syscall.h>
@@ -20,6 +21,10 @@ u64 id_len() {
 
 Id this_id() {
     return (Id)pthread_self();
+}
+
+void pause() {
+    _mm_pause();
 }
 
 u64 perf_counter() {

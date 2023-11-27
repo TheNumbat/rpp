@@ -18,6 +18,10 @@ Id this_id() {
     return cache;
 }
 
+void pause() {
+    YieldProcessor();
+}
+
 u64 perf_counter() {
     LARGE_INTEGER li;
     QueryPerformanceCounter(&li);
