@@ -101,7 +101,7 @@ struct rpp::detail::Reflect<Log::Location> {
 
 template<>
 struct Hasher<Log::Location> {
-    u64 hash(Log::Location l) {
+    static u64 hash(const Log::Location& l) {
         return Hash::combine(Hash::combine(rpp::hash(l.file), rpp::hash(l.function)),
                              Hash::combine(rpp::hash(l.line), rpp::hash(l.column)));
     }
