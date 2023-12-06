@@ -995,16 +995,14 @@ struct rpp::detail::Reflect<Math::BBox> {
     using members = List<FIELD(min), FIELD(max)>;
 };
 
-namespace Hash {
-
 template<typename T, u64 N>
-u64 hash(Math::Vect<T, N> v) {
-    u64 h = 0;
-    for(u64 i = 0; i < N; i++) h = combine(h, hash(v[i]));
-    return h;
-}
-
-} // namespace Hash
+struct Hasher<Math::Vect<T, N>> {
+    static u64 hash(const Math::Vect<T, N>& v) {
+        u64 h = 0;
+        for(u64 i = 0; i < N; i++) h = combine(h, rpp::hash(v[i]));
+        return h;
+    }
+};
 
 using Math::Vec2;
 using Math::Vec3;
