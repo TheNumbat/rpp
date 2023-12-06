@@ -43,6 +43,11 @@ struct Region_Allocator {
         ~Scope() {
             end(R);
         }
+
+        Scope(const Scope&) = delete;
+        Scope& operator=(const Scope&) = delete;
+        Scope(Scope&&) = delete;
+        Scope& operator=(Scope&&) = delete;
     };
 
     static void* alloc(Region region, u64 size);
