@@ -40,7 +40,7 @@ static_assert(sizeof(First_Chunk) == FIRST_CHUNK_SIZE);
 
 thread_local u64 current_region = 0;
 thread_local u64 region_offsets[MAX_REGION_DEPTH] = {};
-thread_local u64 region_brands[MAX_REGION_DEPTH] = {};
+thread_local Region region_brands[MAX_REGION_DEPTH] = {};
 thread_local First_Chunk first_chunk;
 thread_local Chunk* chunks = &first_chunk.chunk;
 
@@ -53,13 +53,13 @@ static void new_chunk(u64 request) {
     chunks = chunk;
 }
 
-void assert_brand(u64 brand) {
+void assert_brand(Region brand) {
     if(region_brands[current_region] != brand) {
         die("Region brand mismatch!");
     }
 }
 
-void* Region_Allocator::alloc(u64 brand, u64 size) {
+void* Region_Allocator::alloc(Region brand, u64 size) {
     assert_brand(brand);
     if(chunks->size - chunks->used < size) {
         new_chunk(size);
@@ -71,18 +71,18 @@ void* Region_Allocator::alloc(u64 brand, u64 size) {
     return ret;
 }
 
-void Region_Allocator::free(u64 brand, void*) {
+void Region_Allocator::free(Region brand, void*) {
     assert_brand(brand);
 }
 
-void Region_Allocator::begin(u64 brand) {
+void Region_Allocator::begin(Region brand) {
     current_region++;
     assert(current_region < MAX_REGION_DEPTH);
     region_offsets[current_region] = region_offsets[current_region - 1];
     region_brands[current_region] = brand;
 }
 
-void Region_Allocator::end(u64 brand) {
+void Region_Allocator::end(Region brand) {
     assert(current_region > 0);
     u64 end_offset = region_offsets[current_region];
     current_region--;

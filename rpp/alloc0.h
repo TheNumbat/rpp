@@ -32,38 +32,40 @@ struct Mallocator {
     static void free(void* mem);
 };
 
+using Region = u64;
+
 struct Region_Allocator {
-    template<u64 Brand>
+    template<Region R>
     struct Scope {
         Scope() {
-            begin(Brand);
+            begin(R);
         }
         ~Scope() {
-            end(Brand);
+            end(R);
         }
     };
 
-    static void* alloc(u64 brand, u64 size);
-    static void free(u64 brand, void* mem);
+    static void* alloc(Region region, u64 size);
+    static void free(Region region, void* mem);
 
     static u64 depth();
     static u64 size();
 
 private:
-    static void begin(u64 brand);
-    static void end(u64 brand);
+    static void begin(Region region);
+    static void end(Region region);
 
     friend struct Stack_Scope;
 };
 
-template<u64 Brand>
+template<Region R>
 struct Mregion {
     static constexpr Literal name = "Region";
     static void* alloc(u64 size) {
-        return Region_Allocator::alloc(Brand, size);
+        return Region_Allocator::alloc(R, size);
     }
     static void free(void* mem) {
-        Region_Allocator::free(Brand, mem);
+        Region_Allocator::free(R, mem);
     }
 };
 
