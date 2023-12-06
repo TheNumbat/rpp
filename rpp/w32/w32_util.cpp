@@ -8,8 +8,8 @@ namespace rpp {
 
 Pair<wchar_t*, int> utf8_to_ucs2(String_View utf8_) {
 
-    Region_Scope;
-    auto utf8 = utf8_.terminate<Mregion>();
+    Region_Scope(R);
+    auto utf8 = utf8_.terminate<Mregion<R>>();
 
     constexpr int buffer_size = MAX_PATH;
     static thread_local wchar_t wbuffer[buffer_size];

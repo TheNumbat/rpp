@@ -593,6 +593,7 @@ struct Literal {
             c_string[i] = literal[i];
         }
     }
+
     operator const char*() const {
         return c_string;
     }

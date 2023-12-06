@@ -256,6 +256,24 @@ constexpr bool is_whitespace(u8 c) {
 
 } // namespace ascii
 
+template<Allocator A>
+struct Hasher<String<A>> {
+    static u64 hash(const String<A>& string) {
+        u64 h = 0;
+        for(u8 c : string) h = Hash::combine(h, rpp::hash(c));
+        return h;
+    }
+};
+
+template<>
+struct Hasher<String_View> {
+    static u64 hash(String_View string) {
+        u64 h = 0;
+        for(u8 c : string) h = Hash::combine(h, rpp::hash(c));
+        return h;
+    }
+};
+
 template<typename T>
 struct Is_String {
     static constexpr bool value = false;

@@ -19,8 +19,8 @@ constexpr Literal enum_name(E value) {
 }
 
 inline Opt<Pair<i64, String_View>> parse_i64(String_View input) {
-    Region_Scope;
-    auto term = input.terminate<Mregion>();
+    Region_Scope(R);
+    auto term = input.terminate<Mregion<R>>();
     const char* start = reinterpret_cast<const char*>(term.data());
     char* end = null;
     i64 ret = Std::strtoll(start, &end, 10);
@@ -32,8 +32,8 @@ inline Opt<Pair<i64, String_View>> parse_i64(String_View input) {
 }
 
 inline Opt<Pair<f32, String_View>> parse_f32(String_View input) {
-    Region_Scope;
-    auto term = input.terminate<Mregion>();
+    Region_Scope(R);
+    auto term = input.terminate<Mregion<R>>();
     const char* start = reinterpret_cast<const char*>(term.data());
     char* end = null;
     f32 ret = Std::strtof(start, &end);

@@ -29,15 +29,23 @@ struct Chunk {
 };
 static_assert(sizeof(Chunk) == 24);
 
-constexpr u64 MIN_CHUNK_SIZE = Math::KB(4);
-constexpr u64 REGION_COUNT = 256;
+constexpr u64 FIRST_CHUNK_SIZE = Math::KB(1);
+constexpr u64 MAX_REGION_DEPTH = 128;
+
+struct First_Chunk {
+    Chunk chunk = {null, FIRST_CHUNK_SIZE - sizeof(Chunk), 0};
+    u8 data[FIRST_CHUNK_SIZE - sizeof(Chunk)] = {};
+};
+static_assert(sizeof(First_Chunk) == FIRST_CHUNK_SIZE);
 
 thread_local u64 current_region = 0;
-thread_local u64 region_offsets[REGION_COUNT] = {};
-thread_local Chunk* chunks = null;
+thread_local u64 region_offsets[MAX_REGION_DEPTH] = {};
+thread_local u64 region_brands[MAX_REGION_DEPTH] = {};
+thread_local First_Chunk first_chunk;
+thread_local Chunk* chunks = &first_chunk.chunk;
 
 static void new_chunk(u64 request) {
-    u64 size = Math::max(request + sizeof(Chunk), MIN_CHUNK_SIZE);
+    u64 size = Math::max(request + sizeof(Chunk), 2 * (chunks->size + sizeof(Chunk)));
     Chunk* chunk = reinterpret_cast<Chunk*>(Regions::alloc(size));
     chunk->size = size - sizeof(Chunk);
     chunk->used = 0;
@@ -45,8 +53,15 @@ static void new_chunk(u64 request) {
     chunks = chunk;
 }
 
-void* Mregion::alloc(u64 size) {
-    if(!chunks || chunks->size - chunks->used < size) {
+void assert_brand(u64 brand) {
+    if(region_brands[current_region] != brand) {
+        die("Region brand mismatch!");
+    }
+}
+
+void* Region_Allocator::alloc(u64 brand, u64 size) {
+    assert_brand(brand);
+    if(chunks->size - chunks->used < size) {
         new_chunk(size);
     }
     u8* ret = reinterpret_cast<u8*>(chunks) + sizeof(Chunk) + chunks->used;
@@ -56,45 +71,42 @@ void* Mregion::alloc(u64 size) {
     return ret;
 }
 
-void Mregion::free(void* mem) {
+void Region_Allocator::free(u64 brand, void*) {
+    assert_brand(brand);
 }
 
-void Mregion::begin() {
+void Region_Allocator::begin(u64 brand) {
     current_region++;
-    assert(current_region < REGION_COUNT);
+    assert(current_region < MAX_REGION_DEPTH);
     region_offsets[current_region] = region_offsets[current_region - 1];
+    region_brands[current_region] = brand;
 }
 
-void Mregion::end() {
+void Region_Allocator::end(u64 brand) {
     assert(current_region > 0);
     u64 end_offset = region_offsets[current_region];
     current_region--;
     u64 start_offset = region_offsets[current_region];
     u64 free_size = end_offset - start_offset;
-    while(free_size && free_size >= chunks->used) {
+    while(free_size > chunks->used) {
         free_size -= chunks->used;
         Chunk* chunk = chunks;
         chunks = chunks->up;
         Regions::free(chunk);
     }
-    if(free_size) {
-        chunks->used -= free_size;
+    chunks->used -= free_size;
+    if(chunks->used == 0 && chunks->up != null) {
+        Chunk* chunk = chunks;
+        chunks = chunks->up;
+        Regions::free(chunk);
     }
 }
 
-Mregion::Scope::Scope() {
-    Mregion::begin();
-}
-
-Mregion::Scope::~Scope() {
-    Mregion::end();
-}
-
-u64 Mregion::depth() {
+u64 Region_Allocator::depth() {
     return current_region;
 }
 
-u64 Mregion::size() {
+u64 Region_Allocator::size() {
     return region_offsets[current_region];
 }
 

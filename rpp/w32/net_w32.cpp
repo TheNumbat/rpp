@@ -49,8 +49,8 @@ static_assert(alignof(sockaddr_in) == 4);
 
 Address::Address(String_View address_, u16 port) {
 
-    Region_Scope;
-    auto address = address_.terminate<Mregion>();
+    Region_Scope(R);
+    auto address = address_.terminate<Mregion<R>>();
 
     sockaddr_in& sockaddr_ = *reinterpret_cast<sockaddr_in*>(sockaddr_storage);
     sockaddr_ = {};

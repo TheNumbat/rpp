@@ -6,7 +6,7 @@
 
 namespace rpp {
 
-template<Allocator A, u64 Buckets = 24, u64 Bias = 8>
+template<Allocator A = Mdefault, u64 Buckets = 24, u64 Bias = 8>
 struct Range_Allocator {
 
     Range_Allocator() = default;
@@ -222,9 +222,9 @@ struct Range_Allocator {
         RNG::Stream rng(0);
         info("Testing allocator...");
 
-        Region_Scope;
         for(u64 i = 0; i < 1000; i++) {
-            Vec<Range> allocations, leaks;
+            Region_Scope(R);
+            Vec<Range, Mregion<R>> allocations(1000), leaks(1000);
             for(u64 j = 0; j < 1000; j++) {
                 u64 align = rng.range(static_cast<u64>(1), Math::MB(1));
                 u64 size = rng.range(static_cast<u64>(1), Math::MB(1));

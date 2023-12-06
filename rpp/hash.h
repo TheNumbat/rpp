@@ -9,7 +9,7 @@ namespace rpp {
 
 namespace Hash {
 
-inline u64 squirrel5(u64 at) {
+constexpr u64 squirrel5(u64 at) {
     constexpr u64 BIT_NOISE1 = 0xA278032FB08BA40Dul;
     constexpr u64 BIT_NOISE2 = 0x9D9FDC30FD876B1Dul;
     constexpr u64 BIT_NOISE3 = 0xEC705118C5FBDA13ul;
@@ -28,48 +28,35 @@ inline u64 squirrel5(u64 at) {
     return at;
 }
 
-inline u64 combine(u64 h1, u64 h2) {
+constexpr u64 combine(u64 h1, u64 h2) {
     return squirrel5(h1 + h2);
 }
 
-template<Int I>
-u64 hash(I key) {
+constexpr u64 primitive(char key) {
     return squirrel5(static_cast<u64>(key));
 }
 
-inline u64 hash(f32 key) {
-    return hash(static_cast<u64>(*reinterpret_cast<u32*>(&key)));
+template<Int I>
+constexpr u64 primitive(I key) {
+    return squirrel5(static_cast<u64>(key));
 }
 
-inline u64 hash(f64 key) {
+inline u64 primitive(f32 key) {
+    return primitive(static_cast<u64>(*reinterpret_cast<u32*>(&key)));
+}
+
+inline u64 primitive(f64 key) {
     return squirrel5(*reinterpret_cast<u64*>(&key));
 }
 
 template<typename T>
-u64 hash(T* key) {
-    return hash(static_cast<u64>(reinterpret_cast<uintptr_t>(key)));
-}
-
-template<Allocator A = Mdefault>
-u64 hash(const String<A>& string) {
-    u64 h = 0;
-    for(u8 c : string) h = combine(h, hash(static_cast<u64>(c)));
-    return h;
-}
-
-inline u64 hash(String_View string) {
-    u64 h = 0;
-    for(u8 c : string) h = combine(h, hash(static_cast<u64>(c)));
-    return h;
-}
-
-inline u64 hash(Log::Location l) {
-    return combine(combine(hash(l.file), hash(l.function)), combine(hash(l.line), hash(l.column)));
+constexpr u64 primitive(T* key) {
+    return primitive(static_cast<u64>(reinterpret_cast<uintptr_t>(key)));
 }
 
 template<typename K>
 concept Primitive = requires(K k) {
-    { Hash::hash(k) } -> Same<u64>;
+    { Hash::primitive(k) } -> Same<u64>;
 };
 
 } // namespace Hash
@@ -79,8 +66,8 @@ struct Hasher;
 
 template<Hash::Primitive K>
 struct Hasher<K> {
-    static u64 hash(const K& key) {
-        return Hash::hash(key);
+    static constexpr u64 hash(const K& key) {
+        return Hash::primitive(key);
     }
 };
 
@@ -90,13 +77,23 @@ concept Hashable = requires(K k) {
 };
 
 template<Hashable T>
-u64 hash(T&& value) {
+constexpr u64 hash(T&& value) {
     return Hasher<typename Decay<T>::type>::hash(std::forward<T>(value));
 }
 
 template<Hashable T>
-u64 hash_nonzero(T&& value) {
+constexpr u64 hash_nonzero(T&& value) {
     return Hasher<typename Decay<T>::type>::hash(std::forward<T>(value)) | 1;
+}
+
+#define LOCATION_HASH (::rpp::hash_literal(__FILE__, __LINE__))
+
+template<size_t N>
+consteval u64 hash_literal(const char (&literal)[N], u64 seed = 0) {
+    for(size_t i = 0; i < N - 1; i++) {
+        seed = Hash::combine(seed, hash(literal[i]));
+    }
+    return seed;
 }
 
 } // namespace rpp

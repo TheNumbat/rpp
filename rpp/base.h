@@ -105,6 +105,8 @@ f32 strtof(const char* str, char** endptr);
 
 #include "reflect.h"
 
+#include "hash.h"
+
 #include "math.h"
 
 #include "ref0.h"
@@ -136,8 +138,6 @@ f32 strtof(const char* str, char** endptr);
 #include "string1.h"
 
 #include "box.h"
-
-#include "hash.h"
 
 #include "map.h"
 

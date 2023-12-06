@@ -62,30 +62,27 @@ i32 main() {
     Profile::start_thread();
     Profile::begin_frame();
 
+    Range_Allocator<>::test();
+
     [] {
-        Region_Scope;
-        Vec<u8, Mregion> v0 = Vec<u8, Mregion>::make(Math::MB(2));
+        Region_Scope(R0);
+        auto v0 = Vec<u8, Mregion<R0>>::make(Math::MB(2));
         {
-            Region_Scope;
-            Vec<u8, Mregion> v1 = Vec<u8, Mregion>::make(Math::MB(4));
+            Region_Scope(R1);
+            auto v1 = Vec<u8, Mregion<R1>>::make(Math::MB(4));
             {
-                Region_Scope;
-                Vec<u8, Mregion> v2 = Vec<u8, Mregion>::make(256);
-                Vec<u8, Mregion> v3 = Vec<u8, Mregion>::make(256);
-                Vec<u8, Mregion> v4 = Vec<u8, Mregion>::make(256);
+                Region_Scope(R2);
+                auto v2 = Vec<u8, Mregion<R2>>::make(256);
+                auto v3 = Vec<u8, Mregion<R2>>::make(256);
+                auto v4 = Vec<u8, Mregion<R2>>::make(256);
                 {
-                    Region_Scope;
-                    Vec<u8, Mregion> v5 = Vec<u8, Mregion>::make(256);
-                    Vec<u8, Mregion> v6 = Vec<u8, Mregion>::make(256);
-                    Vec<u8, Mregion> v7 = Vec<u8, Mregion>::make(Math::MB(2));
+                    Region_Scope(R3);
+                    auto v5 = Vec<u8, Mregion<R3>>::make(256);
+                    auto v6 = Vec<u8, Mregion<R3>>::make(256);
+                    auto v7 = Vec<u8, Mregion<R3>>::make(Math::MB(2));
                 }
             }
         }
-    }();
-
-    [] {
-        Region_Scope;
-        Range_Allocator<Mregion>::test();
     }();
 
     // Alloc0

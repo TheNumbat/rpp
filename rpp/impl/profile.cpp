@@ -214,13 +214,13 @@ void Profile::finalize() {
     } else {
         info("No memory leaked.");
     }
-    if(Mregion::size() != 0) {
-        warn("Unbalanced region size: %", Mregion::size());
+    if(Region_Allocator::size() != 0) {
+        warn("Unbalanced region size: %", Region_Allocator::size());
     } else {
         info("No region memory leaked.");
     }
-    if(Mregion::depth() != 0) {
-        warn("Unbalanced regions: %", Mregion::depth());
+    if(Region_Allocator::depth() != 0) {
+        warn("Unbalanced regions: %", Region_Allocator::depth());
     } else {
         info("No regions leaked.");
     }

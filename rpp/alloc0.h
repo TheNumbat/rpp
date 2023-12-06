@@ -32,30 +32,47 @@ struct Mallocator {
     static void free(void* mem);
 };
 
-#define REGION_SCOPE_NAME2(counter) region_scope__##counter
-#define REGION_SCOPE_NAME1(counter) REGION_SCOPE_NAME2(counter)
-#define REGION_SCOPE_NAME REGION_SCOPE_NAME1(__COUNTER__)
-
-#define Region_Scope Mregion::Scope REGION_SCOPE_NAME
-
-struct Mregion {
-    static constexpr Literal name = "Region";
-
-    static void* alloc(u64 size);
-    static void free(void* mem);
-
+struct Region_Allocator {
+    template<u64 Brand>
     struct Scope {
-        Scope();
-        ~Scope();
+        Scope() {
+            begin(Brand);
+        }
+        ~Scope() {
+            end(Brand);
+        }
     };
+
+    static void* alloc(u64 brand, u64 size);
+    static void free(u64 brand, void* mem);
 
     static u64 depth();
     static u64 size();
 
 private:
-    static void begin();
-    static void end();
+    static void begin(u64 brand);
+    static void end(u64 brand);
+
+    friend struct Stack_Scope;
 };
+
+template<u64 Brand>
+struct Mregion {
+    static constexpr Literal name = "Region";
+    static void* alloc(u64 size) {
+        return Region_Allocator::alloc(Brand, size);
+    }
+    static void free(void* mem) {
+        Region_Allocator::free(Brand, mem);
+    }
+};
+
+#define REGION_SCOPE2(counter) __region_scope_##counter
+#define REGION_SCOPE1(R, brand, counter)                                                           \
+    ::rpp::Region_Allocator::Scope<brand> REGION_SCOPE2(counter);                                  \
+    static constexpr u64 R = brand;
+
+#define Region_Scope(R) REGION_SCOPE1(R, LOCATION_HASH, __COUNTER__)
 
 using Mdefault = Mallocator<"Default">;
 

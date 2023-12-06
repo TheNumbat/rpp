@@ -74,8 +74,8 @@ void output(Level level, const Location& loc, String_View msg);
 
 template<typename... Ts>
 void log(Level level, const Location& loc, String_View fmt, const Ts&... args) {
-    Region_Scope;
-    output(level, std::move(loc), format<Mregion>(fmt, args...).view());
+    Region_Scope(R);
+    output(level, std::move(loc), format<Mregion<R>>(fmt, args...).view());
 }
 
 } // namespace Log
@@ -97,6 +97,14 @@ struct rpp::detail::Reflect<Log::Location> {
     static constexpr char name[] = "Location";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(function), FIELD(file), FIELD(line), FIELD(column)>;
+};
+
+template<>
+struct Hasher<Log::Location> {
+    u64 hash(Log::Location l) {
+        return Hash::combine(Hash::combine(rpp::hash(l.file), rpp::hash(l.function)),
+                             Hash::combine(rpp::hash(l.line), rpp::hash(l.column)));
+    }
 };
 
 } // namespace rpp

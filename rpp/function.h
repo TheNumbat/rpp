@@ -133,11 +133,11 @@ struct Measure<Function<R(Args...)>> {
     static u64 measure(const Function<Fn>& function) {
         u64 length = 10;
         if(function) {
-            Region_Scope;
+            Region_Scope(Rg);
             length += String_View{Reflect<R>::name}.length();
             length += 2;
             if constexpr(sizeof...(Args) > 0)
-                length += (format_typename<Args, Mregion>().length() + ...);
+                length += (format_typename<Args, Mregion<Rg>>().length() + ...);
             if constexpr(sizeof...(Args) > 1) length += 2 * (sizeof...(Args) - 1);
         } else {
             length += 4;
@@ -151,9 +151,9 @@ template<Allocator O, typename... Ts>
 struct Type_Write {
     template<typename I>
     void apply() {
-        Region_Scope;
+        Region_Scope(R);
         using T = Index<I::value, Ts...>;
-        idx = output.write(idx, format_typename<T, Mregion>());
+        idx = output.write(idx, format_typename<T, Mregion<R>>());
         if constexpr(I::value + 1 < sizeof...(Ts)) idx = output.write(idx, ", "_v);
     }
     String<O>& output;
