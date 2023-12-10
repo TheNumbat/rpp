@@ -146,7 +146,7 @@ private:
         if(list_) {
             Free_Node* ret = list_;
             list_ = list_->next;
-            Std::memset(ret, 0, sizeof(Free_Node));
+            Libc::memset(ret, 0, sizeof(Free_Node));
             return reinterpret_cast<T*>(ret);
         }
         void* new_node = Base::alloc(sizeof(Free_Node));

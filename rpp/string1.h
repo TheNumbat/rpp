@@ -36,7 +36,7 @@ template<Allocator A>
 String<A> String_View::terminate() const {
     String<A> ret{length_ + 1};
     ret.set_length(length_ + 1);
-    Std::memcpy(ret.data(), data_, length_);
+    Libc::memcpy(ret.data(), data_, length_);
     ret[length_] = '\0';
     return ret;
 }
@@ -46,7 +46,7 @@ template<Allocator RA>
 String<RA> String<SA>::terminate() const {
     String<RA> ret{length_ + 1};
     ret.set_length(length_ + 1);
-    Std::memcpy(ret.data(), data_, length_);
+    Libc::memcpy(ret.data(), data_, length_);
     ret[length_] = '\0';
     return ret;
 }
@@ -105,14 +105,14 @@ template<Allocator A>
 template<Allocator B>
 u64 String<A>::write(u64 i, const String<B>& text) {
     assert(i + text.length() <= length_);
-    Std::memcpy(data_ + i, text.data(), text.length());
+    Libc::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
 }
 
 template<Allocator A>
 u64 String<A>::write(u64 i, String_View text) {
     assert(i + text.length() <= length_);
-    Std::memcpy(data_ + i, text.data(), text.length());
+    Libc::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
 }
 
@@ -120,8 +120,8 @@ template<Allocator A>
 String<A> String_View::append(String_View next) const {
     String<A> ret{length_ + next.length()};
     ret.set_length(length_ + next.length());
-    Std::memcpy(ret.data(), data_, length_);
-    Std::memcpy(ret.data() + length_, next.data(), next.length());
+    Libc::memcpy(ret.data(), data_, length_);
+    Libc::memcpy(ret.data() + length_, next.data(), next.length());
     return ret;
 }
 
@@ -130,8 +130,8 @@ template<Allocator RA, Allocator B>
 String<RA> String<A>::append(const String<B>& next) const {
     String<RA> ret{length_ + next.length()};
     ret.set_length(length_ + next.length());
-    Std::memcpy(ret.data(), data_, length_);
-    Std::memcpy(ret.data() + length_, next.data(), next.length());
+    Libc::memcpy(ret.data(), data_, length_);
+    Libc::memcpy(ret.data() + length_, next.data(), next.length());
     return ret;
 }
 

@@ -23,7 +23,7 @@ inline Opt<Pair<i64, String_View>> parse_i64(String_View input) {
     auto term = input.terminate<Mregion<R>>();
     const char* start = reinterpret_cast<const char*>(term.data());
     char* end = null;
-    i64 ret = Std::strtoll(start, &end, 10);
+    i64 ret = Libc::strtoll(start, &end, 10);
     if(start == end) {
         return {};
     }
@@ -36,7 +36,7 @@ inline Opt<Pair<f32, String_View>> parse_f32(String_View input) {
     auto term = input.terminate<Mregion<R>>();
     const char* start = reinterpret_cast<const char*>(term.data());
     char* end = null;
-    f32 ret = Std::strtof(start, &end);
+    f32 ret = Libc::strtof(start, &end);
     if(start == end) {
         return {};
     }

@@ -136,7 +136,7 @@ struct Map {
         Map<K, V, B> ret(capacity_);
         ret.length_ = length_;
         if constexpr(Trivially_Copyable<K> && Trivially_Copyable<V>) {
-            Std::memcpy(ret.data_, data_, capacity_ * sizeof(Slot));
+            Libc::memcpy(ret.data_, data_, capacity_ * sizeof(Slot));
         } else {
             for(u64 i = 0; i < capacity_; i++) {
                 if(data_[i].hash != Slot::EMPTY) new(&ret.data_[i]) Slot{data_[i].clone()};
@@ -173,7 +173,7 @@ struct Map {
                 data_[i].~Slot();
             }
         } else {
-            Std::memset(data_, Slot::EMPTY, capacity_ * sizeof(Slot));
+            Libc::memset(data_, Slot::EMPTY, capacity_ * sizeof(Slot));
         }
         length_ = 0;
     }

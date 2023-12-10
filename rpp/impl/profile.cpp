@@ -226,7 +226,7 @@ void Profile::finalize() {
     }
     if(net != 0) {
         warn("Memory leaked, shutting down now...");
-        ::exit(1);
+        Libc::exit(1);
     }
 }
 

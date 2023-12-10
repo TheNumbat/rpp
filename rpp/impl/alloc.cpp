@@ -2,6 +2,7 @@
 #include "../base.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifdef COMPILER_MSVC
 void* operator new(std::size_t, std::align_val_t, void* ptr) noexcept {
@@ -67,7 +68,7 @@ void* Region_Allocator::alloc(Region brand, u64 size) {
     u8* ret = reinterpret_cast<u8*>(chunks) + sizeof(Chunk) + chunks->used;
     chunks->used += size;
     region_offsets[current_region] += size;
-    Std::memset(ret, 0, size);
+    Libc::memset(ret, 0, size);
     return ret;
 }
 

@@ -78,7 +78,7 @@ struct Vec {
         Vec<T, B> ret(capacity_);
         ret.length_ = length_;
         if constexpr(Trivially_Copyable<T>) {
-            Std::memcpy(ret.data_, data_, length_ * sizeof(T));
+            Libc::memcpy(ret.data_, data_, length_ * sizeof(T));
         } else if constexpr(Clone<T>) {
             for(u64 i = 0; i < length_; i++) {
                 new(&ret.data_[i]) T{data_[i].clone()};
@@ -113,7 +113,7 @@ struct Vec {
 
         if(data_ && new_data) {
             if constexpr(Trivially_Movable<T>) {
-                Std::memcpy((void*)new_data, data_, sizeof(T) * length_);
+                Libc::memcpy((void*)new_data, data_, sizeof(T) * length_);
             } else {
                 static_assert(Move_Constructable<T>);
                 for(u64 i = 0; i < length_; i++) {

@@ -52,7 +52,7 @@ struct Variant {
     {
         if constexpr((Trivially_Movable<Ts> && ...)) {
             index_ = src.index_;
-            Std::memcpy(data_, src.data_, size);
+            Libc::memcpy(data_, src.data_, size);
         } else {
             src.match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
         };
@@ -64,7 +64,7 @@ struct Variant {
         destruct();
         if constexpr((Trivially_Movable<Ts> && ...)) {
             index_ = src.index_;
-            Std::memcpy(data_, src.data_, size);
+            Libc::memcpy(data_, src.data_, size);
         } else {
             src.match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
         }

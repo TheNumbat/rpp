@@ -43,7 +43,7 @@ struct Array {
     {
         Array result;
         if constexpr(Trivially_Copyable<T>) {
-            Std::memcpy(result.data_, data_, sizeof(T) * N);
+            Libc::memcpy(result.data_, data_, sizeof(T) * N);
         } else if constexpr(Clone<T>) {
             for(u64 i = 0; i < N; i++) {
                 result[i] = data_[i].clone();

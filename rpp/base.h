@@ -49,7 +49,6 @@
 #endif
 
 #include <stdint.h>
-#include <stdlib.h>
 
 #include <initializer_list>
 #include <source_location>
@@ -85,8 +84,9 @@ static_assert(sizeof(char) == 1);
 static_assert(sizeof(bool) == 1);
 static_assert(sizeof(void*) == 8);
 
-namespace Std {
+namespace Libc {
 
+[[noreturn]] void exit(i32 code);
 i32 strncmp(const char* a, const char* b, u64 bytes);
 u64 strlen(const char* str);
 void* memset(void* dest, i32 value, u64 bytes);
@@ -96,7 +96,7 @@ i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...);
 i64 strtoll(const char* str, char** endptr, i32 base);
 f32 strtof(const char* str, char** endptr);
 
-} // namespace Std
+} // namespace Libc
 
 } // namespace rpp
 

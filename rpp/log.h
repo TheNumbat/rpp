@@ -8,25 +8,27 @@
 #define Here rpp::Log::Location::make(std::source_location::current())
 #define Log_Scope rpp::Log::Scope log_scope__##__COUNTER__
 
-#define info(fmt, ...) (void)(rpp::Log::log(rpp::Log::Level::info, Here, fmt##_v, ##__VA_ARGS__), 0)
+#define info(fmt, ...)                                                                             \
+    (void)(::rpp::Log::log(::rpp::Log::Level::info, Here, fmt##_v, ##__VA_ARGS__), 0)
 
-#define warn(fmt, ...) (void)(rpp::Log::log(rpp::Log::Level::warn, Here, fmt##_v, ##__VA_ARGS__), 0)
+#define warn(fmt, ...)                                                                             \
+    (void)(::rpp::Log::log(::rpp::Log::Level::warn, Here, fmt##_v, ##__VA_ARGS__), 0)
 
 #define die(fmt, ...)                                                                              \
-    (void)(rpp::Log::log(rpp::Log::Level::fatal, Here, fmt##_v, ##__VA_ARGS__), DEBUG_BREAK,       \
-           ::exit(1), 0)
+    (void)(::rpp::Log::log(::rpp::Log::Level::fatal, Here, fmt##_v, ##__VA_ARGS__), DEBUG_BREAK,   \
+           rpp::Libc::exit(1), 0)
 
 #undef assert
 #define assert(expr)                                                                               \
-    (void)((!!(expr)) || (rpp::Log::log(rpp::Log::Level::fatal, Here,                              \
-                                        rpp::String_View{"Assert: %"}, rpp::String_View{#expr}),   \
-                          DEBUG_BREAK, ::exit(1), 0))
+    (void)((!!(expr)) || (::rpp::Log::log(::rpp::Log::Level::fatal, Here,                          \
+                                          rpp::String_View{"Assert: %"}, rpp::String_View{#expr}), \
+                          DEBUG_BREAK, rpp::Libc::exit(1), 0))
 
 #define UNREACHABLE                                                                                \
-    (void)(rpp::Log::log(rpp::Log::Level::fatal, Here, rpp::String_View{"Unreachable"}),           \
-           DEBUG_BREAK, ::exit(1), 0)
+    (void)(::rpp::Log::log(::rpp::Log::Level::fatal, Here, rpp::String_View{"Unreachable"}),       \
+           DEBUG_BREAK, rpp::Libc::exit(1), 0)
 
-#define DEBUG_BREAK (rpp::Log::debug_break())
+#define DEBUG_BREAK (::rpp::Log::debug_break())
 
 namespace rpp {
 namespace Log {
@@ -102,8 +104,8 @@ struct rpp::detail::Reflect<Log::Location> {
 template<>
 struct Hasher<Log::Location> {
     static u64 hash(const Log::Location& l) {
-        return Hash::combine(Hash::combine(rpp::hash(l.file), rpp::hash(l.function)),
-                             Hash::combine(rpp::hash(l.line), rpp::hash(l.column)));
+        return Hash::combine(Hash::combine(::rpp::hash(l.file), rpp::hash(l.function)),
+                             Hash::combine(::rpp::hash(l.line), rpp::hash(l.column)));
     }
 };
 

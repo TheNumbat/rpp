@@ -1073,9 +1073,9 @@ template<Movable T>
 void swap(T& a, T& b) {
     if constexpr(Trivially_Movable<T>) {
         alignas(alignof(T)) u8 tmp[sizeof(T)];
-        Std::memcpy(tmp, &a, sizeof(T));
-        Std::memcpy(&a, &b, sizeof(T));
-        Std::memcpy(&b, tmp, sizeof(T));
+        Libc::memcpy(tmp, &a, sizeof(T));
+        Libc::memcpy(&a, &b, sizeof(T));
+        Libc::memcpy(&b, tmp, sizeof(T));
     } else {
         T tmp = std::move(a);
         a = std::move(b);

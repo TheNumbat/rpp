@@ -97,7 +97,7 @@ Async::Task<bool> write(Thread::Pool<>& pool, String_View path, Slice<u8> data) 
     Vec<u8, Alloc> to_write(aligned_size);
     to_write.resize(aligned_size);
 
-    Std::memcpy(to_write.data(), data.data(), size);
+    Libc::memcpy(to_write.data(), data.data(), size);
 
     BOOL ret =
         WriteFile(handle, to_write.data(), static_cast<u32>(aligned_size), null, &overlapped);

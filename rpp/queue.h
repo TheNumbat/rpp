@@ -69,7 +69,7 @@ struct Queue {
         ret.capacity_ = capacity_;
 
         if constexpr(Trivially_Copyable<T>) {
-            Std::memcpy(ret.data_, data_, capacity_ * sizeof(T));
+            Libc::memcpy(ret.data_, data_, capacity_ * sizeof(T));
         } else if constexpr(Clone<T>) {
             u64 start = start_idx();
             u64 end = end_idx();
@@ -100,11 +100,11 @@ struct Queue {
 
         if constexpr(Trivially_Movable<T>) {
             if(length_ <= last_) {
-                Std::memcpy(new_data, start, sizeof(T) * length_);
+                Libc::memcpy(new_data, start, sizeof(T) * length_);
             } else {
                 u64 first = length_ - last_;
-                Std::memcpy(new_data, start + capacity_, sizeof(T) * first);
-                Std::memcpy(new_data + first, data_, sizeof(T) * last_);
+                Libc::memcpy(new_data, start + capacity_, sizeof(T) * first);
+                Libc::memcpy(new_data + first, data_, sizeof(T) * last_);
             }
         } else {
             static_assert(Move_Constructable<T>);
@@ -241,7 +241,7 @@ struct Queue {
             u64 next = idx == capacity_ - 1 ? 0 : idx + 1;
             if(found) {
                 if constexpr(Trivially_Movable<T>) {
-                    Std::memcpy(&data_[next], &data_[idx], sizeof(T));
+                    Libc::memcpy(&data_[next], &data_[idx], sizeof(T));
                 } else {
                     static_assert(Move_Constructable<T>);
                     new(&data_[next]) T{std::move(data_[idx])};

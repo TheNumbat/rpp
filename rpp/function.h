@@ -92,7 +92,7 @@ private:
     template<typename F>
     static void f_move(F* dst, F* src) {
         if constexpr(Trivially_Movable<F>) {
-            Std::memcpy(dst, src, sizeof(F));
+            Libc::memcpy(dst, src, sizeof(F));
         } else {
             new(dst) F{std::move(*src)};
         }
