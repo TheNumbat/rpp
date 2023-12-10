@@ -48,7 +48,6 @@
 #include <pthread.h>
 #endif
 
-#include <float.h>
 #include <stdint.h>
 #include <stdlib.h>
 
