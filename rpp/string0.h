@@ -34,6 +34,7 @@ struct String_View {
     const u8& operator[](u64 idx) const;
 
     String_View file_suffix() const;
+    String_View file_extension() const;
     String_View remove_file_suffix() const;
 
     template<Allocator A = Mdefault>

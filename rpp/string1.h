@@ -78,6 +78,22 @@ inline String_View String_View::file_suffix() const {
     return String_View{data_ + i + offset, length_ - i - offset};
 }
 
+inline String_View String_View::file_extension() const {
+
+    if(length_ == 0) return String_View{};
+
+    u64 i = length_ - 1;
+    u64 offset = 0;
+
+    for(; i != 0; i--) {
+        if(data_[i] == '.' || data_[i] == '\\' || data_[i] == '/') {
+            offset = 1;
+            break;
+        }
+    }
+    return String_View{data_ + i + offset, length_ - i - offset};
+}
+
 inline String_View String_View::remove_file_suffix() const {
 
     if(length_ == 0) return String_View{};
