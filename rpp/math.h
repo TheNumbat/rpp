@@ -82,10 +82,14 @@ f32 floor(f32 v);
 f64 floor(f64 v);
 f32 ceil(f32 v);
 f64 ceil(f64 v);
+f32 round(f32 v);
+f64 round(f64 v);
 f32 abs(f32 v);
 f64 abs(f64 v);
 f32 sqrt(f32 v);
 f64 sqrt(f64 v);
+f32 sign(f32 v);
+f64 sign(f64 v);
 i32 abs(i32 v);
 i64 abs(i64 v);
 

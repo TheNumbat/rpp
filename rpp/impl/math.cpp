@@ -74,6 +74,12 @@ f32 ceil(f32 v) {
 f64 ceil(f64 v) {
     return std::ceil(v);
 }
+f32 round(f32 v) {
+    return std::round(v);
+}
+f64 round(f64 v) {
+    return std::round(v);
+}
 f32 abs(f32 v) {
     return std::abs(v);
 }
@@ -85,6 +91,12 @@ f32 sqrt(f32 v) {
 }
 f64 sqrt(f64 v) {
     return std::sqrt(v);
+}
+f32 sign(f32 v) {
+    return v == 0.0f ? 0.0f : v < 0.0f ? -1.0f : 1.0f;
+}
+f64 sign(f64 v) {
+    return v == 0.0 ? 0.0 : v < 0.0 ? -1.0 : 1.0;
 }
 i32 abs(i32 v) {
     return std::abs(v);
