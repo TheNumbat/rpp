@@ -153,6 +153,9 @@ struct Vec {
     bool full() const {
         return length_ == capacity_;
     }
+    void unsafe_fill() {
+        length_ = capacity_;
+    }
 
     T& push(const T& value)
         requires Copy_Constructable<T>
