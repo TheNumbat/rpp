@@ -28,7 +28,7 @@ struct Named {
 };
 
 template<typename... Ts>
-    requires(sizeof...(Ts) > 0 && sizeof...(Ts) <= 256 && Distinct<Ts...>)
+    requires(sizeof...(Ts) > 0 && sizeof...(Ts) <= 255 && Distinct<Ts...>)
 struct Variant {
 
     template<typename V>
@@ -56,6 +56,7 @@ struct Variant {
         } else {
             src.match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
         };
+        src.index_ = INVALID;
     }
 
     Variant& operator=(Variant&& src)
@@ -68,6 +69,7 @@ struct Variant {
         } else {
             src.match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
         }
+        src.index_ = INVALID;
         return *this;
     }
 
@@ -85,10 +87,6 @@ struct Variant {
         });
     }
 
-    u8 index() const {
-        return index_;
-    }
-
     template<typename F>
         requires((Invocable<F, Ts&> && ...) && All_Same<Invoke_Result<F, Ts&>...>)
     auto match(F&& f) {
@@ -100,7 +98,14 @@ struct Variant {
         return Accessors<true>::apply(std::forward<F>(f), data_, index_);
     }
 
+    u8 index() const {
+        assert(index_ != INVALID);
+        return index_;
+    }
+
 private:
+    static constexpr u8 INVALID = 255;
+
     template<typename V>
         requires One<V, Ts...>
     void construct(V&& value) {
@@ -111,6 +116,7 @@ private:
     }
 
     void destruct() {
+        if(index_ == INVALID) return;
         if constexpr((Must_Destruct<Ts> || ...)) {
             Accessors<false>::apply(Overload{[](Ts& v) {
                                         if constexpr(Must_Destruct<Ts>) {
@@ -119,6 +125,7 @@ private:
                                     }...},
                                     data_, index_);
         }
+        index_ = INVALID;
     }
 
     static constexpr u64 size = Math::max({sizeof(Ts)...});

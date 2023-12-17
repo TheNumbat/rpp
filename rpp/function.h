@@ -43,6 +43,7 @@ struct Function<Words, R(Args...)> {
     }
 
     R operator()(Args... args) {
+        assert(vtable);
         return invoke(std::forward<Args>(args)...);
     }
 

@@ -255,6 +255,10 @@ i32 main() {
             Variant<i8, i16, i32, i64, u8, u16, u32, u64, f32, f64> v{1.0f};
             v.match([](auto i) { info("variant has %", i); });
         }
+        {
+            Variant<String<>> v{"Hello"_v.string()};
+            auto s = std::move(v);
+        }
 
         static_assert(alignof(i32) == 4);
         Variant<i32> v{1};
@@ -282,7 +286,7 @@ i32 main() {
         Variant<i32, SV> v3 = v2.clone();
         assert(v3.index() == 1);
         Variant<i32, SV> v4 = std::move(v3);
-        assert(v3.index() == 1);
+        assert(v4.index() == 1);
 
         { //
             Variant<i32, String<>> v5{"Hello"_v.string()};
