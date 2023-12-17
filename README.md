@@ -69,6 +69,8 @@ To-Do:
     - Work stealing
 - IO
     - Proper async file IO on linux
+- Map
+    - Don't store hashes given integer keys
 - Range allocator
     - Second level of linear buckets
     - Reduce memory overhead

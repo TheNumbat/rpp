@@ -64,6 +64,9 @@ i32 main() {
 
     Range_Allocator<>::test();
 
+    Array<i32, 3> v{1, 2, 3};
+    String_View message = "foo"_v;
+
     [] {
         Region_Scope(R0);
         auto v0 = Vec<u8, Mregion<R0>>::make(Math::MB(2));
@@ -248,6 +251,11 @@ i32 main() {
 
     // Variant
     [] {
+        {
+            Variant<i8, i16, i32, i64, u8, u16, u32, u64, f32, f64> v{1.0f};
+            v.match([](auto i) { info("variant has %", i); });
+        }
+
         static_assert(alignof(i32) == 4);
         Variant<i32> v{1};
         info("sizeof variant %", sizeof(v));
@@ -419,6 +427,9 @@ i32 main() {
 
         Vec<i32> v2 = v.clone();
         Vec<i32> v3 = std::move(v2);
+
+        Slice<i32> sl2 = v3.slice();
+        assert(sl2.length() == 2);
 
         assert(v3.length() == 2);
 
@@ -680,6 +691,15 @@ i32 main() {
         Prof_Scope("Map");
 
         {
+            Map<String_View, i32> int_map{Pair{"foo"_v, 0}, Pair{"bar"_v, 1}};
+
+            int_map.insert("baz"_v, 2);
+            int_map.erase("bar"_v);
+
+            for(auto& [key, value] : int_map) info("%: %", key, value);
+        }
+
+        {
             Map<String<>, String<>> sv{Pair{"Hello"_v.string(), "World"_v.string()}};
             //
         }
@@ -894,7 +914,6 @@ i32 main() {
              Variant<Named<"One", i32>, Named<"Two", i32>>{Named<"One", i32>{1}});
         info("%", Variant<Named<"One", i32>, Named<"Two", i32>>{Named<"Two", i32>{2}});
 
-        info("% %", format_typename<Function<void()>>(), Function<void()>{});
         info("% %", format_typename<Function<void()>>(), Function<void()>{[]() {}});
         info("% %", format_typename<Function<void(i32)>>(), Function<void(i32)>{[](i32 i) {}});
         info("% %", format_typename<Function<void(i32, i32)>>(),

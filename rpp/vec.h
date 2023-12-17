@@ -246,6 +246,10 @@ struct Vec {
         return data_;
     }
 
+    Slice<T> slice() const {
+        return Slice<T>{data_, length_};
+    }
+
 private:
     T* data_ = null;
     u64 length_ = 0;

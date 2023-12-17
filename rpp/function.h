@@ -17,8 +17,6 @@ struct Function<Words, R(Args...)> {
     using Parameters = List<Args...>;
     using Fn = R(Args...);
 
-    Function() = default;
-
     template<typename F>
         requires Same<Invoke_Result<F, Args...>, R>
     Function(F&& f) {
@@ -46,10 +44,6 @@ struct Function<Words, R(Args...)> {
 
     R operator()(Args... args) {
         return invoke(std::forward<Args>(args)...);
-    }
-
-    operator bool() const {
-        return vtable != null;
     }
 
 private:
@@ -131,17 +125,13 @@ template<Reflectable R, typename... Args>
 struct Measure<Function<R(Args...)>> {
     using Fn = R(Args...);
     static u64 measure(const Function<Fn>& function) {
+        Region_Scope(Rg);
         u64 length = 10;
-        if(function) {
-            Region_Scope(Rg);
-            length += String_View{Reflect<R>::name}.length();
-            length += 2;
-            if constexpr(sizeof...(Args) > 0)
-                length += (format_typename<Args, Mregion<Rg>>().length() + ...);
-            if constexpr(sizeof...(Args) > 1) length += 2 * (sizeof...(Args) - 1);
-        } else {
-            length += 4;
-        }
+        length += String_View{Reflect<R>::name}.length();
+        length += 2;
+        if constexpr(sizeof...(Args) > 0)
+            length += (format_typename<Args, Mregion<Rg>>().length() + ...);
+        if constexpr(sizeof...(Args) > 1) length += 2 * (sizeof...(Args) - 1);
         return length;
     }
 };
@@ -168,15 +158,11 @@ struct Write<O, Function<R(Args...)>> {
 
     static u64 write(String<O>& output, u64 idx, const Function<Fn>& function) {
         idx = output.write(idx, "Function{"_v);
-        if(function) {
-            idx = output.write(idx, String_View{Reflect<R>::name});
-            idx = output.write(idx, '(');
-            Type_Write<O, Args...> iterator{output, idx};
-            rpp::detail::list::Iter<Type_Write<O, Args...>, Indices>::apply(iterator);
-            idx = output.write(iterator.idx, ')');
-        } else {
-            idx = output.write(idx, "null"_v);
-        }
+        idx = output.write(idx, String_View{Reflect<R>::name});
+        idx = output.write(idx, '(');
+        Type_Write<O, Args...> iterator{output, idx};
+        rpp::detail::list::Iter<Type_Write<O, Args...>, Indices>::apply(iterator);
+        idx = output.write(iterator.idx, ')');
         return output.write(idx, '}');
     }
 };
