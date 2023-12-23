@@ -52,7 +52,6 @@
 
 #include <initializer_list>
 #include <source_location>
-#include <type_traits>
 #include <utility>
 
 #define null nullptr
@@ -101,6 +100,8 @@ f32 strtof(const char* str, char** endptr);
 } // namespace rpp
 
 #define RPP_BASE
+
+#include "utility.h"
 
 #include "reflect.h"
 

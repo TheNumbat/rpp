@@ -12,11 +12,10 @@ namespace rpp::AsyncIO {
 
 Async::Task<Opt<Vec<u8, Alloc>>> read(Thread::Pool<>& pool, String_View path_) {
 
-    // Async IO for normal files is a pain on linux.
     // TODO(max): io_uring
 
-    Region_Scope;
-    auto path = path_.terminate<Mregion>();
+    Region_Scope(R);
+    auto path = path_.terminate<Mregion<R>>();
 
     int fd = open(reinterpret_cast<const char*>(path.data()), O_RDONLY);
     if(fd == -1) {
@@ -43,11 +42,10 @@ Async::Task<Opt<Vec<u8, Alloc>>> read(Thread::Pool<>& pool, String_View path_) {
 
 Async::Task<bool> write(Thread::Pool<>& pool, String_View path_, Slice<u8> data) {
 
-    // Async IO for normal files is a pain on linux.
     // TODO(max): io_uring
 
-    Region_Scope;
-    auto path = path_.terminate<Mregion>();
+    Region_Scope(R);
+    auto path = path_.terminate<Mregion<R>>();
 
     int fd = open(reinterpret_cast<const char*>(path.data()), O_WRONLY | O_CREAT | O_TRUNC);
     if(fd == -1) {

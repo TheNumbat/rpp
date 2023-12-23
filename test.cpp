@@ -64,9 +64,6 @@ i32 main() {
 
     Range_Allocator<>::test();
 
-    Array<i32, 3> v{1, 2, 3};
-    String_View message = "foo"_v;
-
     [] {
         Region_Scope(R0);
         auto v0 = Vec<u8, Mregion<R0>>::make(Math::MB(2));

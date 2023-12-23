@@ -64,6 +64,19 @@ Utilities
 - Thread pool that schedules coroutines
 
 To-Do:
+- Release
+    - Refactor tests
+    - Refactor limits
+    - Require compiler version
+    - Update cmake (no werror)
+    - Update readme
+    - CI
+    - Change defines
+    - Try to delete type_traits/utility
+    - Pools
+    - Unify thread/async
+    - Remove std move/forward
+- Result<T,E> type
 - Thread pool
     - Priorities & CPU affinity
     - Work stealing
