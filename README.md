@@ -64,10 +64,11 @@ Utilities
 
 To-Do:
 - Release
+    - Refactor reflect a bit
+    - Pool Allocator & use for range allocator?
     - Refactor tests
-    - Update readme
     - CI
-    - Pool Allocator
+    - Update readme
 - Result<T,E> type
 - Thread pool
     - Priorities & CPU affinity
