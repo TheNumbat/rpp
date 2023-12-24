@@ -12,9 +12,9 @@ struct Stack {
     explicit Stack(u64 capacity) : data_(capacity) {
     }
 
-    template<typename... Ss>
-        requires All<T, Ss...> && Move_Constructable<T>
-    explicit Stack(Ss&&... init) : data_(std::move(init)...) {
+    template<typename... S>
+        requires All_Are<T, S...> && Move_Constructable<T>
+    explicit Stack(S&&... init) : data_(forward<S>(init)...) {
     }
 
     Stack(const Stack& src) = delete;
@@ -53,13 +53,13 @@ struct Stack {
     T& push(T&& value)
         requires Move_Constructable<T>
     {
-        return data_.push(std::move(value));
+        return data_.push(move(value));
     }
 
     template<typename... Args>
         requires Constructable<T, Args...>
     T& emplace(Args&&... args) {
-        return data_.emplace(std::forward<Args>(args)...);
+        return data_.emplace(forward<Args>(args)...);
     }
 
     void pop() {
@@ -96,13 +96,17 @@ private:
     friend struct Reflect<Stack>;
 };
 
+namespace detail {
+
 template<typename S, Allocator A>
-struct rpp::detail::Reflect<Stack<S, A>> {
+struct Reflect<Stack<S, A>> {
     using T = Stack<S, A>;
     static constexpr Literal name = "Stack";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
 };
+
+} // namespace detail
 
 namespace Format {
 

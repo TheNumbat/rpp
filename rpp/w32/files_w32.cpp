@@ -56,7 +56,7 @@ Opt<Vec<u8, Alloc>> read(String_View path) {
     }
 
     u64 size = static_cast<u64>(full_size.QuadPart);
-    assert(size <= UINT32_MAX);
+    assert(size <= RPP_UINT32_MAX);
 
     Vec<u8, Alloc> data(size);
     data.resize(size);
@@ -69,7 +69,7 @@ Opt<Vec<u8, Alloc>> read(String_View path) {
 
     CloseHandle(handle);
 
-    return Opt{std::move(data)};
+    return Opt{move(data)};
 }
 
 bool write(String_View path, Slice<u8> data) {
@@ -87,7 +87,7 @@ bool write(String_View path, Slice<u8> data) {
         return false;
     }
 
-    assert(data.length() <= UINT32_MAX);
+    assert(data.length() <= RPP_UINT32_MAX);
 
     if(WriteFile(handle, data.data(), static_cast<u32>(data.length()), null, null) == FALSE) {
         warn("Failed to write file %: %", path, Log::sys_error());

@@ -15,7 +15,7 @@ struct Storage {
     template<typename... Args>
         requires Constructable<T, Args...>
     explicit Storage(Args&&... args) {
-        new(value_) T{std::forward<Args>(args)...};
+        new(value_) T{forward<Args>(args)...};
     }
 
     ~Storage() = default;
@@ -37,7 +37,7 @@ struct Storage {
     template<typename... Args>
         requires Constructable<T, Args...>
     void construct(Args&&... args) {
-        new(value_) T{std::forward<Args>(args)...};
+        new(value_) T{forward<Args>(args)...};
     }
 
     void destruct() {
@@ -66,13 +66,17 @@ protected:
     friend struct Reflect<Storage>;
 };
 
+namespace detail {
+
 template<typename S>
-struct rpp::detail::Reflect<Storage<S>> {
+struct Reflect<Storage<S>> {
     using T = Storage<S>;
     static constexpr Literal name = "Storage";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value_)>;
 };
+
+} // namespace detail
 
 namespace Format {
 

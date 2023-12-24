@@ -21,7 +21,7 @@ Opt<Vec<u8, Alloc>> read(String_View path_) {
     off_t full_size = lseek(fd, 0, SEEK_END);
     lseek(fd, 0, SEEK_SET);
 
-    assert(full_size <= UINT32_MAX);
+    assert(full_size <= RPP_UINT32_MAX);
 
     Vec<u8, Alloc> data(static_cast<u64>(full_size));
     data.resize(static_cast<u64>(full_size));
@@ -32,7 +32,7 @@ Opt<Vec<u8, Alloc>> read(String_View path_) {
     }
 
     close(fd);
-    return Opt{std::move(data)};
+    return Opt{move(data)};
 }
 
 bool write(String_View path_, Slice<u8> data) {

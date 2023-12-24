@@ -14,13 +14,13 @@ struct Opt {
 
     explicit Opt(T&& value)
         requires Move_Constructable<T>
-        : value_(std::move(value)), ok_(true) {
+        : value_(move(value)), ok_(true) {
     }
 
     template<typename... Args>
     explicit Opt(Args&&... args)
         requires Constructable<T, Args...>
-        : value_(std::forward<Args>(args)...), ok_(true) {
+        : value_(forward<Args>(args)...), ok_(true) {
     }
 
     ~Opt() {
@@ -43,7 +43,7 @@ struct Opt {
         ok_ = src.ok_;
         src.ok_ = false;
         if(ok_) {
-            value_.construct(std::move(*src.value_));
+            value_.construct(move(*src.value_));
         }
     }
 
@@ -54,7 +54,7 @@ struct Opt {
         ok_ = src.ok_;
         src.ok_ = false;
         if(ok_) {
-            value_.construct(std::move(*src.value_));
+            value_.construct(move(*src.value_));
         }
         return *this;
     }
@@ -63,7 +63,7 @@ struct Opt {
         requires Move_Constructable<T>
     {
         this->~Opt();
-        value_.construct(std::move(value));
+        value_.construct(move(value));
         ok_ = true;
         return *this;
     }
@@ -114,13 +114,17 @@ protected:
     friend struct Reflect<Opt>;
 };
 
+namespace detail {
+
 template<typename O>
-struct rpp::detail::Reflect<Opt<O>> {
+struct Reflect<Opt<O>> {
     using T = Opt<O>;
     static constexpr Literal name = "Opt";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(ok_), FIELD(value_)>;
 };
+
+}; // namespace detail
 
 namespace Format {
 

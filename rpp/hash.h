@@ -5,9 +5,11 @@
 #error "Include base.h instead."
 #endif
 
+#define LOCATION_HASH (::rpp::hash_literal(__FILE__, __LINE__))
+
 namespace rpp {
 
-namespace Hash {
+namespace detail {
 
 constexpr u64 squirrel5(u64 at) {
     constexpr u64 BIT_NOISE1 = 0xA278032FB08BA40Dul;
@@ -28,70 +30,74 @@ constexpr u64 squirrel5(u64 at) {
     return at;
 }
 
-constexpr u64 combine(u64 h1, u64 h2) {
+constexpr u64 hash_combine(u64 h1, u64 h2) {
     return squirrel5(h1 + h2);
 }
 
-constexpr u64 primitive(char key) {
-    return squirrel5(static_cast<u64>(key));
-}
+template<typename K>
+struct Hash;
 
 template<Int I>
-constexpr u64 primitive(I key) {
-    return squirrel5(static_cast<u64>(key));
-}
-
-inline u64 primitive(f32 key) {
-    return primitive(static_cast<u64>(*reinterpret_cast<u32*>(&key)));
-}
-
-inline u64 primitive(f64 key) {
-    return squirrel5(*reinterpret_cast<u64*>(&key));
-}
-
-template<typename T>
-constexpr u64 primitive(T* key) {
-    return primitive(static_cast<u64>(reinterpret_cast<uintptr_t>(key)));
-}
-
-template<typename K>
-concept Primitive = requires(K k) {
-    { Hash::primitive(k) } -> Same<u64>;
-};
-
-} // namespace Hash
-
-template<typename K>
-struct Hasher;
-
-template<Hash::Primitive K>
-struct Hasher<K> {
-    static constexpr u64 hash(const K& key) {
-        return Hash::primitive(key);
+struct Hash<I> {
+    static constexpr u64 hash(I key) {
+        return squirrel5(static_cast<u64>(key));
     }
 };
 
+template<>
+struct Hash<char> {
+    static constexpr u64 hash(char key) {
+        return squirrel5(static_cast<u64>(key));
+    }
+};
+
+template<>
+struct Hash<f32> {
+    static u64 hash(f32 key) {
+        return squirrel5(static_cast<u64>(*reinterpret_cast<u32*>(&key)));
+    }
+};
+
+template<>
+struct Hash<f64> {
+    static u64 hash(f64 key) {
+        return squirrel5(*reinterpret_cast<u64*>(&key));
+    }
+};
+
+template<typename T>
+struct Hash<T*> {
+    static constexpr u64 hash(T* key) {
+        return squirrel5(static_cast<u64>(reinterpret_cast<uptr>(key)));
+    }
+};
+
+} // namespace detail
+
 template<typename K>
 concept Hashable = requires(K k) {
-    { Hasher<typename Decay<K>::type>::hash(k) } -> Same<u64>;
+    { detail::Hash<Decay<K>>::hash(k) } -> Same<u64>;
 };
 
 template<Hashable T>
 constexpr u64 hash(T&& value) {
-    return Hasher<typename Decay<T>::type>::hash(std::forward<T>(value));
+    return detail::Hash<Decay<T>>::hash(forward<T>(value));
 }
 
 template<Hashable T>
 constexpr u64 hash_nonzero(T&& value) {
-    return Hasher<typename Decay<T>::type>::hash(std::forward<T>(value)) | 1;
+    return detail::Hash<Decay<T>>::hash(forward<T>(value)) | 1;
 }
 
-#define LOCATION_HASH (::rpp::hash_literal(__FILE__, __LINE__))
+template<Hashable... Ts>
+constexpr u64 hash(Ts&&... values) {
+    return detail::squirrel5((hash(forward<Ts>(values)) + ...));
+}
 
 template<size_t N>
 consteval u64 hash_literal(const char (&literal)[N], u64 seed = 0) {
     for(size_t i = 0; i < N - 1; i++) {
-        seed = Hash::combine(seed, hash(literal[i]));
+        seed = detail::hash_combine(seed, hash(literal[i]));
     }
     return seed;
 }

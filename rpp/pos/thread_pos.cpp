@@ -1,6 +1,7 @@
 
 #include "../thread.h"
 
+#include <errno.h>
 #include <immintrin.h>
 #include <limits.h>
 #include <linux/futex.h>

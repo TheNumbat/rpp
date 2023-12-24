@@ -28,7 +28,7 @@ inline Opt<Pair<i64, String_View>> parse_i64(String_View input) {
         return {};
     }
     String_View rest = input.sub(end - start, input.length());
-    return Opt<Pair<i64, String_View>>{Pair{ret, std::move(rest)}};
+    return Opt<Pair<i64, String_View>>{Pair{ret, move(rest)}};
 }
 
 inline Opt<Pair<f32, String_View>> parse_f32(String_View input) {
@@ -41,7 +41,7 @@ inline Opt<Pair<f32, String_View>> parse_f32(String_View input) {
         return {};
     }
     String_View rest = input.sub(end - start, input.length());
-    return Opt<Pair<f32, String_View>>{Pair{ret, std::move(rest)}};
+    return Opt<Pair<f32, String_View>>{Pair{ret, move(rest)}};
 }
 
 inline Opt<Pair<String_View, String_View>> parse_string(String_View s) {
@@ -65,10 +65,10 @@ template<Enum E>
 Opt<Pair<E, String_View>> parse_enum(String_View s) {
     Opt<Pair<E, String_View>> ret = {};
     if(auto n = parse_string(s)) {
-        auto [name, rest] = std::move(*n);
+        auto [name, rest] = move(*n);
         iterate_enum<E>([&](const Literal& check, const E& check_value) {
             if(name == String_View{check}) {
-                ret = Opt<Pair<E, String_View>>{Pair<E, String_View>{check_value, std::move(rest)}};
+                ret = Opt<Pair<E, String_View>>{Pair<E, String_View>{check_value, move(rest)}};
             }
         });
     }

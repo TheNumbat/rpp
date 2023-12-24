@@ -16,14 +16,14 @@ struct Array {
         requires Default_Constructable<T>
     = default;
 
-    template<typename... Ss>
-        requires(sizeof...(Ss) == N) && All<T, Ss...>
-    explicit Array(Ss&&... init) : data_{std::forward<Ss>(init)...} {
+    template<typename... S>
+        requires Length<N, S...> && All_Are<T, S...>
+    explicit Array(S&&... init) : data_{forward<S>(init)...} {
     }
 
-    template<typename... Ss>
-        requires(sizeof...(Ss) == N) && All<T, Ss...> && Copy_Constructable<T>
-    explicit Array(const Ss&... init) : data_{T{init}...} {
+    template<typename... S>
+        requires Length<N, S...> && All_Are<T, S...> && Copy_Constructable<T>
+    explicit Array(const S&... init) : data_{T{init}...} {
     }
 
     ~Array() = default;
@@ -95,13 +95,17 @@ private:
     friend struct Reflect<Array>;
 };
 
+namespace detail {
+
 template<typename T, u64 N>
-struct rpp::detail::Reflect<Array<T, N>> {
+struct Reflect<Array<T, N>> {
     using underlying = T;
     static constexpr Literal name = "Array";
     static constexpr Kind kind = Kind::array_;
     static constexpr u64 length = N;
 };
+
+} // namespace detail
 
 namespace Format {
 

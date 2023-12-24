@@ -32,9 +32,9 @@ template<typename... Ts>
 struct Variant {
 
     template<typename V>
-        requires One<V, Ts...>
+        requires One_Is<V, Ts...>
     explicit Variant(V&& value) {
-        construct(std::forward<V>(value));
+        construct(forward<V>(value));
     }
     ~Variant() {
         destruct();
@@ -54,7 +54,7 @@ struct Variant {
             index_ = src.index_;
             Libc::memcpy(data_, src.data_, size);
         } else {
-            src.match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
+            src.match(Overload{[this](Ts& v) { this->construct(move(v)); }...});
         };
         src.index_ = INVALID;
     }
@@ -67,7 +67,7 @@ struct Variant {
             index_ = src.index_;
             Libc::memcpy(data_, src.data_, size);
         } else {
-            src.match(Overload{[this](Ts& v) { this->construct(std::move(v)); }...});
+            src.match(Overload{[this](Ts& v) { this->construct(move(v)); }...});
         }
         src.index_ = INVALID;
         return *this;
@@ -77,7 +77,7 @@ struct Variant {
         requires((Clone<Ts> || Trivial<Ts>) && ...)
     {
         return match([](const auto& v) {
-            using T = typename Decay<decltype(v)>::type;
+            using T = Decay<decltype(v)>;
             if constexpr(Clone<T>) {
                 return Variant{v.clone()};
             } else {
@@ -88,14 +88,14 @@ struct Variant {
     }
 
     template<typename F>
-        requires((Invocable<F, Ts&> && ...) && All_Same<Invoke_Result<F, Ts&>...>)
+        requires(Invocable<F, Ts&> && ...) && All_Same<Invoke_Result<F, Ts&>...>
     auto match(F&& f) {
-        return Accessors<false>::apply(std::forward<F>(f), data_, index_);
+        return Accessors<false>::apply(forward<F>(f), data_, index_);
     }
     template<typename F>
-        requires((Invocable<F, const Ts&> && ...) && All_Same<Invoke_Result<F, const Ts&>...>)
+        requires(Invocable<F, const Ts&> && ...) && All_Same<Invoke_Result<F, const Ts&>...>
     auto match(F&& f) const {
-        return Accessors<true>::apply(std::forward<F>(f), data_, index_);
+        return Accessors<true>::apply(forward<F>(f), data_, index_);
     }
 
     u8 index() const {
@@ -107,12 +107,12 @@ private:
     static constexpr u8 INVALID = 255;
 
     template<typename V>
-        requires One<V, Ts...>
+        requires One_Is<V, Ts...>
     void construct(V&& value) {
         static_assert(alignof(Variant<Ts...>) == align);
         static_assert(sizeof(Variant<Ts...>) == Math::align(size + 1, align));
-        new(data_) V{std::forward<V>(value)};
-        index_ = Index_Of<V, Ts...>::value;
+        new(data_) V{forward<V>(value)};
+        index_ = Index_Of<V, Ts...>;
     }
 
     void destruct() {
@@ -134,11 +134,11 @@ private:
     alignas(align) u8 data_[size] = {};
     u8 index_ = 0;
 
-    template<bool Const>
+    template<bool is_const>
     struct Accessors {
         template<typename T>
-        using Ref = typename If<Const, const T&, T&>::type;
-        using Data = typename If<Const, const u8, u8>::type;
+        using Ref = If<is_const, const T&, T&>;
+        using Data = If<is_const, const u8, u8>;
         static constexpr u64 N = sizeof...(Ts);
 
         // For variants with up to 8 cases, we branch on the index.
@@ -146,7 +146,7 @@ private:
 
 #define INDEX(n)                                                                                   \
     if constexpr(N > n)                                                                            \
-        if(index == n) return apply_one<F, Index<n, Ts...>>(std::forward<F>(f), data)
+        if(index == n) return apply_one<F, Choose<n, Ts...>>(forward<F>(f), data)
 
         template<typename F>
             requires(N <= 8)
@@ -158,36 +158,38 @@ private:
             INDEX(3);
             INDEX(2);
             INDEX(1);
-            return apply_one<F, Index<0, Ts...>>(std::forward<F>(f), data);
+            return apply_one<F, Choose<0, Ts...>>(forward<F>(f), data);
         }
 
 #undef INDEX
 
         template<typename F>
         static auto apply(F&& f, Data* data, u8 index) {
-            return apply_n(std::forward<F>(f), data, index, std::index_sequence_for<Ts...>{});
+            return apply_n(forward<F>(f), data, index, Index_Sequence_For<Ts...>{});
         }
 
     private:
         template<typename F, typename T>
         static auto apply_one(F&& f, Data* data) {
-            return std::forward<F>(f)(reinterpret_cast<Ref<T>>(*data));
+            return forward<F>(f)(reinterpret_cast<Ref<T>>(*data));
         }
         template<typename F, u64... Is>
-        static auto apply_n(F&& f, Data* data, u8 index, std::index_sequence<Is...>) {
-            using T = Index<0, Ts...>;
+        static auto apply_n(F&& f, Data* data, u8 index, Index_Sequence<Is...>) {
+            using T = Choose<0, Ts...>;
             using R = Invoke_Result<F, Ref<T>>;
             using Apply = R (*)(F&&, Data*);
-            static constexpr Apply table[] = {&apply_one<F, Index<Is, Ts...>>...};
-            return table[index](std::forward<F>(f), data);
+            static constexpr Apply table[] = {&apply_one<F, Choose<Is, Ts...>>...};
+            return table[index](forward<F>(f), data);
         }
     };
 
     friend struct Reflect<Variant<Ts...>>;
 };
 
+namespace detail {
+
 template<Literal N, typename NT>
-struct rpp::detail::Reflect<Named<N, NT>> {
+struct Reflect<Named<N, NT>> {
     using T = Named<N, NT>;
     static constexpr Literal name = N;
     static constexpr Kind kind = Kind::record_;
@@ -195,12 +197,14 @@ struct rpp::detail::Reflect<Named<N, NT>> {
 };
 
 template<typename... Ts>
-struct rpp::detail::Reflect<Variant<Ts...>> {
+struct Reflect<Variant<Ts...>> {
     using T = Variant<Ts...>;
     static constexpr Literal name = "Variant";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(index_)>;
 };
+
+} // namespace detail
 
 namespace Format {
 

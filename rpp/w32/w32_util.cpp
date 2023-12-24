@@ -1,7 +1,6 @@
 
 #include "w32_util.h"
 
-#include <cstdio>
 #include <windows.h>
 
 namespace rpp {
@@ -43,9 +42,9 @@ String_View ucs2_to_utf8(const wchar_t* ucs2, int ucs2_len) {
 String_View basic_win32_error(u32 err) {
 
     constexpr int buffer_size = 64;
-    static thread_local char buffer[buffer_size];
+    static thread_local u8 buffer[buffer_size];
 
-    int written = std::snprintf(buffer, buffer_size, "Win32 Error: %u", err);
+    int written = Libc::snprintf(buffer, buffer_size, "Win32 Error: %u", err);
     assert(written > 0 && written + 1 <= buffer_size);
 
     return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};

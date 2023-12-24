@@ -2,10 +2,9 @@
 #include "../base.h"
 #include "../log_callback.h"
 
-#include <csignal>
-#include <cstdio>
-#include <cstring>
-#include <ctime>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
 
 #ifdef OS_WINDOWS
 #include "../w32/w32_util.h"
@@ -14,6 +13,7 @@
 
 #ifdef OS_LINUX
 #include <errno.h>
+#include <signal.h>
 #endif
 
 namespace rpp {
@@ -86,33 +86,33 @@ String_View sys_error() {
 }
 
 void debug_break() {
-    std::raise(SIGTRAP);
+    ::raise(SIGTRAP);
 }
 
 #endif
 
-static_assert(sizeof(std::time_t) == sizeof(Time));
-static_assert(alignof(std::time_t) <= alignof(Time));
+static_assert(sizeof(::time_t) == sizeof(Time));
+static_assert(alignof(::time_t) <= alignof(Time));
 
 Time sys_time() {
-    return std::time(null);
+    return ::time(null);
 }
 
 String_View sys_time_string(Time timestamp_) {
 
-    std::time_t timestamp = static_cast<std::time_t>(timestamp_);
+    ::time_t timestamp = static_cast<::time_t>(timestamp_);
 
     constexpr u64 buffer_size = 64;
     static thread_local char buffer[buffer_size];
 
-    std::tm tm_info;
+    ::tm tm_info;
 #ifdef OS_WINDOWS
     localtime_s(&tm_info, &timestamp);
 #else
     localtime_r(&timestamp, &tm_info);
 #endif
 
-    size_t written = std::strftime(buffer, buffer_size, "[%H:%M:%S]", &tm_info);
+    size_t written = ::strftime(buffer, buffer_size, "[%H:%M:%S]", &tm_info);
     assert(written > 0 && written + 1 <= buffer_size);
 
     return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};
@@ -126,29 +126,28 @@ void output(Level level, const Location& loc, String_View msg) {
     switch(level) {
     case Level::info: {
         level_str = "info";
-        format_str = "%.*s [%s/%zu] [%.*s:%zu:%zu]: %*s%.*s\n";
+        format_str = "%.*s [%s/%zu] [%.*s:%zu]: %*s%.*s\n";
     } break;
     case Level::warn: {
         level_str = "warn";
-        format_str = "\033[0;31m%.*s [%s/%zu] [%.*s:%zu:%zu]: %*s%.*s\033[0m\n";
+        format_str = "\033[0;31m%.*s [%s/%zu] [%.*s:%zu]: %*s%.*s\033[0m\n";
     } break;
     case Level::fatal: {
         level_str = "fatal";
-        format_str = "\033[0;31m%.*s [%s/%zu] [%.*s:%zu:%zu]: %*s%.*s\033[0m\n";
+        format_str = "\033[0;31m%.*s [%s/%zu] [%.*s:%zu]: %*s%.*s\033[0m\n";
     } break;
     default: UNREACHABLE;
     }
 
     Thread::Id thread = Thread::this_id();
-    std::time_t timer = std::time(null);
+    ::time_t timer = ::time(null);
 
     Thread::Lock lock(g_log_data.lock);
 
     String_View time = sys_time_string(timer);
 
     printf(format_str, time.length(), time.data(), level_str, thread, loc.file.length(),
-           loc.file.data(), loc.line, loc.column, g_log_indent * INDENT_SIZE, "", msg.length(),
-           msg.data());
+           loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "", msg.length(), msg.data());
     fflush(stdout);
 
     for(auto& [_, callback] : g_log_data.callbacks) {
@@ -157,8 +156,8 @@ void output(Level level, const Location& loc, String_View msg) {
 
     if(g_log_data.file) {
         fprintf(g_log_data.file, format_str, time.length(), time.data(), level_str, thread,
-                loc.file.length(), loc.file.data(), loc.line, loc.column,
-                g_log_indent * INDENT_SIZE, "", msg.length(), msg.data());
+                loc.file.length(), loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "",
+                msg.length(), msg.data());
         fflush(g_log_data.file);
     }
 }
@@ -175,7 +174,7 @@ Scope::~Scope() {
 Token subscribe(Function<void(Level, Thread::Id, Time, Location, String_View)> f) {
     Thread::Lock lock(g_log_data.lock);
     Token t = g_log_data.next++;
-    g_log_data.callbacks.insert(t, std::move(f));
+    g_log_data.callbacks.insert(t, move(f));
     return t;
 }
 

@@ -29,24 +29,24 @@ struct Vecs {
     Vec<i32> i;
     Vec<u32> u;
 };
-namespace rpp {
+namespace rpp::detail {
 template<>
-struct rpp::detail::Reflect<Ints> {
+struct Reflect<Ints> {
     using T = Ints;
     static constexpr Literal name = "Ints";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
 };
 template<>
-struct rpp::detail::Reflect<Vecs> {
+struct Reflect<Vecs> {
     using T = Vecs;
     static constexpr Literal name = "Vecs";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
 };
-} // namespace rpp
+} // namespace rpp::detail
 
-auto lots_of_jobs(Thread::Pool<>& pool, u64 depth) -> Async::Task<u64> {
+auto lots_of_jobs(Async::Pool<>& pool, u64 depth) -> Async::Task<u64> {
     if(depth == 0) {
         co_return 1;
     }
@@ -127,12 +127,12 @@ i32 main() {
         }
 
         String_View sv2 = sv;
-        String_View sv3 = std::move(sv2);
+        String_View sv3 = move(sv2);
         String_View sv4 = s.view();
         String s2 = sv3.string();
 
         String s3 = s.clone();
-        String s4 = std::move(s3);
+        String s4 = move(s3);
 
         (void)s4;
         (void)sv4;
@@ -168,12 +168,12 @@ i32 main() {
 
         Pair<SV, SV> p1;
         Pair<SV, SV> e{"Hello"_v, "World"_v};
-        Pair<SV, SV> e2 = std::move(e);
+        Pair<SV, SV> e2 = move(e);
         Pair<SV, SV> p2 = p1.clone();
         (void)e2;
         (void)p2;
 
-        Pair<i32, i32> p3 = std::move(p);
+        Pair<i32, i32> p3 = move(p);
         assert(p3.first == 1 && p3.second == 2);
 
         Pair<i32, i32> p4 = p3;
@@ -215,7 +215,7 @@ i32 main() {
         Tuple<i32, i32> t4 = t2.clone();
         assert(t4.get<0>() == 1);
 
-        Tuple<i32, i32> t5 = std::move(t4);
+        Tuple<i32, i32> t5 = move(t4);
         assert(t5.get<0>() == 1);
 
         Tuple<i32, i32> t6 = t5;
@@ -233,13 +233,13 @@ i32 main() {
         Tuple<i32, SV, String<>> t7{1, "Hello"_v, "World"_v.string()};
 
         Tuple<i32, SV, String<>> t8 = t7.clone();
-        Tuple<i32, SV, String<>> t9 = std::move(t8);
+        Tuple<i32, SV, String<>> t9 = move(t8);
 
         assert(t9.get<0>() == 1);
         assert(t9.get<1>() == "Hello"_v);
         assert(t9.get<2>() == "World"_v.string());
 
-        auto [g, h, i] = std::move(t9);
+        auto [g, h, i] = move(t9);
         info("%", t9.get<2>());
         assert(g == 1 && h == "Hello"_v && i == "World"_v.string());
 
@@ -254,7 +254,7 @@ i32 main() {
         }
         {
             Variant<String<>> v{"Hello"_v.string()};
-            auto s = std::move(v);
+            auto s = move(v);
         }
 
         static_assert(alignof(i32) == 4);
@@ -282,23 +282,23 @@ i32 main() {
 
         Variant<i32, SV> v3 = v2.clone();
         assert(v3.index() == 1);
-        Variant<i32, SV> v4 = std::move(v3);
+        Variant<i32, SV> v4 = move(v3);
         assert(v4.index() == 1);
 
         { //
             Variant<i32, String<>> v5{"Hello"_v.string()};
             Variant<i32, String<>> v6 = v5.clone();
-            Variant<i32, String<>> v7 = std::move(v6);
+            Variant<i32, String<>> v7 = move(v6);
 
             Variant<i32, String<>> v8{1};
             Variant<i32, String<>> v9 = v8.clone();
-            Variant<i32, String<>> v10 = std::move(v9);
+            Variant<i32, String<>> v10 = move(v9);
         }
 
         Variant<Named<"1", i32>, Named<"2", i32>> v11{Named<"1", i32>{1}};
 
         v11.match([](const auto& i) {
-            info("variant has %: %", String_View{Decay<decltype(i)>::type::name}, i);
+            info("variant has %: %", String_View{Decay<decltype(i)>::name}, i);
         });
     }();
 
@@ -313,7 +313,7 @@ i32 main() {
         Storage<String<>> s2{"World"_v.string()};
 
         Storage<String<>> s3{s2->clone()};
-        Storage<String<>> s4{std::move(*s3)};
+        Storage<String<>> s4{move(*s3)};
 
         s2.destruct();
         s4.destruct();
@@ -335,13 +335,13 @@ i32 main() {
         assert(o);
 
         Opt<i32> o2 = o;
-        Opt<i32> o3 = std::move(o2);
+        Opt<i32> o3 = move(o2);
 
         Opt<SV> os{"Hello"_v};
         Opt<SV> os2 = os.clone();
-        Opt<SV> os3 = std::move(os2);
+        Opt<SV> os3 = move(os2);
 
-        SV vv = std::move(*os3);
+        SV vv = move(*os3);
         assert(vv == "Hello"_v);
 
         assert(os->length() == 5);
@@ -381,7 +381,7 @@ i32 main() {
             assert(i == cc[id++]);
         }
 
-        Array<i32, 4> d = std::move(c);
+        Array<i32, 4> d = move(c);
         assert(d[2] == 3);
 
         Array<SV, 3> e{"Hello"_v, "World"_v, "!"_v};
@@ -427,7 +427,7 @@ i32 main() {
         assert(v.length() == 2);
 
         Vec<i32> v2 = v.clone();
-        Vec<i32> v3 = std::move(v2);
+        Vec<i32> v3 = move(v2);
 
         Slice<i32> sl2 = v3.slice();
         assert(sl2.length() == 2);
@@ -436,7 +436,7 @@ i32 main() {
 
         Vec<SV> sv{"Hello"_v, "World"_v};
         Vec<SV> sv2 = sv.clone();
-        Vec<SV> sv3 = std::move(sv2);
+        Vec<SV> sv3 = move(sv2);
 
         assert(sv3.length() == 2);
 
@@ -444,7 +444,7 @@ i32 main() {
         assert(s.length() == 2);
 
         Slice<i32> s2 = s;
-        Slice<i32> s3 = std::move(s2);
+        Slice<i32> s3 = move(s2);
 
         Slice<SV> s4{sv3};
         assert(s4.length() == 2);
@@ -482,7 +482,7 @@ i32 main() {
         Box<i32> b2;
         assert(!b2);
 
-        b2 = std::move(b);
+        b2 = move(b);
         assert(!b && b2 && *b2 == 5);
 
         Box<i32> b3 = b2.clone();
@@ -536,13 +536,13 @@ i32 main() {
         assert(v.length() == 2);
 
         Stack<i32> v2 = v.clone();
-        Stack<i32> v3 = std::move(v2);
+        Stack<i32> v3 = move(v2);
 
         assert(v3.length() == 2);
 
         Stack<SV> sv{"Hello"_v, "World"_v};
         Stack<SV> sv2 = sv.clone();
-        Stack<SV> sv3 = std::move(sv2);
+        Stack<SV> sv3 = move(sv2);
 
         assert(sv3.length() == 2);
 
@@ -597,13 +597,13 @@ i32 main() {
         assert(v.front() == 2);
 
         Queue<i32> v2 = v.clone();
-        Queue<i32> v3 = std::move(v2);
+        Queue<i32> v3 = move(v2);
 
         assert(v3.length() == 2);
 
         Queue<SV> sv{"Hello"_v, "World"_v};
         Queue<SV> sv2 = sv.clone();
-        Queue<SV> sv3 = std::move(sv2);
+        Queue<SV> sv3 = move(sv2);
 
         assert(sv3.length() == 2);
 
@@ -659,13 +659,13 @@ i32 main() {
         assert(v.top() == 1);
 
         Heap<i32> v2 = v.clone();
-        Heap<i32> v3 = std::move(v2);
+        Heap<i32> v3 = move(v2);
 
         assert(v3.length() == 3);
 
         Heap<SV> sv{"Hello"_v, "World"_v};
         Heap<SV> sv2 = sv.clone();
-        Heap<SV> sv3 = std::move(sv2);
+        Heap<SV> sv3 = move(sv2);
 
         assert(sv3.length() == 2);
 
@@ -737,7 +737,7 @@ i32 main() {
         assert(v.get(3) == 3);
 
         Map<i32, i32> v2 = v.clone();
-        Map<i32, i32> v3 = std::move(v2);
+        Map<i32, i32> v3 = move(v2);
 
         assert(v3.length() == 2);
 
@@ -747,7 +747,7 @@ i32 main() {
         Map<SV, SV> sv{Pair{"Hello"_v, "World"_v}};
 
         Map<SV, SV> sv2 = sv.clone();
-        Map<SV, SV> sv3 = std::move(sv2);
+        Map<SV, SV> sv3 = move(sv2);
 
         assert(sv3.length() == 1);
 
@@ -770,7 +770,7 @@ i32 main() {
         assert(r1 && r2 && *r1 == 5 && *r2 == 5);
         assert(r1.references() == 2 && r2.references() == 2);
 
-        Rc<i32> r3 = std::move(r2);
+        Rc<i32> r3 = move(r2);
         assert(r1 && r3 && *r1 == 5 && *r3 == 5);
         assert(r1.references() == 2 && r3.references() == 2);
         assert(!r2 && r2.references() == 0);
@@ -789,7 +789,7 @@ i32 main() {
         assert(r1 && r2 && *r1 == 5 && *r2 == 5);
         assert(r1.references() == 2 && r2.references() == 2);
 
-        Arc<i32> r3 = std::move(r2);
+        Arc<i32> r3 = move(r2);
         assert(r1 && r3 && *r1 == 5 && *r3 == 5);
         assert(r1.references() == 2 && r3.references() == 2);
         assert(!r2 && r2.references() == 0);
@@ -803,7 +803,7 @@ i32 main() {
 
         f();
 
-        Function<void()> f2 = std::move(f);
+        Function<void()> f2 = move(f);
 
         f2();
 
@@ -816,12 +816,12 @@ i32 main() {
         f3();
 
         Function<void()> f4{
-            [test = std::move(test)]() { info("Hello function 2: %", test); },
+            [test = move(test)]() { info("Hello function 2: %", test); },
         };
 
         f4();
 
-        Function<void()> f5 = std::move(f4);
+        Function<void()> f5 = move(f4);
 
         f5();
 
@@ -847,7 +847,7 @@ i32 main() {
 
         String_View s = "Hello"_v;
         String_View s2 = "World"_v;
-        f8(s, s, s, std::move(s2));
+        f8(s, s, s, move(s2));
 
         struct Large {
             char data[32];
@@ -1148,7 +1148,7 @@ i32 main() {
 
     // Thread pool
     [] {
-        Thread::Pool pool;
+        Async::Pool pool;
 
         for(u64 i = 0; i < 100; i++) {
             assert(lots_of_jobs(pool, 10).block() == 1024);
@@ -1156,7 +1156,7 @@ i32 main() {
     }();
 
     [] {
-        Thread::Pool pool;
+        Async::Pool pool;
 
         {
             auto job = [&pool]() -> Async::Task<i32> {
@@ -1180,7 +1180,7 @@ i32 main() {
         {
             auto job = [&pool_ = pool]() -> Async::Task<i32> {
                 // pool will be gone after the first suspend, so we need to copy it
-                Thread::Pool<>& pool = pool_;
+                Async::Pool<>& pool = pool_;
                 co_await pool.suspend();
                 info("Hello from coroutine 4.1 on thread pool");
                 co_await pool.suspend();
@@ -1194,7 +1194,7 @@ i32 main() {
         {
             auto job = [&pool_ = pool]() -> Async::Task<i32> {
                 // pool will be gone after the first suspend, so we need to copy it
-                Thread::Pool<>& pool = pool_;
+                Async::Pool<>& pool = pool_;
                 co_await pool.suspend();
                 info("Hello from coroutine 3.1 on thread pool");
                 co_await pool.suspend();
@@ -1213,7 +1213,7 @@ i32 main() {
 
     // Scheduling
     [] {
-        Thread::Pool pool;
+        Async::Pool pool;
 
         {
             auto job = [&pool_ = pool](i32 ms) -> Async::Task<i32> {
@@ -1273,12 +1273,12 @@ i32 main() {
 
     // Async IO
     [] {
-        Thread::Pool pool;
+        Async::Pool pool;
         {
             auto job = [&pool_ = pool]() -> Async::Task<void> {
                 auto& pool = pool_;
                 info("coWaiting 100ms.");
-                co_await AsyncIO::wait(pool, 100);
+                co_await Async::wait(pool, 100);
                 info("coWaited 100ms.");
                 co_return;
             };
@@ -1288,23 +1288,23 @@ i32 main() {
         }
     }();
     [] {
-        Thread::Pool pool;
+        Async::Pool pool;
         {
             Vec<u8> large(4096 + 1);
             large.resize(4096 + 1);
-            AsyncIO::write(pool, "large_file"_v, Slice<u8>{large}).block();
+            Async::write(pool, "large_file"_v, Slice<u8>{large}).block();
         }
         {
-            auto file = AsyncIO::read(pool, "large_file"_v).block();
+            auto file = Async::read(pool, "large_file"_v).block();
             info("Read file: %", file->length());
         }
         {
-            auto job = [&pool_ = pool]() -> Async::Task<Vec<u8, AsyncIO::Alloc>> {
+            auto job = [&pool_ = pool]() -> Async::Task<Vec<u8, Files::Alloc>> {
                 auto& pool = pool_;
                 info("coReading file.");
-                auto file = co_await AsyncIO::read(pool, "large_file"_v);
+                auto file = co_await Async::read(pool, "large_file"_v);
                 info("coRead file: %", file->length());
-                co_return std::move(*file); // dies access violation resuming coroutine
+                co_return move(*file); // dies access violation resuming coroutine
             };
 
             auto file = job().block();

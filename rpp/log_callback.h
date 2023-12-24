@@ -15,7 +15,7 @@ void unsubscribe(Token token);
 
 template<Invocable<Level, Thread::Id, Time, Location, String_View> F>
 Token subscribe(F&& f) {
-    return subscribe(Function<Callback>{std::forward<F>(f)});
+    return subscribe(Function<Callback>{forward<F>(f)});
 }
 
 } // namespace Log

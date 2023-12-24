@@ -62,7 +62,7 @@ inline const u8& String_View::operator[](u64 idx) const {
     return data_[idx];
 }
 
-inline String_View String_View::file_suffix() const {
+constexpr String_View String_View::file_suffix() const {
 
     if(length_ == 0) return String_View{};
 
@@ -78,7 +78,7 @@ inline String_View String_View::file_suffix() const {
     return String_View{data_ + i + offset, length_ - i - offset};
 }
 
-inline String_View String_View::file_extension() const {
+constexpr String_View String_View::file_extension() const {
 
     if(length_ == 0) return String_View{};
 
@@ -94,7 +94,7 @@ inline String_View String_View::file_extension() const {
     return String_View{data_ + i + offset, length_ - i - offset};
 }
 
-inline String_View String_View::remove_file_suffix() const {
+constexpr String_View String_View::remove_file_suffix() const {
 
     if(length_ == 0) return String_View{};
 

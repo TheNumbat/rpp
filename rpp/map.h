@@ -17,7 +17,7 @@ struct Map_Slot {
     Map_Slot() = default;
 
     explicit Map_Slot(K&& key, V&& value) : hash(hash_nonzero(key)) {
-        data.construct(std::move(key), std::move(value));
+        data.construct(move(key), move(value));
     }
     ~Map_Slot() {
         if constexpr(Must_Destruct<Pair<K, V>>) {
@@ -32,13 +32,13 @@ struct Map_Slot {
     Map_Slot(Map_Slot&& src) {
         hash = src.hash;
         src.hash = EMPTY;
-        if(hash != EMPTY) data.construct(std::move(*src.data));
+        if(hash != EMPTY) data.construct(move(*src.data));
     }
     Map_Slot& operator=(Map_Slot&& src) {
         this->~Map_Slot();
         hash = src.hash;
         src.hash = EMPTY;
-        if(hash != EMPTY) data.construct(std::move(*src.data));
+        if(hash != EMPTY) data.construct(move(*src.data));
         return *this;
     }
 
@@ -80,9 +80,9 @@ struct Map {
     }
 
     template<typename... Ss>
-        requires All<Pair<K, V>, Ss...> && Move_Constructable<Pair<K, V>>
+        requires All_Are<Pair<K, V>, Ss...> && Move_Constructable<Pair<K, V>>
     explicit Map(Ss&&... init) {
-        (insert(std::move(init.first), std::move(init.second)), ...);
+        (insert(move(init.first), move(init.second)), ...);
     }
 
     Map(const Map& src) = delete;
@@ -157,7 +157,7 @@ struct Map {
         shift_ = Math::ctlz(capacity_) + 1;
 
         for(u64 i = 0; i < old_capacity; i++) {
-            if(old_data[i].hash != Slot::EMPTY) insert_slot(std::move(old_data[i]));
+            if(old_data[i].hash != Slot::EMPTY) insert_slot(move(old_data[i]));
         }
         A::free(old_data);
     }
@@ -197,19 +197,19 @@ struct Map {
     V& insert(K&& key, const V& value)
         requires Copy_Constructable<V>
     {
-        return insert(std::move(key), V{value});
+        return insert(move(key), V{value});
     }
 
     V& insert(const K& key, V&& value)
         requires Copy_Constructable<K>
     {
-        return insert(K{key}, std::move(value));
+        return insert(K{key}, move(value));
     }
 
     V& insert(K&& key, V&& value) {
         if(full()) grow();
-        Slot slot{std::move(key), std::move(value)};
-        Slot& placed = insert_slot(std::move(slot));
+        Slot slot{move(key), move(value)};
+        Slot& placed = insert_slot(move(slot));
         length_ += 1;
         return placed.data->second;
     }
@@ -218,8 +218,8 @@ struct Map {
         requires Constructable<V, Args...>
     V& emplace(K&& key, Args&&... args) {
         if(full()) grow();
-        Slot slot{std::move(key), V{std::forward<Args>(args)...}};
-        Slot& placed = insert_slot(std::move(slot));
+        Slot slot{move(key), V{forward<Args>(args)...}};
+        Slot& placed = insert_slot(move(slot));
         length_ += 1;
         return placed.data->second;
     }
@@ -324,12 +324,12 @@ struct Map {
         if(entry) {
             return **entry;
         }
-        return insert(std::move(key), V{});
+        return insert(move(key), V{});
     }
 
-    template<bool const_>
+    template<bool is_const>
     struct Iterator {
-        using M = typename If<const_, const Map, Map>::type;
+        using M = If<is_const, const Map, Map>;
 
         Iterator operator++(int) {
             Iterator i = *this;
@@ -344,7 +344,7 @@ struct Map {
         }
 
         Pair<const K, V>& operator*() const
-            requires(!const_)
+            requires(!is_const)
         {
             return reinterpret_cast<Pair<const K, V>&>(*map_.data_[count_].data);
         }
@@ -353,7 +353,7 @@ struct Map {
         }
 
         Pair<const K, V>* operator->() const
-            requires(!const_)
+            requires(!is_const)
         {
             return reinterpret_cast<Pair<const K, V>*>(&*map_.data_[count_].data);
         }
@@ -402,11 +402,11 @@ private:
         for(;;) {
             u64 hash = data_[idx].hash;
             if(hash == Slot::EMPTY) {
-                data_[idx] = std::move(slot);
+                data_[idx] = move(slot);
                 return placement ? *placement : data_[idx];
             }
             if(hash == slot.hash && data_[idx].data->first == slot.data->first) {
-                data_[idx] = std::move(slot);
+                data_[idx] = move(slot);
                 return data_[idx];
             }
             u64 hashidx = hash >> shift_;
@@ -428,7 +428,7 @@ private:
             if(nexthash_ == Slot::EMPTY) return;
             u64 next_ideal = nexthash_ >> shift_;
             if(next == next_ideal) return;
-            data_[idx] = std::move(data_[next]);
+            data_[idx] = move(data_[next]);
             idx = next;
         }
     }
@@ -463,22 +463,26 @@ private:
     friend struct Iterator;
 };
 
+namespace detail {
+
 template<Key K, typename V>
-struct rpp::detail::Reflect<detail::Map_Slot<K, V>> {
-    using T = detail::Map_Slot<K, V>;
+struct Reflect<Map_Slot<K, V>> {
+    using T = Map_Slot<K, V>;
     static constexpr Literal name = "Map_Slot";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(hash), FIELD(data)>;
 };
 
 template<Key K, typename V, Allocator A>
-struct rpp::detail::Reflect<Map<K, V, A>> {
+struct Reflect<Map<K, V, A>> {
     using T = Map<K, V, A>;
     static constexpr Literal name = "Map";
     static constexpr Kind kind = Kind::record_;
     using members =
         List<FIELD(data_), FIELD(capacity_), FIELD(length_), FIELD(usable_), FIELD(shift_)>;
 };
+
+} // namespace detail
 
 namespace Format {
 

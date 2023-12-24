@@ -34,7 +34,7 @@ struct Rc {
         requires Constructable<T, Args...>
     explicit Rc(Args&&... args) {
         data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(data_) Data{1, T{std::forward<Args>(args)...}};
+        new(data_) Data{1, T{forward<Args>(args)...}};
     }
 
     Rc(const Rc& src) = delete;
@@ -117,7 +117,7 @@ struct Arc {
         requires Constructable<T, Args...>
     explicit Arc(Args&&... args) {
         data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(data_) Data{Thread::Atomic{1}, T{std::forward<Args>(args)...}};
+        new(data_) Data{Thread::Atomic{1}, T{forward<Args>(args)...}};
     }
 
     static Arc make()
@@ -195,16 +195,18 @@ private:
     friend struct Reflect<Arc<T>>;
 };
 
+namespace detail {
+
 template<typename R>
-struct rpp::detail::Reflect<detail::Rc_Data<R>> {
-    using T = detail::Rc_Data<R>;
+struct Reflect<Rc_Data<R>> {
+    using T = Rc_Data<R>;
     static constexpr Literal name = "Rc_Data";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value), FIELD(references)>;
 };
 
 template<typename R>
-struct rpp::detail::Reflect<Rc<R>> {
+struct Reflect<Rc<R>> {
     using T = Rc<R>;
     static constexpr Literal name = "Rc";
     static constexpr Kind kind = Kind::record_;
@@ -212,20 +214,22 @@ struct rpp::detail::Reflect<Rc<R>> {
 };
 
 template<typename R>
-struct rpp::detail::Reflect<detail::Arc_Data<R>> {
-    using T = detail::Arc_Data<R>;
+struct Reflect<Arc_Data<R>> {
+    using T = Arc_Data<R>;
     static constexpr Literal name = "Arc_Data";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value), FIELD(references)>;
 };
 
 template<typename R>
-struct rpp::detail::Reflect<Arc<R>> {
+struct Reflect<Arc<R>> {
     using T = Arc<R>;
     static constexpr Literal name = "Arc";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
 };
+
+} // namespace detail
 
 namespace Format {
 

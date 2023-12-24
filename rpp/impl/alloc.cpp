@@ -5,15 +5,18 @@
 #include <stdlib.h>
 
 #ifdef COMPILER_MSVC
-void* operator new(std::size_t, std::align_val_t, void* ptr) noexcept {
+namespace std {
+enum class align_val_t : rpp::u64 {};
+}
+void* operator new(rpp::u64, std::align_val_t align, void* ptr) noexcept {
     return ptr;
 }
-void* operator new[](std::size_t, std::align_val_t, void* ptr) noexcept {
+void* operator new[](rpp::u64, std::align_val_t align, void* ptr) noexcept {
     return ptr;
 }
-void operator delete(void*, std::align_val_t, void*) noexcept {
+void operator delete(void*, std::align_val_t align, void* ptr) noexcept {
 }
-void operator delete[](void*, std::align_val_t, void*) noexcept {
+void operator delete[](void*, std::align_val_t align, void* ptr) noexcept {
 }
 #endif
 

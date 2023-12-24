@@ -22,9 +22,7 @@ struct VecN_base;
 
 template<typename T, u64 N>
 using Vect_Base =
-    typename If<N == 2, Vec2_base<T>,
-                typename If<N == 3, Vec3_base<T>,
-                            typename If<N == 4, Vec4_base<T>, VecN_base<T, N>>::type>::type>::type;
+    If<N == 2, Vec2_base<T>, If<N == 3, Vec3_base<T>, If<N == 4, Vec4_base<T>, VecN_base<T, N>>>>;
 
 template<Trivial T, u64 N>
 struct Vect : Vect_Base<T, N> {
@@ -60,7 +58,7 @@ struct Vect : Vect_Base<T, N> {
     }
 
     template<typename... S>
-        requires All<T, S...> && (sizeof...(S) == N)
+        requires All_Are<T, S...> && Length<N, S...>
     constexpr explicit Vect(S... args) : Base{args...} {
     }
 
@@ -566,7 +564,7 @@ struct Mat4 {
     }
 
     template<typename... Ts>
-        requires Length<16, Ts...> && All<f32, Ts...>
+        requires Length<16, Ts...> && All_Are<f32, Ts...>
     explicit Mat4(Ts... args) : data{args...} {
     }
 
@@ -875,135 +873,6 @@ Math::Vect<T, N> operator/(T s, Math::Vect<T, N> v) {
     }
 }
 
-template<>
-struct rpp::detail::Reflect<Math::Vec2> {
-    using T = Math::Vec2;
-    static constexpr Literal name = "Vec2";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Vec3> {
-    using T = Math::Vec3;
-    static constexpr Literal name = "Vec3";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Vec4> {
-    using T = Math::Vec4;
-    static constexpr Literal name = "Vec4";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Vec2i> {
-    using T = Math::Vec2i;
-    static constexpr Literal name = "Vec2i";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Vec3i> {
-    using T = Math::Vec3i;
-    static constexpr Literal name = "Vec3i";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Vec4i> {
-    using T = Math::Vec4i;
-    static constexpr Literal name = "Vec4i";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Vec2u> {
-    using T = Math::Vec2u;
-    static constexpr Literal name = "Vec2u";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Vec3u> {
-    using T = Math::Vec3u;
-    static constexpr Literal name = "Vec3u";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Vec4u> {
-    using T = Math::Vec4u;
-    static constexpr Literal name = "Vec4u";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
-};
-
-template<u64 N>
-struct rpp::detail::Reflect<Math::VecN<N>> {
-    using T = Math::VecN<N>;
-    static constexpr Literal name = "VecN";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data)>;
-};
-
-template<u64 N>
-struct rpp::detail::Reflect<Math::VecNi<N>> {
-    using T = Math::VecNi<N>;
-    static constexpr Literal name = "VecNi";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data)>;
-};
-
-template<u64 N>
-struct rpp::detail::Reflect<Math::VecNu<N>> {
-    using T = Math::VecNu<N>;
-    static constexpr Literal name = "VecNu";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Mat4> {
-    using T = Math::Mat4;
-    static constexpr Literal name = "Mat4";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(columns)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::Quat> {
-    using T = Math::Quat;
-    static constexpr Literal name = "Quat";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data)>;
-};
-
-template<>
-struct rpp::detail::Reflect<Math::BBox> {
-    using T = Math::BBox;
-    static constexpr Literal name = "BBox";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(min), FIELD(max)>;
-};
-
-template<typename T, u64 N>
-struct Hasher<Math::Vect<T, N>> {
-    static u64 hash(const Math::Vect<T, N>& v) {
-        u64 h = 0;
-        for(u64 i = 0; i < N; i++) h = combine(h, rpp::hash(v[i]));
-        return h;
-    }
-};
-
 using Math::Vec2;
 using Math::Vec3;
 using Math::Vec4;
@@ -1022,6 +891,139 @@ using Math::VecNu;
 using Math::BBox;
 using Math::Mat4;
 using Math::Quat;
+
+namespace detail {
+
+template<>
+struct Reflect<Math::Vec2> {
+    using T = Math::Vec2;
+    static constexpr Literal name = "Vec2";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(x), FIELD(y)>;
+};
+
+template<>
+struct Reflect<Math::Vec3> {
+    using T = Math::Vec3;
+    static constexpr Literal name = "Vec3";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(x), FIELD(y), FIELD(z)>;
+};
+
+template<>
+struct Reflect<Math::Vec4> {
+    using T = Math::Vec4;
+    static constexpr Literal name = "Vec4";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
+};
+
+template<>
+struct Reflect<Math::Vec2i> {
+    using T = Math::Vec2i;
+    static constexpr Literal name = "Vec2i";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(x), FIELD(y)>;
+};
+
+template<>
+struct Reflect<Math::Vec3i> {
+    using T = Math::Vec3i;
+    static constexpr Literal name = "Vec3i";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(x), FIELD(y), FIELD(z)>;
+};
+
+template<>
+struct Reflect<Math::Vec4i> {
+    using T = Math::Vec4i;
+    static constexpr Literal name = "Vec4i";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
+};
+
+template<>
+struct Reflect<Math::Vec2u> {
+    using T = Math::Vec2u;
+    static constexpr Literal name = "Vec2u";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(x), FIELD(y)>;
+};
+
+template<>
+struct Reflect<Math::Vec3u> {
+    using T = Math::Vec3u;
+    static constexpr Literal name = "Vec3u";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(x), FIELD(y), FIELD(z)>;
+};
+
+template<>
+struct Reflect<Math::Vec4u> {
+    using T = Math::Vec4u;
+    static constexpr Literal name = "Vec4u";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
+};
+
+template<u64 N>
+struct Reflect<Math::VecN<N>> {
+    using T = Math::VecN<N>;
+    static constexpr Literal name = "VecN";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(data)>;
+};
+
+template<u64 N>
+struct Reflect<Math::VecNi<N>> {
+    using T = Math::VecNi<N>;
+    static constexpr Literal name = "VecNi";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(data)>;
+};
+
+template<u64 N>
+struct Reflect<Math::VecNu<N>> {
+    using T = Math::VecNu<N>;
+    static constexpr Literal name = "VecNu";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(data)>;
+};
+
+template<>
+struct Reflect<Math::Mat4> {
+    using T = Math::Mat4;
+    static constexpr Literal name = "Mat4";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(columns)>;
+};
+
+template<>
+struct Reflect<Math::Quat> {
+    using T = Math::Quat;
+    static constexpr Literal name = "Quat";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(data)>;
+};
+
+template<>
+struct Reflect<Math::BBox> {
+    using T = Math::BBox;
+    static constexpr Literal name = "BBox";
+    static constexpr Kind kind = Kind::record_;
+    using members = List<FIELD(min), FIELD(max)>;
+};
+
+template<typename T, u64 N>
+struct Hash<Math::Vect<T, N>> {
+    static u64 hash(const Math::Vect<T, N>& v) {
+        u64 h = 0;
+        for(u64 i = 0; i < N; i++) h = hash_combine(h, rpp::hash(v[i]));
+        return h;
+    }
+};
+
+} // namespace detail
 
 namespace Format {
 

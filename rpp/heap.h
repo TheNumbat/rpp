@@ -16,11 +16,11 @@ struct Heap {
         capacity_ = capacity;
     }
 
-    template<typename... Ss>
-        requires All<T, Ss...> && Move_Constructable<T>
-    explicit Heap(Ss&&... init) {
-        reserve(sizeof...(Ss));
-        (push(std::move(init)), ...);
+    template<typename... S>
+        requires All_Are<T, S...> && Move_Constructable<T>
+    explicit Heap(S&&... init) {
+        reserve(sizeof...(S));
+        (push(forward<S>(init)), ...);
     }
 
     explicit Heap(const Heap& src) = delete;
@@ -91,7 +91,7 @@ struct Heap {
         } else {
             static_assert(Move_Constructable<T>);
             for(u64 i = 0; i < length_; i++) {
-                new(&new_data[i]) T{std::move(data_[i])};
+                new(&new_data[i]) T{move(data_[i])};
             }
         }
         A::free(data_);
@@ -130,7 +130,7 @@ struct Heap {
         requires Move_Constructable<T>
     {
         if(full()) grow();
-        new(&data_[length_++]) T{std::move(value)};
+        new(&data_[length_++]) T{move(value)};
         reheap_up(length_ - 1);
     }
 
@@ -139,7 +139,7 @@ struct Heap {
         requires Constructable<T, Args...>
     {
         if(full()) grow();
-        new(&data_[length_++]) T{std::forward<Args>(args)...};
+        new(&data_[length_++]) T{forward<Args>(args)...};
         reheap_up(length_ - 1);
     }
 
@@ -158,7 +158,7 @@ struct Heap {
                 Libc::memcpy(data_, data_ + length_, sizeof(T));
             } else {
                 static_assert(Move_Constructable<T>);
-                new(data_) T{std::move(data_[length_])};
+                new(data_) T{move(data_[length_])};
             }
             reheap_down(0);
         }
@@ -188,9 +188,9 @@ private:
     void swap(u64 a, u64 b)
         requires Move_Constructable<T>
     {
-        T temp{std::move(data_[a])};
-        new(&data_[a]) T{std::move(data_[b])};
-        new(&data_[b]) T{std::move(temp)};
+        T temp{move(data_[a])};
+        new(&data_[a]) T{move(data_[b])};
+        new(&data_[b]) T{move(temp)};
     }
 
     void reheap_up(u64 idx)
@@ -249,13 +249,17 @@ private:
     friend struct Reflect<Heap>;
 };
 
+namespace detail {
+
 template<typename H, Allocator A>
-struct rpp::detail::Reflect<Heap<H, A>> {
+struct Reflect<Heap<H, A>> {
     using T = Heap<H, A>;
     static constexpr Literal name = "Heap";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
 };
+
+} // namespace detail
 
 namespace Format {
 

@@ -31,7 +31,7 @@ struct Record_Length {
     void apply(const Literal& name, const T& value) {
         length += String_View{name}.length();
         length += 3;
-        length += Measure<typename Decay<T>::type>::measure(value);
+        length += Measure<Decay<T>>::measure(value);
         if(n + 1 < N) length += 2;
         n++;
     }
@@ -45,7 +45,7 @@ struct Record_Write {
     void apply(const Literal& name, const T& value) {
         idx = output.write(idx, String_View{name});
         idx = output.write(idx, " : "_v);
-        idx = Write<A, typename Decay<T>::type>::write(output, idx, value);
+        idx = Write<A, Decay<T>>::write(output, idx, value);
         if(n + 1 < N) idx = output.write(idx, ", "_v);
         n++;
     }
@@ -278,7 +278,7 @@ concept Writable = requires(String<> s) {
 };
 
 template<Allocator A, typename... Ss>
-    requires(Writable<typename Decay<Ss>::type> && ...)
+    requires(Writable<Decay<Ss>> && ...)
 String<A> concat(String_View sep, const Ss&&... strings) {
     if constexpr(sizeof...(strings) == 0) {
         return String<A>{};
@@ -387,7 +387,7 @@ struct Typename<T<T0, T1>> {
 
 template<Reflectable T, Allocator A = Mdefault>
 String<A> format_typename() {
-    return Format::Typename<typename Decay<T>::type>::template name<A>();
+    return Format::Typename<Decay<T>>::template name<A>();
 }
 
 } // namespace rpp

@@ -1,12 +1,18 @@
 
 #pragma once
 
+#define RPP_ASYNC
+#include "std/coroutine.h"
+
 #include "base.h"
 #include "thread.h"
 
-#include <coroutine>
-
 namespace rpp::Async {
+
+template<typename P = void>
+struct Handle { // Thwarts ADL
+    std::coroutine_handle<P> handle;
+};
 
 using Alloc = Thread::Alloc;
 
@@ -130,7 +136,7 @@ struct Promise : Promise_Base<R, A> {
         this->flag.signal();
     }
     void return_value(R&& val) {
-        value = std::move(val);
+        value = rpp::move(val);
         this->flag.signal();
     }
 
@@ -182,7 +188,7 @@ struct Task {
         if constexpr(Same<R, void>) {
             return;
         } else {
-            return std::move(handle.promise().value);
+            return rpp::move(handle.promise().value);
         }
     }
 

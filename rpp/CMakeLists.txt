@@ -16,6 +16,7 @@ set(SOURCES_RPP
     "hash.h"
     "heap.h"
     "log.h"
+    "limits.h"
     "map.h"
     "math.h"
     "net.h"
@@ -38,9 +39,13 @@ set(SOURCES_RPP
     "thread.h"
     "thread0.h"
     "tuple.h"
+    "utility.h"
     "variant.h"
     "vec.h"
     "vmath.h"
+
+    "std/coroutine.h"
+    "std/initializer_list.h"
 
     "impl/alloc.cpp"
     "impl/base.cpp"

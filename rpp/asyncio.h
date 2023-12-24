@@ -5,13 +5,11 @@
 #include "files.h"
 #include "pool.h"
 
-namespace rpp::AsyncIO {
+namespace rpp::Async {
 
-using Alloc = Files::Alloc;
+Task<void> wait(Pool<>& pool, u64 ms);
 
-Async::Task<void> wait(Thread::Pool<>& pool, u64 ms);
+Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path);
+Task<bool> write(Pool<>& pool, String_View path, Slice<u8> data);
 
-Async::Task<Opt<Vec<u8, Alloc>>> read(Thread::Pool<>& pool, String_View path);
-Async::Task<bool> write(Thread::Pool<>& pool, String_View path, Slice<u8> data);
-
-} // namespace rpp::AsyncIO
+} // namespace rpp::Async

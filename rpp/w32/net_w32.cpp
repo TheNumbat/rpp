@@ -1,7 +1,6 @@
 
 #include "../net.h"
 
-#include <cstdio>
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -18,7 +17,8 @@ static String_View wsa_error_code(int err) {
     assert(written + 1 <= buffer_size);
 
     if(written <= 1) {
-        int written2 = std::snprintf(buffer, buffer_size, "WinSock Error: %d", err);
+        int written2 =
+            Libc::snprintf(reinterpret_cast<u8*>(buffer), buffer_size, "WinSock Error: %d", err);
         assert(written2 > 0 && written2 + 1 <= buffer_size);
         return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written2)};
     }
@@ -129,7 +129,7 @@ Opt<Udp::Data> Udp::recv(Packet& in) {
     Address retaddr;
     *reinterpret_cast<sockaddr_in*>(retaddr.sockaddr_storage) = src;
 
-    return Opt{Data{static_cast<u64>(ret), std::move(retaddr)}};
+    return Opt{Data{static_cast<u64>(ret), move(retaddr)}};
 }
 
 u64 Udp::send(Address address, const Packet& out, u64 length) {

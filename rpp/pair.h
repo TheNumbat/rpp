@@ -21,17 +21,17 @@ struct Pair {
 
     explicit Pair(A&& first, B&& second)
         requires Move_Constructable<A> && Move_Constructable<B>
-        : first(std::move(first)), second(std::move(second)) {
+        : first(move(first)), second(move(second)) {
     }
 
     explicit Pair(const A& first, B&& second)
         requires Trivial<A> && Move_Constructable<B>
-        : first(A{first}), second(std::move(second)) {
+        : first(A{first}), second(move(second)) {
     }
 
     explicit Pair(A&& first, const B& second)
         requires Move_Constructable<A> && Trivial<B>
-        : first(std::move(first)), second(B{second}) {
+        : first(move(first)), second(B{second}) {
     }
 
     ~Pair() = default;
@@ -76,13 +76,17 @@ struct Pair {
     B second;
 };
 
+namespace detail {
+
 template<typename A, typename B>
-struct rpp::detail::Reflect<Pair<A, B>> {
+struct Reflect<Pair<A, B>> {
     using T = Pair<A, B>;
     static constexpr Literal name = "Pair";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(first), FIELD(second)>;
 };
+
+} // namespace detail
 
 namespace Format {
 
@@ -114,11 +118,11 @@ using rpp::Pair;
 template<typename T>
 struct tuple_size;
 
-template<size_t I, typename T>
+template<rpp::u64 I, typename T>
 struct tuple_element;
 
 template<typename L, typename R>
-struct tuple_size<Pair<L, R>> : std::integral_constant<size_t, 2> {};
+struct tuple_size<Pair<L, R>> : rpp::Constant<rpp::u64, 2> {};
 
 template<typename L, typename R>
 struct tuple_element<0, Pair<L, R>> {

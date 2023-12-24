@@ -1,96 +1,97 @@
 
+#include "../base.h"
+
 #ifdef COMPILER_MSVC
 #include <intrin.h>
 #endif
 
-#include "../base.h"
-#include <cmath>
+#include <math.h>
 
 namespace rpp::Math {
 
 f32 cos(f32 v) {
-    return std::cos(v);
+    return ::cosf(v);
 }
 f64 cos(f64 v) {
-    return std::cos(v);
+    return ::cos(v);
 }
 f32 sin(f32 v) {
-    return std::sin(v);
+    return ::sinf(v);
 }
 f64 sin(f64 v) {
-    return std::sin(v);
+    return ::sin(v);
 }
 f32 tan(f32 v) {
-    return std::tan(v);
+    return ::tanf(v);
 }
 f64 tan(f64 v) {
-    return std::tan(v);
+    return ::tan(v);
 }
 f32 acos(f32 v) {
-    return std::acos(v);
+    return ::acosf(v);
 }
 f64 acos(f64 v) {
-    return std::acos(v);
+    return ::acos(v);
 }
 f32 asin(f32 v) {
-    return std::asin(v);
+    return ::asinf(v);
 }
 f64 asin(f64 v) {
-    return std::asin(v);
+    return ::asin(v);
 }
 f32 atan(f32 v) {
-    return std::atan(v);
+    return ::atanf(v);
 }
 f64 atan(f64 v) {
-    return std::atan(v);
+    return ::atan(v);
 }
 f32 atan2(f32 y, f32 x) {
-    return std::atan2(y, x);
+    return ::atan2f(y, x);
 }
 f64 atan2(f64 y, f64 x) {
-    return std::atan2(y, x);
+    return ::atan2(y, x);
 }
 f32 hypot(f32 x, f32 y) {
-    return std::hypot(x, y);
+    return ::hypotf(x, y);
 }
 f64 hypot(f64 x, f64 y) {
-    return std::hypot(x, y);
+    return ::hypot(x, y);
 }
 f32 pow(f32 x, f32 y) {
-    return std::pow(x, y);
+    return ::powf(x, y);
 }
 f64 pow(f64 x, f64 y) {
-    return std::pow(x, y);
+    return ::pow(x, y);
 }
 f32 floor(f32 v) {
-    return std::floor(v);
+    return ::floorf(v);
 }
 f64 floor(f64 v) {
-    return std::floor(v);
+    return ::floor(v);
 }
 f32 ceil(f32 v) {
-    return std::ceil(v);
+    return ::ceilf(v);
 }
 f64 ceil(f64 v) {
-    return std::ceil(v);
+    return ::ceil(v);
 }
 f32 round(f32 v) {
-    return std::round(v);
+    return ::roundf(v);
 }
 f64 round(f64 v) {
-    return std::round(v);
+    return ::round(v);
 }
 f32 abs(f32 v) {
-    return std::abs(v);
+    return ::fabsf(v);
 }
 f64 abs(f64 v) {
-    return std::abs(v);
+    return ::fabs(v);
 }
 f32 sqrt(f32 v) {
-    return std::sqrt(v);
+    return ::sqrtf(v);
 }
 f64 sqrt(f64 v) {
-    return std::sqrt(v);
+    return ::sqrt(v);
 }
 f32 sign(f32 v) {
     return v == 0.0f ? 0.0f : v < 0.0f ? -1.0f : 1.0f;
@@ -99,10 +100,10 @@ f64 sign(f64 v) {
     return v == 0.0 ? 0.0 : v < 0.0 ? -1.0 : 1.0;
 }
 i32 abs(i32 v) {
-    return std::abs(v);
+    return ::abs(v);
 }
 i64 abs(i64 v) {
-    return std::abs(v);
+    return ::llabs(v);
 }
 
 u32 popcount(u32 val) {

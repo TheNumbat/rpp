@@ -20,7 +20,7 @@ struct Function<Words, R(Args...)> {
     template<typename F>
         requires Same<Invoke_Result<F, Args...>, R>
     Function(F&& f) {
-        construct(std::forward<F>(f));
+        construct(forward<F>(f));
     }
     ~Function() {
         destruct();
@@ -44,7 +44,7 @@ struct Function<Words, R(Args...)> {
 
     R operator()(Args... args) {
         assert(vtable);
-        return invoke(std::forward<Args>(args)...);
+        return invoke(forward<Args>(args)...);
     }
 
 private:
@@ -59,7 +59,7 @@ private:
         static VoidFn f_vtable[] = {reinterpret_cast<VoidFn>(&f_destruct<F>),
                                     reinterpret_cast<VoidFn>(&f_move<F>),
                                     reinterpret_cast<VoidFn>(&f_invoke<F>)};
-        new(storage) F{std::forward<F>(f)};
+        new(storage) F{forward<F>(f)};
         vtable = static_cast<VoidFn*>(f_vtable);
     }
     void destruct() {
@@ -75,7 +75,7 @@ private:
     }
     R invoke(Args... args) {
         R (*invoke)(void*, Args...) = reinterpret_cast<R (*)(void*, Args...)>(vtable[2]);
-        return invoke(storage, std::forward<Args>(args)...);
+        return invoke(storage, forward<Args>(args)...);
     }
 
     template<typename F>
@@ -89,12 +89,12 @@ private:
         if constexpr(Trivially_Movable<F>) {
             Libc::memcpy(dst, src, sizeof(F));
         } else {
-            new(dst) F{std::move(*src)};
+            new(dst) F{rpp::move(*src)};
         }
     }
     template<typename F>
     static R f_invoke(F* src, Args... args) {
-        return src->operator()(std::forward<Args>(args)...);
+        return src->operator()(forward<Args>(args)...);
     }
 
     alignas(MAX_ALIGN) u8 storage[Words * 8] = {};
@@ -111,13 +111,17 @@ using Function = detail::Function<4, F>;
 template<u64 Words, typename F>
 using FunctionN = detail::Function<Words, F>;
 
+namespace detail {
+
 template<u64 Words, typename Fn>
-struct rpp::detail::Reflect<detail::Function<Words, Fn>> {
-    using T = detail::Function<Words, Fn>;
+struct Reflect<Function<Words, Fn>> {
+    using T = Function<Words, Fn>;
     static constexpr Literal name = "Function";
     static constexpr Kind kind = Kind::record_;
     using members = List<>;
 };
+
+} // namespace detail
 
 namespace Format {
 
@@ -143,7 +147,7 @@ struct Type_Write {
     template<typename I>
     void apply() {
         Region_Scope(R);
-        using T = Index<I::value, Ts...>;
+        using T = Choose<I::value, Ts...>;
         idx = output.write(idx, format_typename<T, Mregion<R>>());
         if constexpr(I::value + 1 < sizeof...(Ts)) idx = output.write(idx, ", "_v);
     }
@@ -162,7 +166,7 @@ struct Write<O, Function<R(Args...)>> {
         idx = output.write(idx, String_View{Reflect<R>::name});
         idx = output.write(idx, '(');
         Type_Write<O, Args...> iterator{output, idx};
-        rpp::detail::list::Iter<Type_Write<O, Args...>, Indices>::apply(iterator);
+        detail::list::Iter<Type_Write<O, Args...>, Indices>::apply(iterator);
         idx = output.write(iterator.idx, ')');
         return output.write(idx, '}');
     }

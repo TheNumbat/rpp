@@ -151,8 +151,10 @@ private:
 
 } // namespace Thread
 
+namespace detail {
+
 template<>
-struct rpp::detail::Reflect<Thread::Atomic> {
+struct Reflect<Thread::Atomic> {
     using T = Thread::Atomic;
     static constexpr Literal name = "Atomic";
     static constexpr Kind kind = Kind::record_;
@@ -160,7 +162,7 @@ struct rpp::detail::Reflect<Thread::Atomic> {
 };
 
 template<>
-struct rpp::detail::Reflect<Thread::Priority> {
+struct Reflect<Thread::Priority> {
     using T = Thread::Priority;
     using underlying = u8;
     static constexpr Literal name = "Priority";
@@ -169,5 +171,7 @@ struct rpp::detail::Reflect<Thread::Priority> {
     using members = List<CASE(low), CASE(normal), CASE(high), CASE(critical)>;
     static_assert(Enum<T>);
 };
+
+} // namespace detail
 
 } // namespace rpp

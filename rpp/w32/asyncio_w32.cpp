@@ -4,11 +4,11 @@
 #include "w32_util.h"
 #include <windows.h>
 
-namespace rpp::AsyncIO {
+namespace rpp::Async {
 
 constexpr u64 SECTOR_SIZE = 4096;
 
-Async::Task<Opt<Vec<u8, Alloc>>> read(Thread::Pool<>& pool, String_View path) {
+Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path) {
 
     auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
     if(ucs2_path_len == 0) {
@@ -34,9 +34,9 @@ Async::Task<Opt<Vec<u8, Alloc>>> read(Thread::Pool<>& pool, String_View path) {
     u64 size = static_cast<u64>(full_size.QuadPart);
     u64 aligned_size = Math::align_pow2(size, SECTOR_SIZE);
 
-    assert(aligned_size <= UINT32_MAX);
+    assert(aligned_size <= RPP_UINT32_MAX);
 
-    Vec<u8, Alloc> data(aligned_size);
+    Vec<u8, Files::Alloc> data(aligned_size);
     data.resize(aligned_size);
 
     HANDLE event = CreateEventEx(null, null, 0, EVENT_ALL_ACCESS);
@@ -57,14 +57,14 @@ Async::Task<Opt<Vec<u8, Alloc>>> read(Thread::Pool<>& pool, String_View path) {
         co_return {};
     }
 
-    co_await pool.event(Async::Event::of_sys(event));
+    co_await pool.event(Event::of_sys(event));
 
     CloseHandle(handle);
     data.resize(size);
-    co_return Opt{std::move(data)};
+    co_return Opt{move(data)};
 }
 
-Async::Task<bool> write(Thread::Pool<>& pool, String_View path, Slice<u8> data) {
+Task<bool> write(Pool<>& pool, String_View path, Slice<u8> data) {
 
     auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
     if(ucs2_path_len == 0) {
@@ -92,7 +92,7 @@ Async::Task<bool> write(Thread::Pool<>& pool, String_View path, Slice<u8> data) 
 
     u64 size = data.length();
     u64 aligned_size = Math::align_pow2(size, SECTOR_SIZE);
-    assert(aligned_size <= UINT32_MAX);
+    assert(aligned_size <= RPP_UINT32_MAX);
 
     Vec<u8, Alloc> to_write(aligned_size);
     to_write.resize(aligned_size);
@@ -108,7 +108,7 @@ Async::Task<bool> write(Thread::Pool<>& pool, String_View path, Slice<u8> data) 
         co_return false;
     }
 
-    co_await pool.event(Async::Event::of_sys(event));
+    co_await pool.event(Event::of_sys(event));
 
     if(SetFilePointer(handle, static_cast<u32>(size), null, FILE_BEGIN) ==
        INVALID_SET_FILE_POINTER) {
@@ -127,7 +127,7 @@ Async::Task<bool> write(Thread::Pool<>& pool, String_View path, Slice<u8> data) 
     co_return true;
 }
 
-Async::Task<void> wait(Thread::Pool<>& pool, u64 ms) {
+Task<void> wait(Pool<>& pool, u64 ms) {
 
     HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
     if(timer == INVALID_HANDLE_VALUE) {
@@ -144,9 +144,9 @@ Async::Task<void> wait(Thread::Pool<>& pool, u64 ms) {
         co_return;
     }
 
-    co_await pool.event(Async::Event::of_sys(timer));
+    co_await pool.event(Event::of_sys(timer));
 
     co_return;
 }
 
-} // namespace rpp::AsyncIO
+} // namespace rpp::Async

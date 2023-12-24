@@ -48,10 +48,10 @@ struct Profile {
 
     struct Scope {
         Scope(Log::Location loc) {
-            Profile::enter(std::move(loc));
+            Profile::enter(move(loc));
         }
         Scope(String_View name) {
-            Profile::enter(std::move(name));
+            Profile::enter(move(name));
         }
         ~Scope() {
             Profile::exit();
@@ -68,7 +68,7 @@ struct Profile {
 
         static Timing_Node make(Log::Location loc, u64 parent) {
             Timing_Node ret;
-            ret.loc = std::move(loc);
+            ret.loc = move(loc);
             ret.parent = parent;
             ret.begin = timestamp();
             ret.calls = 1;
@@ -143,12 +143,16 @@ private:
     static inline Map<String_View, Alloc_Profile, Mhidden> allocs;
 };
 
+namespace detail {
+
 template<>
-struct rpp::detail::Reflect<Profile::Alloc> {
+struct Reflect<Profile::Alloc> {
     using T = Profile::Alloc;
     static constexpr Literal name = "Alloc";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(name), FIELD(address), FIELD(size)>;
 };
+
+} // namespace detail
 
 } // namespace rpp

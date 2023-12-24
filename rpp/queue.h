@@ -19,10 +19,10 @@ struct Queue {
     }
 
     template<typename... Ss>
-        requires All<T, Ss...> && Move_Constructable<T>
+        requires All_Are<T, Ss...> && Move_Constructable<T>
     explicit Queue(Ss&&... init) {
         reserve(sizeof...(Ss));
-        (push(std::move(init)), ...);
+        (push(move(init)), ...);
     }
 
     Queue(const Queue& src) = delete;
@@ -110,15 +110,15 @@ struct Queue {
             static_assert(Move_Constructable<T>);
             if(length_ <= last_) {
                 for(u64 i = 0; i < length_; i++) {
-                    new(&new_data[i]) T{std::move(start[i])};
+                    new(&new_data[i]) T{move(start[i])};
                 }
             } else {
                 u64 first = length_ - last_;
                 for(u64 i = 0; i < first; i++) {
-                    new(&new_data[i]) T{std::move(start[i + capacity_])};
+                    new(&new_data[i]) T{move(start[i + capacity_])};
                 }
                 for(u64 i = 0; i < last_; i++) {
-                    new(&new_data[first + i]) T{std::move(data_[i])};
+                    new(&new_data[first + i]) T{move(data_[i])};
                 }
             }
         }
@@ -140,7 +140,7 @@ struct Queue {
     {
         if(full()) grow();
 
-        new(&data_[last_]) T{std::move(value)};
+        new(&data_[last_]) T{move(value)};
         T& ret = data_[last_];
 
         length_++;
@@ -154,7 +154,7 @@ struct Queue {
     {
         if(full()) grow();
 
-        new(&data_[last_]) T{std::forward<Args>(args)...};
+        new(&data_[last_]) T{forward<Args>(args)...};
         T& ret = data_[last_];
 
         length_++;
@@ -244,7 +244,7 @@ struct Queue {
                     Libc::memcpy(&data_[next], &data_[idx], sizeof(T));
                 } else {
                     static_assert(Move_Constructable<T>);
-                    new(&data_[next]) T{std::move(data_[idx])};
+                    new(&data_[next]) T{move(data_[idx])};
                 }
             } else if(data_[idx] == value) {
                 if constexpr(Must_Destruct<T>) {
@@ -262,9 +262,9 @@ struct Queue {
         return found;
     }
 
-    template<bool const_>
+    template<bool is_const>
     struct Iterator {
-        using Q = typename If<const_, const Queue, Queue>::type;
+        using Q = If<is_const, const Queue, Queue>;
 
         Iterator operator++() {
             count_++;
@@ -277,7 +277,7 @@ struct Queue {
         }
 
         T& operator*() const
-            requires(!const_)
+            requires(!is_const)
         {
             return queue_.data_[queue_.idx_at(count_)];
         }
@@ -286,7 +286,7 @@ struct Queue {
         }
 
         T* operator->() const
-            requires(!const_)
+            requires(!is_const)
         {
             return &queue_.data_[queue_.idx_at(count_)];
         }
@@ -349,13 +349,17 @@ private:
     friend struct Iterator;
 };
 
+namespace detail {
+
 template<typename Q, Allocator A>
-struct rpp::detail::Reflect<Queue<Q, A>> {
+struct Reflect<Queue<Q, A>> {
     using T = Queue<Q, A>;
     static constexpr Literal name = "Queue";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(last_), FIELD(capacity_)>;
 };
+
+} // namespace detail
 
 namespace Format {
 

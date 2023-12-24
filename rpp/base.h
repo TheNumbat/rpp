@@ -5,9 +5,6 @@
 #define COMPILER_MSVC
 #elif defined __clang__
 #define COMPILER_CLANG
-#elif defined __GNUC__
-#define COMPILER_GCC
-#define offsetof __builtin_offsetof
 #else
 #error "Unsupported compiler."
 #endif
@@ -20,7 +17,6 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
-
 #elif defined __linux__
 #define OS_LINUX
 #else
@@ -35,39 +31,41 @@
 
 #ifdef COMPILER_MSVC
 #define FORCE_INLINE __forceinline
+#define MSVC_INTRINSIC [[msvc::intrinsic]]
+#else
+#define MSVC_INTRINSIC
 #endif
 
-#if defined COMPILER_CLANG || defined COMPILER_GCC
+#ifdef COMPILER_CLANG
 #define FORCE_INLINE __attribute__((always_inline))
 #include <new>
-#include <stddef.h>
 #endif
 
 #ifdef OS_LINUX
-#include <errno.h>
 #include <pthread.h>
 #endif
-
-#include <stdint.h>
-
-#include <initializer_list>
-#include <source_location>
-#include <utility>
 
 #define null nullptr
 
 namespace rpp {
-typedef uint8_t u8;
-typedef int8_t i8;
-typedef uint16_t u16;
-typedef int16_t i16;
-typedef uint32_t u32;
-typedef int32_t i32;
-typedef uint64_t u64;
-typedef int64_t i64;
 
+typedef signed char i8;
+typedef short i16;
+typedef int i32;
+typedef long long i64;
+typedef unsigned char u8;
+typedef unsigned short u16;
+typedef unsigned int u32;
 typedef float f32;
 typedef double f64;
+
+#ifdef COMPILER_MSVC
+typedef unsigned __int64 uptr;
+typedef unsigned long long u64;
+#else
+typedef __UINTPTR_TYPE__ uptr;
+typedef unsigned long u64;
+#endif
 
 static_assert(sizeof(i8) == 1);
 static_assert(sizeof(i16) == 2);
@@ -82,6 +80,7 @@ static_assert(sizeof(f64) == 8);
 static_assert(sizeof(char) == 1);
 static_assert(sizeof(bool) == 1);
 static_assert(sizeof(void*) == 8);
+static_assert(sizeof(uptr) == 8);
 
 namespace Libc {
 
@@ -101,7 +100,11 @@ f32 strtof(const char* str, char** endptr);
 
 #define RPP_BASE
 
+#include "std/initializer_list.h"
+
 #include "utility.h"
+
+#include "limits.h"
 
 #include "reflect.h"
 

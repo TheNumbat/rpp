@@ -36,13 +36,13 @@ struct Promise {
     Promise& operator=(Promise&&) = delete;
 
     void fill(T&& val) {
-        value = std::move(val);
+        value = move(val);
         flag.signal();
     }
 
     T block() {
         flag.block();
-        return std::move(value);
+        return move(value);
     }
 
     bool ready() {
@@ -96,7 +96,7 @@ struct Thread {
     template<Invocable F>
     explicit Thread(F&& f) {
         F* data = reinterpret_cast<F*>(A::alloc(sizeof(F)));
-        new(data) F{std::forward<F>(f)};
+        new(data) F{forward<F>(f)};
         thread = sys_start(&invoke<F>, data);
     }
     ~Thread() {
@@ -156,13 +156,13 @@ auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
     using Result = Invoke_Result<F, Args...>;
     auto future = Future<Result, A>::make();
 
-    Thread thread{[future = future.dup(), f = std::forward<F>(f),
-                   ... args = std::forward<Args>(args)]() mutable {
+    Thread thread{[future = future.dup(), f = forward<F>(f),
+                   ... args = forward<Args>(args)]() mutable {
         if constexpr(Same<Result, void>) {
-            f(std::forward<Args>(args)...);
+            f(forward<Args>(args)...);
             future->fill();
         } else {
-            future->fill(f(std::forward<Args>(args)...));
+            future->fill(f(forward<Args>(args)...));
         }
     }};
     thread.detach();
@@ -172,8 +172,10 @@ auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
 
 } // namespace Thread
 
+namespace detail {
+
 template<typename P>
-struct rpp::detail::Reflect<Thread::Promise<P>> {
+struct Reflect<Thread::Promise<P>> {
     using T = Thread::Promise<P>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
@@ -181,7 +183,7 @@ struct rpp::detail::Reflect<Thread::Promise<P>> {
 };
 
 template<>
-struct rpp::detail::Reflect<Thread::Promise<void>> {
+struct Reflect<Thread::Promise<void>> {
     using T = Thread::Promise<void>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
@@ -189,11 +191,13 @@ struct rpp::detail::Reflect<Thread::Promise<void>> {
 };
 
 template<Allocator A>
-struct rpp::detail::Reflect<Thread::Thread<A>> {
+struct Reflect<Thread::Thread<A>> {
     using T = Thread::Thread<A>;
     static constexpr Literal name = "Thread";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(thread)>;
 };
+
+} // namespace detail
 
 } // namespace rpp

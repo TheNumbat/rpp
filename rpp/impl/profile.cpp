@@ -36,7 +36,7 @@ void Profile::end_thread() {
 
 Profile::Time_Point Profile::Frame_Profile::begin() {
     assert(current_node == 0 && nodes.empty());
-    Timing_Node& node = nodes.push(Timing_Node::make(Log::Location{"Frame"_v, {}, 0, 0}, 0));
+    Timing_Node& node = nodes.push(Timing_Node::make(Log::Location{"Frame"_v, {}, 0}, 0));
     return node.begin;
 }
 
@@ -97,14 +97,14 @@ void Profile::end_frame() {
 
 void Profile::enter(String_View name) {
     if constexpr(DO_PROFILE) {
-        enter(Log::Location{std::move(name), ""_v, 0, 0});
+        enter(Log::Location{move(name), ""_v, 0});
     }
 }
 
 void Profile::enter(Log::Location loc) {
     if constexpr(DO_PROFILE) {
         Thread::Lock lock(this_thread.frames_lock);
-        this_thread.frames.back().enter(std::move(loc));
+        this_thread.frames.back().enter(move(loc));
     }
 }
 
@@ -124,7 +124,7 @@ void Profile::Frame_Profile::enter(Log::Location loc) {
     if(!repeat) {
         u64 child_idx = nodes.length();
         node.children.push(child_idx);
-        nodes.push(Timing_Node::make(std::move(loc), current_node));
+        nodes.push(Timing_Node::make(move(loc), current_node));
         current_node = child_idx;
     } else {
         node.begin = timestamp();
@@ -184,7 +184,7 @@ void Profile::alloc(Alloc a) {
         {
             Thread::Lock lock(this_thread.frames_lock);
             if(this_thread.during_frame) {
-                this_thread.frames.back().allocations.push(std::move(a));
+                this_thread.frames.back().allocations.push(move(a));
             }
         }
     }

@@ -5,7 +5,11 @@
 #error "Include base.h instead."
 #endif
 
-#define Here rpp::Log::Location::make(std::source_location::current())
+#ifdef COMPILER_MSVC
+#define __PRETTY_FUNCTION__ __FUNCTION__
+#endif
+
+#define Here rpp::Log::Location::make(__FILE__, __LINE__, __PRETTY_FUNCTION__)
 #define Log_Scope rpp::Log::Scope log_scope__##__COUNTER__
 
 #define info(fmt, ...)                                                                             \
@@ -45,18 +49,15 @@ struct Location {
     String_View function;
     String_View file;
     u64 line = 0;
-    u64 column = 0;
 
-    static Location make(std::source_location source_location) {
-        return Location{String_View{source_location.function_name()},
-                        String_View{source_location.file_name()}.file_suffix(),
-                        static_cast<u64>(source_location.line()),
-                        static_cast<u64>(source_location.column())};
+    template<u64 N, u64 M>
+    static constexpr Location make(const char (&file)[N], u64 line, const char (&function)[M]) {
+        return Location{String_View{function}, String_View{file}.file_suffix(),
+                        static_cast<u64>(line)};
     }
 
     bool operator==(const Log::Location& other) const {
-        return function == other.function && file == other.file && line == other.line &&
-               column == other.column;
+        return function == other.function && file == other.file && line == other.line;
     }
 };
 
@@ -77,13 +78,15 @@ void output(Level level, const Location& loc, String_View msg);
 template<typename... Ts>
 void log(Level level, const Location& loc, String_View fmt, const Ts&... args) {
     Region_Scope(R);
-    output(level, std::move(loc), format<Mregion<R>>(fmt, args...).view());
+    output(level, move(loc), format<Mregion<R>>(fmt, args...).view());
 }
 
 } // namespace Log
 
+namespace detail {
+
 template<>
-struct rpp::detail::Reflect<Log::Level> {
+struct Reflect<Log::Level> {
     using T = Log::Level;
     using underlying = u8;
     static constexpr char name[] = "Level";
@@ -94,19 +97,20 @@ struct rpp::detail::Reflect<Log::Level> {
 };
 
 template<>
-struct rpp::detail::Reflect<Log::Location> {
+struct Reflect<Log::Location> {
     using T = Log::Location;
     static constexpr char name[] = "Location";
     static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(function), FIELD(file), FIELD(line), FIELD(column)>;
+    using members = List<FIELD(function), FIELD(file), FIELD(line)>;
 };
 
 template<>
-struct Hasher<Log::Location> {
+struct Hash<Log::Location> {
     static u64 hash(const Log::Location& l) {
-        return Hash::combine(Hash::combine(::rpp::hash(l.file), rpp::hash(l.function)),
-                             Hash::combine(::rpp::hash(l.line), rpp::hash(l.column)));
+        return rpp::hash(l.file, l.function, l.line);
     }
 };
+
+} // namespace detail
 
 } // namespace rpp

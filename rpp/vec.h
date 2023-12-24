@@ -31,10 +31,10 @@ struct Vec {
     }
 
     template<typename... Ss>
-        requires All<T, Ss...> && Move_Constructable<T>
+        requires All_Are<T, Ss...> && Move_Constructable<T>
     explicit Vec(Ss&&... init) {
         reserve(sizeof...(Ss));
-        (push(std::move(init)), ...);
+        (push(move(init)), ...);
     }
 
     Vec(const Vec& src) = delete;
@@ -117,7 +117,7 @@ struct Vec {
             } else {
                 static_assert(Move_Constructable<T>);
                 for(u64 i = 0; i < length_; i++) {
-                    new(&new_data[i]) T{std::move(data_[i])};
+                    new(&new_data[i]) T{move(data_[i])};
                 }
             }
         }
@@ -168,7 +168,7 @@ struct Vec {
     {
         if(full()) grow();
         assert(length_ < capacity_);
-        new(&data_[length_]) T{std::move(value)};
+        new(&data_[length_]) T{move(value)};
         return data_[length_++];
     }
 
@@ -177,7 +177,7 @@ struct Vec {
     T& emplace(Args&&... args) {
         if(full()) grow();
         assert(length_ < capacity_);
-        new(&data_[length_]) T{std::forward<Args>(args)...};
+        new(&data_[length_]) T{rpp::forward<Args>(args)...};
         return data_[length_++];
     }
 
@@ -352,8 +352,10 @@ private:
     friend struct Reflect<Slice<T>>;
 };
 
+namespace detail {
+
 template<typename V, Allocator A>
-struct rpp::detail::Reflect<Vec<V, A>> {
+struct Reflect<Vec<V, A>> {
     using T = Vec<V, A>;
     static constexpr Literal name = "Vec";
     static constexpr Kind kind = Kind::record_;
@@ -361,12 +363,14 @@ struct rpp::detail::Reflect<Vec<V, A>> {
 };
 
 template<typename T>
-struct rpp::detail::Reflect<Slice<T>> {
+struct Reflect<Slice<T>> {
     static constexpr Literal name = "Slice";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_)>;
     static_assert(Record<Slice<T>>);
 };
+
+} // namespace detail
 
 namespace Format {
 

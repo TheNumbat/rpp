@@ -5,10 +5,15 @@
 #error "Include base.h instead."
 #endif
 
+#define RPP_OFFSETOF(s, m) __builtin_offsetof(s, m)
+
 #define CASE(case_) Case<T, T::case_, #case_>
-#define FIELD(field) Field<decltype(T::field), offsetof(T, field), #field>
+#define FIELD(field) Field<decltype(T::field), RPP_OFFSETOF(T, field), #field>
 
 namespace rpp {
+
+template<typename T>
+struct Empty {};
 
 namespace detail {
 struct Literal {
@@ -106,7 +111,7 @@ struct Iter<F, Cons<Head, Tail>> {
     template<typename G>
     static void apply(G&& f) {
         f.template apply<Head>();
-        Iter<F, Tail>::apply(std::forward<G>(f));
+        Iter<F, Tail>::apply(forward<G>(f));
     }
 };
 
@@ -270,8 +275,7 @@ struct Invoke_Case {
 template<Enum E, typename F>
     requires Invocable<F, const Literal&, E>
 void iterate_enum(F&& f) {
-    list::Iter<Invoke_Case<F>, typename Reflect<E>::members>::apply(
-        Invoke_Case<F>{std::forward<F>(f)});
+    list::Iter<Invoke_Case<F>, typename Reflect<E>::members>::apply(Invoke_Case<F>{forward<F>(f)});
 }
 
 template<typename F, typename T>
@@ -296,14 +300,14 @@ template<Record R, typename F>
 void iterate_record(F&& f, R& record) {
     u8* address = reinterpret_cast<u8*>(&record);
     list::Iter<Invoke_Field<F, false>, typename Reflect<R>::members>::apply(
-        Invoke_Field<F, false>{std::forward<F>(f), address});
+        Invoke_Field<F, false>{forward<F>(f), address});
 }
 
 template<Record R, typename F>
 void iterate_record(F&& f, const R& record) {
     const u8* address = reinterpret_cast<const u8*>(&record);
     list::Iter<Invoke_Field<F, true>, typename Reflect<R>::members>::apply(
-        Invoke_Field<F, true>{std::forward<F>(f), address});
+        Invoke_Field<F, true>{forward<F>(f), address});
 }
 
 template<typename T>

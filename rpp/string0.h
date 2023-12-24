@@ -33,9 +33,9 @@ struct String_View {
 
     const u8& operator[](u64 idx) const;
 
-    String_View file_suffix() const;
-    String_View file_extension() const;
-    String_View remove_file_suffix() const;
+    constexpr String_View file_suffix() const;
+    constexpr String_View file_extension() const;
+    constexpr String_View remove_file_suffix() const;
 
     template<Allocator A = Mdefault>
     String<A> string() const;
@@ -257,20 +257,22 @@ constexpr bool is_whitespace(u8 c) {
 
 } // namespace ascii
 
+namespace detail {
+
 template<Allocator A>
-struct Hasher<String<A>> {
+struct Hash<String<A>> {
     static u64 hash(const String<A>& string) {
         u64 h = 0;
-        for(u8 c : string) h = Hash::combine(h, rpp::hash(c));
+        for(u8 c : string) h = hash_combine(h, rpp::hash(c));
         return h;
     }
 };
 
 template<>
-struct Hasher<String_View> {
-    static u64 hash(String_View string) {
+struct Hash<String_View> {
+    static u64 hash(const String_View& string) {
         u64 h = 0;
-        for(u8 c : string) h = Hash::combine(h, rpp::hash(c));
+        for(u8 c : string) h = hash_combine(h, rpp::hash(c));
         return h;
     }
 };
@@ -285,11 +287,8 @@ struct Is_String<String<A>> {
     static constexpr bool value = true;
 };
 
-template<typename T>
-concept Any_String = Is_String<T>::value;
-
 template<>
-struct rpp::detail::Reflect<String_View> {
+struct Reflect<String_View> {
     using T = String_View;
     static constexpr Literal name = "String_View";
     static constexpr Kind kind = Kind::record_;
@@ -297,11 +296,19 @@ struct rpp::detail::Reflect<String_View> {
 };
 
 template<Allocator A>
-struct rpp::detail::Reflect<String<A>> {
+struct Reflect<String<A>> {
     using T = String<A>;
     static constexpr Literal name = "String";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
 };
+
+} // namespace detail
+
+template<typename T>
+concept Any_String = detail::Is_String<T>::value;
+
+template<typename T>
+concept String_Or_View = Any_String<T> || Same<T, String_View>;
 
 } // namespace rpp

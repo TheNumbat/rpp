@@ -2,6 +2,7 @@
 #include "../net.h"
 
 #include <arpa/inet.h>
+#include <errno.h>
 #include <unistd.h>
 
 namespace rpp::Net {
@@ -66,7 +67,7 @@ Opt<Udp::Data> Udp::recv(Packet& in) {
         return Opt<Data>{};
     }
 
-    return Opt{Data{static_cast<u64>(ret), std::move(src)}};
+    return Opt{Data{static_cast<u64>(ret), move(src)}};
 }
 
 u64 Udp::send(Address address, const Packet& out, u64 length) {

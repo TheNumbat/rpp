@@ -18,7 +18,7 @@ bool before(const File_Time& first, const File_Time& second);
 
 struct Write_Watcher {
 
-    explicit Write_Watcher(String_View path) : path_(std::move(path)) {
+    explicit Write_Watcher(String_View path) : path_(move(path)) {
         Opt<File_Time> time = last_write_time(path_);
         if(time) last_write_time_ = *time;
     }

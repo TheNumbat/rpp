@@ -5,7 +5,7 @@
 #include "base.h"
 #include "thread.h"
 
-namespace rpp::Thread {
+namespace rpp::Async {
 
 template<Allocator A>
 struct Pool;
@@ -16,7 +16,7 @@ struct Schedule {
     explicit Schedule(Pool<A>& pool) : pool{pool} {
     }
     void await_suspend(std::coroutine_handle<> task) {
-        pool.enqueue(task);
+        pool.enqueue(Handle{task});
     }
     void await_resume() {
     }
@@ -31,11 +31,10 @@ private:
 template<Allocator A = Alloc>
 struct Schedule_Event {
 
-    explicit Schedule_Event(Async::Event event, Pool<A>& pool)
-        : event{std::move(event)}, pool{pool} {
+    explicit Schedule_Event(Event event, Pool<A>& pool) : event{move(event)}, pool{pool} {
     }
     void await_suspend(std::coroutine_handle<> task) {
-        pool.enqueue_event(std::move(event), task);
+        pool.enqueue_event(move(event), Handle{task});
     }
     void await_resume() {
     }
@@ -44,40 +43,40 @@ struct Schedule_Event {
     }
 
 private:
-    Async::Event event;
+    Event event;
     Pool<A>& pool;
 };
 
 template<Allocator A = Alloc>
 struct Pool {
 
-    explicit Pool() : thread_states{Vec<Thread_State, A>::make(hardware_threads() - 1)} {
+    explicit Pool() : thread_states{Vec<Thread_State, A>::make(Thread::hardware_threads() - 1)} {
 
-        u64 h_threads = hardware_threads();
+        u64 h_threads = Thread::hardware_threads();
         u64 n_threads = thread_states.length();
         assert(n_threads <= h_threads && n_threads <= 64);
 
         for(u64 i = 0; i < n_threads; i++) {
-            threads.push(Thread([this, i, h_threads] {
+            threads.push(Thread::Thread([this, i, h_threads] {
                 u64 j = i < h_threads / 2 ? i * 2 : (i - h_threads / 2) * 2 + 1;
-                set_affinity(j);
+                Thread::set_affinity(j);
                 do_work(i);
             }));
         }
-        pending_events.push(Async::Event{});
-        event_thread = Thread([this] { do_events(); });
+        pending_events.push(Event{});
+        event_thread = Thread::Thread([this] { do_events(); });
     }
     ~Pool() {
         shutdown.exchange(true);
 
         for(auto& state : thread_states) {
-            Lock lock(state.mut);
+            Thread::Lock lock(state.mut);
             state.cond.signal();
         }
         threads.clear();
 
         {
-            Lock lock(events_mut);
+            Thread::Lock lock(events_mut);
             pending_events[0].signal();
         }
         event_thread.join();
@@ -88,7 +87,7 @@ struct Pool {
             for(auto& job : state.jobs) {
                 // This still leaks pending continuations, as we can't control their destruction
                 // order wrt their waiting tasks.
-                job.destroy();
+                job.handle.destroy();
             }
         }
     }
@@ -102,8 +101,8 @@ struct Pool {
     Schedule<A> suspend() {
         return Schedule<A>{*this};
     }
-    Schedule_Event<A> event(Async::Event event) {
-        return Schedule_Event<A>{std::move(event), *this};
+    Schedule_Event<A> event(Event event) {
+        return Schedule_Event<A>{move(event), *this};
     }
 
     u64 n_threads() const {
@@ -111,15 +110,13 @@ struct Pool {
     }
 
 private:
-    using Job = std::coroutine_handle<>;
-
-    void enqueue(Job job) {
+    void enqueue(Handle<> job) {
         for(u64 i = 0; i < thread_states.length(); i++) {
             Thread_State& state = thread_states[i];
             // Race on empty
             if(state.jobs.empty()) {
-                Lock lock(state.mut);
-                state.jobs.push(std::move(job));
+                Thread::Lock lock(state.mut);
+                state.jobs.push(rpp::move(job));
                 state.cond.signal();
                 return;
             }
@@ -129,56 +126,56 @@ private:
         u64 i = static_cast<u64>(sequence.incr() * Math::PHI32) % thread_states.length();
         Thread_State& state = thread_states[i];
 
-        Lock lock(state.mut);
-        state.jobs.push(std::move(job));
+        Thread::Lock lock(state.mut);
+        state.jobs.push(move(job));
         state.cond.signal();
     }
 
-    void enqueue_event(Async::Event event, Job job) {
-        Lock lock(events_mut);
-        events_to_enqueue.emplace(std::move(event), std::move(job));
+    void enqueue_event(Event event, Handle<> job) {
+        Thread::Lock lock(events_mut);
+        events_to_enqueue.emplace(move(event), move(job));
         pending_events[0].signal();
     }
 
     void do_work(u64 thread_idx) {
         Thread_State& state = thread_states[thread_idx];
         for(;;) {
-            Job job;
+            Handle<> job;
             {
-                Lock lock(state.mut);
+                Thread::Lock lock(state.mut);
 
                 while(state.jobs.empty() && !shutdown.load()) {
                     state.cond.wait(state.mut);
                 }
                 if(shutdown.load()) return;
 
-                job = std::move(state.jobs.front());
+                job = move(state.jobs.front());
                 state.jobs.pop();
             }
-            job.resume();
+            job.handle.resume();
         }
     }
 
     void do_events() {
         for(;;) {
-            u64 idx = Async::Event::wait_any(Slice<Async::Event>{pending_events});
-            Lock lock(events_mut);
+            u64 idx = Event::wait_any(Slice<Event>{pending_events});
+            Thread::Lock lock(events_mut);
             if(idx == 0) {
                 if(shutdown.load()) return;
 
                 for(auto& [event, state] : events_to_enqueue) {
-                    pending_events.push(std::move(event));
-                    pending_event_jobs.push(std::move(state));
+                    pending_events.push(move(event));
+                    pending_event_jobs.push(move(state));
                 }
                 events_to_enqueue.clear();
 
                 pending_events[0].reset();
             } else {
-                auto job = std::move(pending_event_jobs[idx - 1]);
+                auto job = move(pending_event_jobs[idx - 1]);
 
                 if(pending_events.length() > 2) {
-                    rpp::swap(pending_events[idx], pending_events.back());
-                    rpp::swap(pending_event_jobs[idx - 1], pending_event_jobs.back());
+                    swap(pending_events[idx], pending_events.back());
+                    swap(pending_event_jobs[idx - 1], pending_event_jobs.back());
                 }
                 pending_events.pop();
                 pending_event_jobs.pop();
@@ -188,22 +185,22 @@ private:
         }
     }
 
-    Atomic shutdown, sequence;
+    Thread::Atomic shutdown, sequence;
 
     struct Thread_State {
-        Mutex mut;
-        Cond cond;
-        Queue<Job, A> jobs;
+        Thread::Mutex mut;
+        Thread::Cond cond;
+        Queue<Handle<>, A> jobs;
     };
     Vec<Thread_State, A> thread_states;
-    Vec<Thread<A>, A> threads;
+    Vec<Thread::Thread<A>, A> threads;
 
-    Vec<Async::Event, A> pending_events;
-    Vec<Job, A> pending_event_jobs;
-    Vec<Pair<Async::Event, Job>, A> events_to_enqueue;
+    Vec<Event, A> pending_events;
+    Vec<Handle<>, A> pending_event_jobs;
+    Vec<Pair<Event, Handle<>>, A> events_to_enqueue;
 
-    Thread<A> event_thread;
-    Mutex events_mut;
+    Thread::Thread<A> event_thread;
+    Thread::Mutex events_mut;
 
     template<Allocator>
     friend struct Schedule;
@@ -211,4 +208,4 @@ private:
     friend struct Schedule_Event;
 };
 
-} // namespace rpp::Thread
+} // namespace rpp::Async

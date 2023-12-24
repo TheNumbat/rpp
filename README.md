@@ -22,7 +22,6 @@ Headers
 Supported configurations
 - Windows / x86_64 / MSVC 19.38+
 - Linux / x86_64 / Clang 17+
-- Linux / x86_64 / GCC 11+
 
 Pointers
 - Raw pointer: non owning
@@ -72,10 +71,7 @@ To-Do:
     - Update readme
     - CI
     - Change defines
-    - Try to delete type_traits/utility
-    - Pools
-    - Unify thread/async
-    - Remove std move/forward
+    - Pool Allocator
 - Result<T,E> type
 - Thread pool
     - Priorities & CPU affinity

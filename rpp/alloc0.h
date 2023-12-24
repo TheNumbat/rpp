@@ -6,8 +6,8 @@
 #endif
 
 #ifdef COMPILER_MSVC
-void* operator new(std::size_t, std::align_val_t, void* ptr) noexcept;
-void* operator new[](std::size_t, std::align_val_t, void* ptr) noexcept;
+void* operator new(rpp::u64, std::align_val_t, void* ptr) noexcept;
+void* operator new[](rpp::u64, std::align_val_t, void* ptr) noexcept;
 void operator delete(void*, std::align_val_t, void*) noexcept;
 void operator delete[](void*, std::align_val_t, void*) noexcept;
 #endif
@@ -88,7 +88,7 @@ using Mhidden = Mallocator<"Hidden", false>;
 template<Allocator A, typename T, typename... Args>
     requires Constructable<T, Args...>
 T* make(Args&&... args) {
-    return new(A::alloc(sizeof(T))) T{std::forward<Args>(args)...};
+    return new(A::alloc(sizeof(T))) T{forward<Args>(args)...};
 }
 
 template<Allocator A, typename T>
@@ -123,7 +123,7 @@ struct Free_List {
     template<typename... Args>
         requires Constructable<T, Args...>
     T* make(Args&&... args) {
-        return new(alloc()) T{std::forward<Args>(args)...};
+        return new(alloc()) T{forward<Args>(args)...};
     }
 
     void destroy(T* value) {

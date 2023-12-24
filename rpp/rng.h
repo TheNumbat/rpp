@@ -19,7 +19,7 @@ struct Stream {
     }
 
     void seed() {
-        state = Hash::combine(hash(Thread::this_id()), hash(Log::sys_time()));
+        state = hash(hash(Thread::this_id()), hash(Log::sys_time()));
     }
     void seed(u64 seed) {
         state = seed;

@@ -14,14 +14,14 @@ struct Box {
         requires Move_Constructable<T>
     {
         data_ = reinterpret_cast<T*>(A::alloc(sizeof(T)));
-        new(data_) T{std::move(value)};
+        new(data_) T{move(value)};
     }
 
     template<typename... Args>
         requires Constructable<T, Args...>
     explicit Box(Args&&... args) {
         data_ = reinterpret_cast<T*>(A::alloc(sizeof(T)));
-        new(data_) T{std::forward<Args>(args)...};
+        new(data_) T{forward<Args>(args)...};
     }
 
     template<Derived_From<T> D>
@@ -75,7 +75,7 @@ struct Box {
         } else {
             data_ = reinterpret_cast<T*>(A::alloc(sizeof(T)));
         }
-        new(data_) T{std::forward<Args>(args)...};
+        new(data_) T{forward<Args>(args)...};
     }
 
     operator bool() const {
@@ -108,13 +108,17 @@ private:
     friend struct Box;
 };
 
+namespace detail {
+
 template<typename B, Allocator A>
-struct rpp::detail::Reflect<Box<B, A>> {
+struct Reflect<Box<B, A>> {
     using T = Box<B, A>;
     static constexpr Literal name = "Box";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
 };
+
+} // namespace detail
 
 namespace Format {
 

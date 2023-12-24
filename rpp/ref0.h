@@ -44,12 +44,16 @@ private:
     friend struct Reflect<Ref<T>>;
 };
 
+namespace detail {
+
 template<typename R>
-struct rpp::detail::Reflect<Ref<R>> {
+struct Reflect<Ref<R>> {
     using T = Ref<R>;
     static constexpr Literal name = "Ref";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value_)>;
 };
+
+} // namespace detail
 
 } // namespace rpp
