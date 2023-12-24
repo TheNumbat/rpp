@@ -74,7 +74,7 @@ private:
     const u8* data_ = null;
     u64 length_ = 0;
 
-    friend struct Reflect<String_View>;
+    friend struct Reflect::Refl<String_View>;
 };
 
 template<Allocator A>
@@ -178,7 +178,7 @@ private:
     u64 capacity_ = 0;
 
     friend struct String_View;
-    friend struct Reflect<String>;
+    friend struct Reflect::Refl<String>;
 };
 
 template<Allocator A>
@@ -257,7 +257,7 @@ constexpr bool is_whitespace(u8 c) {
 
 } // namespace ascii
 
-namespace detail {
+namespace Hash {
 
 template<Allocator A>
 struct Hash<String<A>> {
@@ -277,6 +277,10 @@ struct Hash<String_View> {
     }
 };
 
+} // namespace Hash
+
+namespace Reflect {
+
 template<typename T>
 struct Is_String {
     static constexpr bool value = false;
@@ -288,7 +292,7 @@ struct Is_String<String<A>> {
 };
 
 template<>
-struct Reflect<String_View> {
+struct Refl<String_View> {
     using T = String_View;
     static constexpr Literal name = "String_View";
     static constexpr Kind kind = Kind::record_;
@@ -296,19 +300,16 @@ struct Reflect<String_View> {
 };
 
 template<Allocator A>
-struct Reflect<String<A>> {
+struct Refl<String<A>> {
     using T = String<A>;
     static constexpr Literal name = "String";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 template<typename T>
-concept Any_String = detail::Is_String<T>::value;
-
-template<typename T>
-concept String_Or_View = Any_String<T> || Same<T, String_View>;
+concept Some_String = Reflect::Is_String<T>::value;
 
 } // namespace rpp

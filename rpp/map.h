@@ -262,14 +262,14 @@ struct Map {
     }
 
     bool contains(String_View key) const
-        requires(Any_String<K>)
+        requires(Some_String<K>)
     {
         if(empty()) return false;
         return try_get_<String_View>(key);
     }
 
     Opt<Ref<V>> try_get(String_View key)
-        requires(Any_String<K>)
+        requires(Some_String<K>)
     {
         if(empty()) return {};
         if(auto idx = try_get_<String_View>(key)) {
@@ -279,7 +279,7 @@ struct Map {
     }
 
     V& get(String_View key)
-        requires(Any_String<K>)
+        requires(Some_String<K>)
     {
         if(auto idx = try_get_<String_View>(key)) {
             return data_[*idx].data->second;
@@ -458,23 +458,23 @@ private:
     u64 usable_ = 0;
     u64 shift_ = 0;
 
-    friend struct Reflect<Map>;
+    friend struct Reflect::Refl<Map>;
     template<bool>
     friend struct Iterator;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<Key K, typename V>
-struct Reflect<Map_Slot<K, V>> {
-    using T = Map_Slot<K, V>;
+struct Refl<::rpp::detail::Map_Slot<K, V>> {
+    using T = ::rpp::detail::Map_Slot<K, V>;
     static constexpr Literal name = "Map_Slot";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(hash), FIELD(data)>;
 };
 
 template<Key K, typename V, Allocator A>
-struct Reflect<Map<K, V, A>> {
+struct Refl<Map<K, V, A>> {
     using T = Map<K, V, A>;
     static constexpr Literal name = "Map";
     static constexpr Kind kind = Kind::record_;
@@ -482,7 +482,7 @@ struct Reflect<Map<K, V, A>> {
         List<FIELD(data_), FIELD(capacity_), FIELD(length_), FIELD(usable_), FIELD(shift_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 

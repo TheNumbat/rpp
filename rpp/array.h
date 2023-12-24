@@ -92,20 +92,20 @@ struct Array {
 
 private:
     T data_[N] = {};
-    friend struct Reflect<Array>;
+    friend struct Reflect::Refl<Array>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename T, u64 N>
-struct Reflect<Array<T, N>> {
+struct Refl<Array<T, N>> {
     using underlying = T;
     static constexpr Literal name = "Array";
     static constexpr Kind kind = Kind::array_;
     static constexpr u64 length = N;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 

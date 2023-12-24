@@ -344,22 +344,22 @@ private:
     u64 last_ = 0;
     u64 capacity_ = 0;
 
-    friend struct Reflect<Queue>;
+    friend struct Reflect::Refl<Queue>;
     template<bool>
     friend struct Iterator;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename Q, Allocator A>
-struct Reflect<Queue<Q, A>> {
+struct Refl<Queue<Q, A>> {
     using T = Queue<Q, A>;
     static constexpr Literal name = "Queue";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(last_), FIELD(capacity_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 

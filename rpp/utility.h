@@ -557,9 +557,28 @@ template<typename F, typename... Args>
     requires Invocable<F, Args...>
 using Invoke_Result = detail::Return_Type<F, Args...>::type;
 
+template<typename T>
+struct Empty {};
+
 template<typename T, T N>
 struct Constant {
     static constexpr T value = N;
+};
+
+struct Literal {
+    static constexpr u64 max_len = 24;
+    template<size_t N>
+    constexpr Literal(const char (&literal)[N]) {
+        static_assert(N <= max_len);
+        for(u64 i = 0; i < N; i++) {
+            c_string[i] = literal[i];
+        }
+    }
+
+    constexpr operator const char*() const {
+        return c_string;
+    }
+    char c_string[max_len] = {};
 };
 
 template<Movable T>

@@ -892,10 +892,10 @@ using Math::BBox;
 using Math::Mat4;
 using Math::Quat;
 
-namespace detail {
+namespace Reflect {
 
 template<>
-struct Reflect<Math::Vec2> {
+struct Refl<Math::Vec2> {
     using T = Math::Vec2;
     static constexpr Literal name = "Vec2";
     static constexpr Kind kind = Kind::record_;
@@ -903,7 +903,7 @@ struct Reflect<Math::Vec2> {
 };
 
 template<>
-struct Reflect<Math::Vec3> {
+struct Refl<Math::Vec3> {
     using T = Math::Vec3;
     static constexpr Literal name = "Vec3";
     static constexpr Kind kind = Kind::record_;
@@ -911,7 +911,7 @@ struct Reflect<Math::Vec3> {
 };
 
 template<>
-struct Reflect<Math::Vec4> {
+struct Refl<Math::Vec4> {
     using T = Math::Vec4;
     static constexpr Literal name = "Vec4";
     static constexpr Kind kind = Kind::record_;
@@ -919,7 +919,7 @@ struct Reflect<Math::Vec4> {
 };
 
 template<>
-struct Reflect<Math::Vec2i> {
+struct Refl<Math::Vec2i> {
     using T = Math::Vec2i;
     static constexpr Literal name = "Vec2i";
     static constexpr Kind kind = Kind::record_;
@@ -927,7 +927,7 @@ struct Reflect<Math::Vec2i> {
 };
 
 template<>
-struct Reflect<Math::Vec3i> {
+struct Refl<Math::Vec3i> {
     using T = Math::Vec3i;
     static constexpr Literal name = "Vec3i";
     static constexpr Kind kind = Kind::record_;
@@ -935,7 +935,7 @@ struct Reflect<Math::Vec3i> {
 };
 
 template<>
-struct Reflect<Math::Vec4i> {
+struct Refl<Math::Vec4i> {
     using T = Math::Vec4i;
     static constexpr Literal name = "Vec4i";
     static constexpr Kind kind = Kind::record_;
@@ -943,7 +943,7 @@ struct Reflect<Math::Vec4i> {
 };
 
 template<>
-struct Reflect<Math::Vec2u> {
+struct Refl<Math::Vec2u> {
     using T = Math::Vec2u;
     static constexpr Literal name = "Vec2u";
     static constexpr Kind kind = Kind::record_;
@@ -951,7 +951,7 @@ struct Reflect<Math::Vec2u> {
 };
 
 template<>
-struct Reflect<Math::Vec3u> {
+struct Refl<Math::Vec3u> {
     using T = Math::Vec3u;
     static constexpr Literal name = "Vec3u";
     static constexpr Kind kind = Kind::record_;
@@ -959,7 +959,7 @@ struct Reflect<Math::Vec3u> {
 };
 
 template<>
-struct Reflect<Math::Vec4u> {
+struct Refl<Math::Vec4u> {
     using T = Math::Vec4u;
     static constexpr Literal name = "Vec4u";
     static constexpr Kind kind = Kind::record_;
@@ -967,7 +967,7 @@ struct Reflect<Math::Vec4u> {
 };
 
 template<u64 N>
-struct Reflect<Math::VecN<N>> {
+struct Refl<Math::VecN<N>> {
     using T = Math::VecN<N>;
     static constexpr Literal name = "VecN";
     static constexpr Kind kind = Kind::record_;
@@ -975,7 +975,7 @@ struct Reflect<Math::VecN<N>> {
 };
 
 template<u64 N>
-struct Reflect<Math::VecNi<N>> {
+struct Refl<Math::VecNi<N>> {
     using T = Math::VecNi<N>;
     static constexpr Literal name = "VecNi";
     static constexpr Kind kind = Kind::record_;
@@ -983,7 +983,7 @@ struct Reflect<Math::VecNi<N>> {
 };
 
 template<u64 N>
-struct Reflect<Math::VecNu<N>> {
+struct Refl<Math::VecNu<N>> {
     using T = Math::VecNu<N>;
     static constexpr Literal name = "VecNu";
     static constexpr Kind kind = Kind::record_;
@@ -991,7 +991,7 @@ struct Reflect<Math::VecNu<N>> {
 };
 
 template<>
-struct Reflect<Math::Mat4> {
+struct Refl<Math::Mat4> {
     using T = Math::Mat4;
     static constexpr Literal name = "Mat4";
     static constexpr Kind kind = Kind::record_;
@@ -999,7 +999,7 @@ struct Reflect<Math::Mat4> {
 };
 
 template<>
-struct Reflect<Math::Quat> {
+struct Refl<Math::Quat> {
     using T = Math::Quat;
     static constexpr Literal name = "Quat";
     static constexpr Kind kind = Kind::record_;
@@ -1007,12 +1007,16 @@ struct Reflect<Math::Quat> {
 };
 
 template<>
-struct Reflect<Math::BBox> {
+struct Refl<Math::BBox> {
     using T = Math::BBox;
     static constexpr Literal name = "BBox";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(min), FIELD(max)>;
 };
+
+} // namespace Reflect
+
+namespace Hash {
 
 template<typename T, u64 N>
 struct Hash<Math::Vect<T, N>> {
@@ -1023,7 +1027,7 @@ struct Hash<Math::Vect<T, N>> {
     }
 };
 
-} // namespace detail
+} // namespace Hash
 
 namespace Format {
 

@@ -101,7 +101,7 @@ private:
 
     Data* data_ = null;
 
-    friend struct Reflect<Rc<T>>;
+    friend struct Reflect::Refl<Rc<T>>;
 };
 
 template<typename T, Allocator A = Mdefault>
@@ -192,21 +192,21 @@ private:
 
     Data* data_ = null;
 
-    friend struct Reflect<Arc<T>>;
+    friend struct Reflect::Refl<Arc<T>>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename R>
-struct Reflect<Rc_Data<R>> {
-    using T = Rc_Data<R>;
+struct Refl<::rpp::detail::Rc_Data<R>> {
+    using T = ::rpp::detail::Rc_Data<R>;
     static constexpr Literal name = "Rc_Data";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value), FIELD(references)>;
 };
 
 template<typename R>
-struct Reflect<Rc<R>> {
+struct Refl<Rc<R>> {
     using T = Rc<R>;
     static constexpr Literal name = "Rc";
     static constexpr Kind kind = Kind::record_;
@@ -214,22 +214,22 @@ struct Reflect<Rc<R>> {
 };
 
 template<typename R>
-struct Reflect<Arc_Data<R>> {
-    using T = Arc_Data<R>;
+struct Refl<::rpp::detail::Arc_Data<R>> {
+    using T = ::rpp::detail::Arc_Data<R>;
     static constexpr Literal name = "Arc_Data";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value), FIELD(references)>;
 };
 
 template<typename R>
-struct Reflect<Arc<R>> {
+struct Refl<Arc<R>> {
     using T = Arc<R>;
     static constexpr Literal name = "Arc";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 

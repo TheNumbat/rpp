@@ -102,23 +102,23 @@ struct Box {
 private:
     T* data_ = null;
 
-    friend struct Reflect<Box>;
+    friend struct Reflect::Refl<Box>;
 
     template<typename B, Allocator BA>
     friend struct Box;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename B, Allocator A>
-struct Reflect<Box<B, A>> {
+struct Refl<Box<B, A>> {
     using T = Box<B, A>;
     static constexpr Literal name = "Box";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 

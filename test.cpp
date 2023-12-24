@@ -29,22 +29,25 @@ struct Vecs {
     Vec<i32> i;
     Vec<u32> u;
 };
-namespace rpp::detail {
+
+namespace rpp::Reflect {
+
 template<>
-struct Reflect<Ints> {
+struct Refl<Ints> {
     using T = Ints;
     static constexpr Literal name = "Ints";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
 };
 template<>
-struct Reflect<Vecs> {
+struct Refl<Vecs> {
     using T = Vecs;
     static constexpr Literal name = "Vecs";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(i), FIELD(u)>;
 };
-} // namespace rpp::detail
+
+} // namespace rpp::Reflect
 
 auto lots_of_jobs(Async::Pool<>& pool, u64 depth) -> Async::Task<u64> {
     if(depth == 0) {
@@ -887,7 +890,7 @@ i32 main() {
         info("% %", format_typename<Ints>(), Ints{10, 2});
         // Ints{i : 10, u : 2}
 
-        info("% %", format_typename<Kind>(), Kind::enum_);
+        info("% %", format_typename<Reflect::Kind>(), Reflect::Kind::enum_);
 
         info("%", "Hello"_v);
         info("%", "Hello"_v.string());
@@ -938,6 +941,9 @@ i32 main() {
 
         info("% %", format_typename<Vec<i32>>(), Vec<i32>{1, 2});
         info("%", Vec<i32>{});
+
+        info("% %", format_typename<Slice<i32>>(), Slice<i32>{1, 2});
+        info("%", Slice<i32>{});
 
         info("% %", format_typename<Stack<i32>>(), Stack<i32>{1, 2});
         info("%", Stack<i32>{});

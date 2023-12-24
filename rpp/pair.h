@@ -76,17 +76,17 @@ struct Pair {
     B second;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename A, typename B>
-struct Reflect<Pair<A, B>> {
+struct Refl<Pair<A, B>> {
     using T = Pair<A, B>;
     static constexpr Literal name = "Pair";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(first), FIELD(second)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 

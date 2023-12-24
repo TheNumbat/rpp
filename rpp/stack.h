@@ -93,20 +93,20 @@ struct Stack {
 private:
     Vec<T, A> data_;
 
-    friend struct Reflect<Stack>;
+    friend struct Reflect::Refl<Stack>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename S, Allocator A>
-struct Reflect<Stack<S, A>> {
+struct Refl<Stack<S, A>> {
     using T = Stack<S, A>;
     static constexpr Literal name = "Stack";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 

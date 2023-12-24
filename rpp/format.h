@@ -9,6 +9,8 @@ namespace rpp {
 
 namespace Format {
 
+using namespace Reflect;
+
 template<Reflectable T>
 struct Measure;
 
@@ -57,7 +59,7 @@ struct Record_Write {
 template<Reflectable T>
 struct Measure {
     static u64 measure(const T& value) {
-        using R = Reflect<T>;
+        using R = Refl<T>;
 
         if constexpr(R::kind == Kind::void_) {
             return 4;
@@ -108,7 +110,7 @@ struct Measure {
             return 2 + name_len + iterator.length;
         } else if constexpr(R::kind == Kind::enum_) {
             u64 length = String_View{R::name}.length() + 2;
-            iterate_enum<T>([&](const Literal& name, const T& check) {
+            iterate_enum<T>([&](const Literal& name, T check) {
                 if(value == check) {
                     length += String_View{name}.length();
                 }
@@ -121,7 +123,7 @@ struct Measure {
 template<Allocator A, Reflectable T>
 struct Write {
     static u64 write(String<A>& output, u64 idx, const T& value) {
-        using R = Reflect<T>;
+        using R = Refl<T>;
 
         if constexpr(R::kind == Kind::void_) {
             return output.write(idx, "void"_v);
@@ -176,7 +178,7 @@ struct Write {
         } else if constexpr(R::kind == Kind::enum_) {
             idx = output.write(idx, String_View{R::name});
             idx = output.write(idx, "::"_v);
-            iterate_enum<T>([&](const Literal& name, const T& check) {
+            iterate_enum<T>([&](const Literal& name, T check) {
                 if(value == check) {
                     idx = output.write(idx, String_View{name});
                 }
@@ -302,7 +304,7 @@ template<Reflectable T>
 struct Typename {
     template<Allocator A>
     static String<A> name() {
-        return String_View{Reflect<T>::name}.string<A>();
+        return String_View{Refl<T>::name}.string<A>();
     }
 };
 
@@ -327,7 +329,7 @@ template<template<typename> typename T, Reflectable T0>
 struct Typename<T<T0>> {
     template<Allocator A>
     static String<A> name() {
-        return format<A>("%<%>"_v, String_View{Reflect<T<T0>>::name},
+        return format<A>("%<%>"_v, String_View{Refl<T<T0>>::name},
                          Typename<T0>::template name<A>());
     }
 };
@@ -337,7 +339,7 @@ template<template<typename, typename> typename T, Reflectable T0, Allocator A0>
 struct Typename<T<T0, A0>> {
     template<Allocator A>
     static String<A> name() {
-        return format<A>("%<%>"_v, String_View{Reflect<T<T0, A0>>::name},
+        return format<A>("%<%>"_v, String_View{Refl<T<T0, A0>>::name},
                          Typename<T0>::template name<A>());
     }
 };
@@ -348,7 +350,7 @@ template<template<typename, typename, typename> typename T, Reflectable T0, Refl
 struct Typename<T<T0, T1, A0>> {
     template<Allocator A>
     static String<A> name() {
-        return format<A>("%<%,%>"_v, String_View{Reflect<T<T0, T1, A0>>::name},
+        return format<A>("%<%,%>"_v, String_View{Refl<T<T0, T1, A0>>::name},
                          Typename<T0>::template name<A>(), Typename<T1>::template name<A>());
     }
 };
@@ -358,7 +360,7 @@ template<template<typename...> typename T, Reflectable... Ts>
 struct Typename<T<Ts...>> {
     template<Allocator A>
     static String<A> name() {
-        return format<A>("%<%>"_v, String_View{Reflect<T<Ts...>>::name},
+        return format<A>("%<%>"_v, String_View{Refl<T<Ts...>>::name},
                          concat<A>(", "_v, Typename<Ts>::template name<A>()...));
     }
 };
@@ -368,7 +370,7 @@ template<template<typename, u64> typename T, Reflectable T0, u64 N>
 struct Typename<T<T0, N>> {
     template<Allocator A>
     static String<A> name() {
-        return format<A>("%<%,%>"_v, String_View{Reflect<T<T0, N>>::name},
+        return format<A>("%<%,%>"_v, String_View{Refl<T<T0, N>>::name},
                          Typename<T0>::template name<A>(), N);
     }
 };
@@ -378,7 +380,7 @@ template<template<typename, typename> typename T, Reflectable T0, typename T1>
 struct Typename<T<T0, T1>> {
     template<Allocator A>
     static String<A> name() {
-        return format<A>("%<%,%>"_v, String_View{Reflect<T<T0, T1>>::name},
+        return format<A>("%<%,%>"_v, String_View{Refl<T<T0, T1>>::name},
                          Typename<T0>::template name<A>(), Typename<T1>::template name<A>());
     }
 };

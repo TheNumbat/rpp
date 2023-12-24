@@ -246,20 +246,20 @@ private:
     u64 length_ = 0;
     u64 capacity_ = 0;
 
-    friend struct Reflect<Heap>;
+    friend struct Reflect::Refl<Heap>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename H, Allocator A>
-struct Reflect<Heap<H, A>> {
+struct Refl<Heap<H, A>> {
     using T = Heap<H, A>;
     static constexpr Literal name = "Heap";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 

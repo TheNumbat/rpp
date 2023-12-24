@@ -255,7 +255,7 @@ private:
     u64 length_ = 0;
     u64 capacity_ = 0;
 
-    friend struct Reflect<Vec>;
+    friend struct Reflect::Refl<Vec>;
 };
 
 template<typename T>
@@ -349,28 +349,28 @@ private:
 
     template<typename>
     friend struct Slice;
-    friend struct Reflect<Slice<T>>;
+    friend struct Reflect::Refl<Slice<T>>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename V, Allocator A>
-struct Reflect<Vec<V, A>> {
+struct Refl<Vec<V, A>> {
     using T = Vec<V, A>;
     static constexpr Literal name = "Vec";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
 };
 
-template<typename T>
-struct Reflect<Slice<T>> {
+template<typename V>
+struct Refl<Slice<V>> {
+    using T = Slice<V>;
     static constexpr Literal name = "Slice";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(length_)>;
-    static_assert(Record<Slice<T>>);
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 
@@ -385,6 +385,18 @@ struct Measure<Vec<T, A>> {
         return length;
     }
 };
+template<Reflectable T>
+struct Measure<Slice<T>> {
+    static u64 measure(const Slice<T>& slice) {
+        u64 length = 7;
+        for(u64 i = 0; i < slice.length(); i++) {
+            length += Measure<T>::measure(slice[i]);
+            if(i + 1 < slice.length()) length += 2;
+        }
+        return length;
+    }
+};
+
 template<Allocator O, Reflectable T, Allocator A>
 struct Write<O, Vec<T, A>> {
     static u64 write(String<O>& output, u64 idx, const Vec<T, A>& vec) {
@@ -392,6 +404,17 @@ struct Write<O, Vec<T, A>> {
         for(u64 i = 0; i < vec.length(); i++) {
             idx = Write<O, T>::write(output, idx, vec[i]);
             if(i + 1 < vec.length()) idx = output.write(idx, ", "_v);
+        }
+        return output.write(idx, ']');
+    }
+};
+template<Allocator O, Reflectable T>
+struct Write<O, Slice<T>> {
+    static u64 write(String<O>& output, u64 idx, const Slice<T>& slice) {
+        idx = output.write(idx, "Slice["_v);
+        for(u64 i = 0; i < slice.length(); i++) {
+            idx = Write<O, T>::write(output, idx, slice[i]);
+            if(i + 1 < slice.length()) idx = output.write(idx, ", "_v);
         }
         return output.write(idx, ']');
     }

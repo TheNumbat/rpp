@@ -143,16 +143,16 @@ private:
     static inline Map<String_View, Alloc_Profile, Mhidden> allocs;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<>
-struct Reflect<Profile::Alloc> {
+struct Refl<Profile::Alloc> {
     using T = Profile::Alloc;
     static constexpr Literal name = "Alloc";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(name), FIELD(address), FIELD(size)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 } // namespace rpp

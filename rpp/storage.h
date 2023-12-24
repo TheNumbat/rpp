@@ -63,34 +63,34 @@ struct Storage {
 protected:
     alignas(alignof(T)) u8 value_[sizeof(T)] = {};
 
-    friend struct Reflect<Storage>;
+    friend struct Reflect::Refl<Storage>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename S>
-struct Reflect<Storage<S>> {
+struct Refl<Storage<S>> {
     using T = Storage<S>;
     static constexpr Literal name = "Storage";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 
 template<Reflectable T>
 struct Measure<Storage<T>> {
     static u64 measure(const Storage<T>& storage) {
-        return 9 + String_View{Reflect<T>::name}.length();
+        return 9 + String_View{Reflect::Refl<T>::name}.length();
     }
 };
 template<Allocator O, Reflectable T>
 struct Write<O, Storage<T>> {
     static u64 write(String<O>& output, u64 idx, const Storage<T>& storage) {
         idx = output.write(idx, "Storage<"_v);
-        idx = output.write(idx, String_View{Reflect<T>::name});
+        idx = output.write(idx, String_View{Reflect::Refl<T>::name});
         return output.write(idx, '>');
     }
 };

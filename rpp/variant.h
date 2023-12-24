@@ -183,13 +183,13 @@ private:
         }
     };
 
-    friend struct Reflect<Variant<Ts...>>;
+    friend struct Reflect::Refl<Variant<Ts...>>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<Literal N, typename NT>
-struct Reflect<Named<N, NT>> {
+struct Refl<Named<N, NT>> {
     using T = Named<N, NT>;
     static constexpr Literal name = N;
     static constexpr Kind kind = Kind::record_;
@@ -197,14 +197,14 @@ struct Reflect<Named<N, NT>> {
 };
 
 template<typename... Ts>
-struct Reflect<Variant<Ts...>> {
+struct Refl<Variant<Ts...>> {
     using T = Variant<Ts...>;
     static constexpr Literal name = "Variant";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(data_), FIELD(index_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 

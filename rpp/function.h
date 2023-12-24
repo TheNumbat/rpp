@@ -100,7 +100,7 @@ private:
     alignas(MAX_ALIGN) u8 storage[Words * 8] = {};
     VoidFn* vtable = null;
 
-    friend struct Reflect<Function<Words, Fn>>;
+    friend struct Reflect::Refl<Function<Words, Fn>>;
 };
 
 } // namespace detail
@@ -111,17 +111,17 @@ using Function = detail::Function<4, F>;
 template<u64 Words, typename F>
 using FunctionN = detail::Function<Words, F>;
 
-namespace detail {
+namespace Reflect {
 
 template<u64 Words, typename Fn>
-struct Reflect<Function<Words, Fn>> {
-    using T = Function<Words, Fn>;
+struct Refl<::rpp::detail::Function<Words, Fn>> {
+    using T = ::rpp::detail::Function<Words, Fn>;
     static constexpr Literal name = "Function";
     static constexpr Kind kind = Kind::record_;
     using members = List<>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 namespace Format {
 
@@ -132,7 +132,7 @@ struct Measure<Function<R(Args...)>> {
     static u64 measure(const Function<Fn>& function) {
         Region_Scope(Rg);
         u64 length = 10;
-        length += String_View{Reflect<R>::name}.length();
+        length += String_View{Reflect::Refl<R>::name}.length();
         length += 2;
         if constexpr(sizeof...(Args) > 0)
             length += (format_typename<Args, Mregion<Rg>>().length() + ...);
@@ -141,32 +141,31 @@ struct Measure<Function<R(Args...)>> {
     }
 };
 
-template<Allocator O, typename... Ts>
-    requires(Reflectable<Ts> && ...)
-struct Type_Write {
-    template<typename I>
+template<Allocator O, u64 N>
+struct Write_Type {
+    template<typename Arg>
     void apply() {
         Region_Scope(R);
-        using T = Choose<I::value, Ts...>;
-        idx = output.write(idx, format_typename<T, Mregion<R>>());
-        if constexpr(I::value + 1 < sizeof...(Ts)) idx = output.write(idx, ", "_v);
+        idx = output.write(idx, format_typename<Arg, Mregion<R>>());
+        if(n + 1 < N) idx = output.write(idx, ", "_v);
+        n++;
     }
-    String<O>& output;
+    u64 n = 0;
     u64 idx = 0;
+    String<O>& output;
 };
+
 template<Allocator O, Reflectable R, typename... Args>
     requires(Reflectable<Args> && ...)
 struct Write<O, Function<R(Args...)>> {
-
     using Fn = R(Args...);
-    using Indices = rpp::Index_List<Args...>;
-
+    static constexpr u64 N = sizeof...(Args);
     static u64 write(String<O>& output, u64 idx, const Function<Fn>& function) {
         idx = output.write(idx, "Function{"_v);
-        idx = output.write(idx, String_View{Reflect<R>::name});
+        idx = output.write(idx, String_View{Reflect::Refl<R>::name});
         idx = output.write(idx, '(');
-        Type_Write<O, Args...> iterator{output, idx};
-        detail::list::Iter<Type_Write<O, Args...>, Indices>::apply(iterator);
+        Write_Type<O, N> iterator{0, idx, output};
+        Reflect::Iter<Write_Type<O, N>, List<Args...>>::apply(iterator);
         idx = output.write(iterator.idx, ')');
         return output.write(idx, '}');
     }

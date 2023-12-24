@@ -41,19 +41,19 @@ struct Ref {
 
 private:
     T* value_ = null;
-    friend struct Reflect<Ref<T>>;
+    friend struct Reflect::Refl<Ref<T>>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename R>
-struct Reflect<Ref<R>> {
+struct Refl<Ref<R>> {
     using T = Ref<R>;
     static constexpr Literal name = "Ref";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value_)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 } // namespace rpp

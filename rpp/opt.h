@@ -111,20 +111,20 @@ protected:
     bool ok_ = false;
     Storage<T> value_;
 
-    friend struct Reflect<Opt>;
+    friend struct Reflect::Refl<Opt>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<typename O>
-struct Reflect<Opt<O>> {
+struct Refl<Opt<O>> {
     using T = Opt<O>;
     static constexpr Literal name = "Opt";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(ok_), FIELD(value_)>;
 };
 
-}; // namespace detail
+}; // namespace Reflect
 
 namespace Format {
 

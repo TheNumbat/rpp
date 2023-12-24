@@ -119,13 +119,13 @@ private:
     T first;
     Tuple<Ts...> rest;
 
-    friend struct Reflect<Tuple<T, Ts...>>;
+    friend struct Reflect::Refl<Tuple<T, Ts...>>;
 };
 
-namespace detail {
+namespace Reflect {
 
 template<>
-struct Reflect<Tuple<>> {
+struct Refl<Tuple<>> {
     using T = Tuple<>;
     static constexpr Literal name = "Tuple";
     static constexpr Kind kind = Kind::record_;
@@ -133,14 +133,14 @@ struct Reflect<Tuple<>> {
 };
 
 template<typename F, typename... Ts>
-struct Reflect<Tuple<F, Ts...>> {
+struct Refl<Tuple<F, Ts...>> {
     using T = Tuple<F, Ts...>;
     static constexpr Literal name = "Tuple";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(first), FIELD(rest)>;
 };
 
-}; // namespace detail
+}; // namespace Reflect
 
 namespace Format {
 
@@ -162,9 +162,9 @@ struct Measure<Tuple<Ts...>> {
         u64 length = 7;
         constexpr u64 N = sizeof...(Ts);
         if constexpr(N > 1) length += 2 * (N - 1);
-        using Indices = Index_List<Ts...>;
+        using Indices = Reflect::Enumerate<Ts...>;
         Tuple_Length<Ts...> iterator{tuple, 0};
-        detail::list::Iter<Tuple_Length<Ts...>, Indices>::apply(iterator);
+        Reflect::Iter<Tuple_Length<Ts...>, Indices>::apply(iterator);
         return length + iterator.length;
     }
 };
@@ -188,9 +188,9 @@ template<Allocator O, typename... Ts>
 struct Write<O, Tuple<Ts...>> {
     static u64 write(String<O>& output, u64 idx, const Tuple<Ts...>& tuple) {
         idx = output.write(idx, "Tuple{"_v);
-        using Indices = Index_List<Ts...>;
+        using Indices = Reflect::Enumerate<Ts...>;
         Tuple_Write<O, Ts...> iterator{tuple, output, idx};
-        detail::list::Iter<Tuple_Write<O, Ts...>, Indices>::apply(iterator);
+        Reflect::Iter<Tuple_Write<O, Ts...>, Indices>::apply(iterator);
         return output.write(iterator.idx, '}');
     }
 };

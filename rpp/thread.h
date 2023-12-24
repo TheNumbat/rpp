@@ -53,7 +53,7 @@ private:
     Flag flag;
     T value;
 
-    friend struct Reflect<Promise<T>>;
+    friend struct Reflect::Refl<Promise<T>>;
 };
 
 template<>
@@ -82,7 +82,7 @@ struct Promise<void> {
 private:
     Flag flag;
 
-    friend struct Reflect<Promise<void>>;
+    friend struct Reflect::Refl<Promise<void>>;
 };
 
 template<typename T, Allocator A = Alloc>
@@ -146,7 +146,7 @@ private:
         return OS_Thread_Ret_Null;
     }
 
-    friend struct Reflect<Thread<A>>;
+    friend struct Reflect::Refl<Thread<A>>;
 };
 
 template<Allocator A = Alloc, typename F, typename... Args>
@@ -156,15 +156,15 @@ auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
     using Result = Invoke_Result<F, Args...>;
     auto future = Future<Result, A>::make();
 
-    Thread thread{[future = future.dup(), f = forward<F>(f),
-                   ... args = forward<Args>(args)]() mutable {
-        if constexpr(Same<Result, void>) {
-            f(forward<Args>(args)...);
-            future->fill();
-        } else {
-            future->fill(f(forward<Args>(args)...));
-        }
-    }};
+    Thread thread{
+        [future = future.dup(), f = forward<F>(f), ... args = forward<Args>(args)]() mutable {
+            if constexpr(Same<Result, void>) {
+                f(forward<Args>(args)...);
+                future->fill();
+            } else {
+                future->fill(f(forward<Args>(args)...));
+            }
+        }};
     thread.detach();
 
     return future;
@@ -172,10 +172,10 @@ auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
 
 } // namespace Thread
 
-namespace detail {
+namespace Reflect {
 
 template<typename P>
-struct Reflect<Thread::Promise<P>> {
+struct Refl<Thread::Promise<P>> {
     using T = Thread::Promise<P>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
@@ -183,7 +183,7 @@ struct Reflect<Thread::Promise<P>> {
 };
 
 template<>
-struct Reflect<Thread::Promise<void>> {
+struct Refl<Thread::Promise<void>> {
     using T = Thread::Promise<void>;
     static constexpr Literal name = "Promise";
     static constexpr Kind kind = Kind::record_;
@@ -191,13 +191,13 @@ struct Reflect<Thread::Promise<void>> {
 };
 
 template<Allocator A>
-struct Reflect<Thread::Thread<A>> {
+struct Refl<Thread::Thread<A>> {
     using T = Thread::Thread<A>;
     static constexpr Literal name = "Thread";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(thread)>;
 };
 
-} // namespace detail
+} // namespace Reflect
 
 } // namespace rpp

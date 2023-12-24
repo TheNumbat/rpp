@@ -83,10 +83,10 @@ void log(Level level, const Location& loc, String_View fmt, const Ts&... args) {
 
 } // namespace Log
 
-namespace detail {
+namespace Reflect {
 
 template<>
-struct Reflect<Log::Level> {
+struct Refl<Log::Level> {
     using T = Log::Level;
     using underlying = u8;
     static constexpr char name[] = "Level";
@@ -97,12 +97,16 @@ struct Reflect<Log::Level> {
 };
 
 template<>
-struct Reflect<Log::Location> {
+struct Refl<Log::Location> {
     using T = Log::Location;
     static constexpr char name[] = "Location";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(function), FIELD(file), FIELD(line)>;
 };
+
+} // namespace Reflect
+
+namespace Hash {
 
 template<>
 struct Hash<Log::Location> {
@@ -111,6 +115,6 @@ struct Hash<Log::Location> {
     }
 };
 
-} // namespace detail
+} // namespace Hash
 
 } // namespace rpp

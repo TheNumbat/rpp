@@ -9,7 +9,7 @@
 
 namespace rpp {
 
-namespace detail {
+namespace Hash {
 
 constexpr u64 squirrel5(u64 at) {
     constexpr u64 BIT_NOISE1 = 0xA278032FB08BA40Dul;
@@ -72,32 +72,32 @@ struct Hash<T*> {
     }
 };
 
-} // namespace detail
+} // namespace Hash
 
 template<typename K>
 concept Hashable = requires(K k) {
-    { detail::Hash<Decay<K>>::hash(k) } -> Same<u64>;
+    { Hash::Hash<Decay<K>>::hash(k) } -> Same<u64>;
 };
 
 template<Hashable T>
 constexpr u64 hash(T&& value) {
-    return detail::Hash<Decay<T>>::hash(forward<T>(value));
+    return Hash::Hash<Decay<T>>::hash(forward<T>(value));
 }
 
 template<Hashable T>
 constexpr u64 hash_nonzero(T&& value) {
-    return detail::Hash<Decay<T>>::hash(forward<T>(value)) | 1;
+    return Hash::Hash<Decay<T>>::hash(forward<T>(value)) | 1;
 }
 
 template<Hashable... Ts>
 constexpr u64 hash(Ts&&... values) {
-    return detail::squirrel5((hash(forward<Ts>(values)) + ...));
+    return Hash::squirrel5((hash(forward<Ts>(values)) + ...));
 }
 
 template<size_t N>
 consteval u64 hash_literal(const char (&literal)[N], u64 seed = 0) {
     for(size_t i = 0; i < N - 1; i++) {
-        seed = detail::hash_combine(seed, hash(literal[i]));
+        seed = Hash::hash_combine(seed, hash(literal[i]));
     }
     return seed;
 }

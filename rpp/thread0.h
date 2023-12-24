@@ -70,7 +70,7 @@ private:
 #endif
 
     friend struct Cond;
-    friend struct Reflect<Mutex>;
+    friend struct Reflect::Refl<Mutex>;
 };
 
 struct Lock {
@@ -91,7 +91,7 @@ struct Lock {
 private:
     Ref<Mutex> mutex_;
 
-    friend struct Reflect<Lock>;
+    friend struct Reflect::Refl<Lock>;
 };
 
 struct Atomic {
@@ -121,7 +121,7 @@ struct Atomic {
 private:
     i64 value_ = 0;
 
-    friend struct Reflect<Atomic>;
+    friend struct Reflect::Refl<Atomic>;
 };
 
 struct Cond {
@@ -146,15 +146,15 @@ private:
     pthread_cond_t cond_ = PTHREAD_COND_INITIALIZER;
 #endif
 
-    friend struct Reflect<Cond>;
+    friend struct Reflect::Refl<Cond>;
 };
 
 } // namespace Thread
 
-namespace detail {
+namespace Reflect {
 
 template<>
-struct Reflect<Thread::Atomic> {
+struct Refl<Thread::Atomic> {
     using T = Thread::Atomic;
     static constexpr Literal name = "Atomic";
     static constexpr Kind kind = Kind::record_;
@@ -162,7 +162,7 @@ struct Reflect<Thread::Atomic> {
 };
 
 template<>
-struct Reflect<Thread::Priority> {
+struct Refl<Thread::Priority> {
     using T = Thread::Priority;
     using underlying = u8;
     static constexpr Literal name = "Priority";
@@ -172,6 +172,6 @@ struct Reflect<Thread::Priority> {
     static_assert(Enum<T>);
 };
 
-} // namespace detail
+} // namespace Reflect
 
 } // namespace rpp
