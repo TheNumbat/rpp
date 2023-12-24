@@ -9,7 +9,7 @@
 
 // TODO(max): bump when they fix the coroutine bug
 #if _MSC_VER < 1937
-#error "Unsupported MSVC version: only 19.39+ is supported."
+#error "Unsupported MSVC version: only 19.37+ is supported."
 #endif
 
 #elif defined __clang__
