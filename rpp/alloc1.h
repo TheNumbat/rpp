@@ -26,7 +26,7 @@ static consteval Literal pool_name(const Literal& name) {
 
 template<typename T>
 struct Pool {
-    static constexpr Literal name = detail::pool_name(Reflect::Refl<T>::name);
+    static constexpr Literal name = pool_name(Reflect::Refl<T>::name);
 
     template<typename... Args>
         requires Constructable<T, Args...>
