@@ -25,6 +25,15 @@ concept Allocator = requires(u64 size, void* address) {
     { A::free(address) } -> Same<void>;
 };
 
+template<typename A, typename T>
+concept Pool = requires(T&& t) {
+    { A::template make<T>(t) } -> Same<T*>;
+    { A::template destroy<T>(&t) } -> Same<void>;
+};
+
+template<typename A, typename T>
+concept Pool_Allocator = Allocator<A> || Pool<A, T>;
+
 template<Literal N, bool Log = true>
 struct Mallocator {
     static constexpr Literal name = N;
@@ -82,7 +91,6 @@ struct Mregion {
 #define Region_Scope(R) REGION_SCOPE1(R, LOCATION_HASH, __COUNTER__)
 
 using Mdefault = Mallocator<"Default">;
-
 using Mhidden = Mallocator<"Hidden", false>;
 
 template<Allocator A, typename T, typename... Args>
@@ -160,6 +168,7 @@ private:
     }
 
     union Free_Node {
+        ~Free_Node() = delete;
         T value;
         Free_Node* next = null;
     };

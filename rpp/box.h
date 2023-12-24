@@ -5,7 +5,8 @@
 
 namespace rpp {
 
-template<typename T, Allocator A = Mdefault>
+template<typename T, typename A = Mdefault>
+    requires Pool_Allocator<A, T>
 struct Box {
 
     Box() = default;
@@ -13,15 +14,13 @@ struct Box {
     explicit Box(T&& value)
         requires Move_Constructable<T>
     {
-        data_ = reinterpret_cast<T*>(A::alloc(sizeof(T)));
-        new(data_) T{move(value)};
+        data_ = make(move(value));
     }
 
     template<typename... Args>
         requires Constructable<T, Args...>
     explicit Box(Args&&... args) {
-        data_ = reinterpret_cast<T*>(A::alloc(sizeof(T)));
-        new(data_) T{forward<Args>(args)...};
+        data_ = make(forward<Args>(args)...);
     }
 
     template<Derived_From<T> D>
@@ -49,7 +48,8 @@ struct Box {
             if constexpr(Must_Destruct<T>) {
                 data_->~T();
             }
-            A::free(data_);
+            destroy(data_);
+            data_ = null;
         }
     }
 
@@ -68,14 +68,8 @@ struct Box {
 
     template<typename... Args>
     void emplace(Args&&... args) {
-        if(data_) {
-            if constexpr(Must_Destruct<T>) {
-                data_->~T();
-            }
-        } else {
-            data_ = reinterpret_cast<T*>(A::alloc(sizeof(T)));
-        }
-        new(data_) T{forward<Args>(args)...};
+        this->~Box();
+        data_ = make(forward<Args>(args)...);
     }
 
     operator bool() const {
@@ -100,17 +94,39 @@ struct Box {
     }
 
 private:
+    template<typename... Args>
+        requires Constructable<T, Args...>
+    static T* make(Args&&... args) {
+        if constexpr(Allocator<A>) {
+            T* data_ = reinterpret_cast<T*>(A::alloc(sizeof(T)));
+            new(data_) T{forward<Args>(args)...};
+            return data_;
+        } else {
+            static_assert(Pool<A, T>);
+            return A::template make<T>(forward<Args>(args)...);
+        }
+    }
+
+    static void destroy(T* value) {
+        if constexpr(Allocator<A>) {
+            if constexpr(Must_Destruct<T>) {
+                value->~T();
+            }
+            A::free(value);
+        } else {
+            static_assert(Pool<A, T>);
+            A::template destroy<T>(value);
+        }
+    }
+
     T* data_ = null;
 
     friend struct Reflect::Refl<Box>;
-
-    template<typename B, Allocator BA>
-    friend struct Box;
 };
 
 namespace Reflect {
 
-template<typename B, Allocator A>
+template<typename B, typename A>
 struct Refl<Box<B, A>> {
     using T = Box<B, A>;
     static constexpr Literal name = "Box";
@@ -122,14 +138,14 @@ struct Refl<Box<B, A>> {
 
 namespace Format {
 
-template<Reflectable T, Allocator A>
+template<Reflectable T, typename A>
 struct Measure<Box<T, A>> {
     static u64 measure(const Box<T, A>& box) {
         if(box) return 5 + Measure<T>::measure(*box);
         return 9;
     }
 };
-template<Allocator O, Reflectable T, Allocator A>
+template<Allocator O, Reflectable T, typename A>
 struct Write<O, Box<T, A>> {
     static u64 write(String<O>& output, u64 idx, const Box<T, A>& box) {
         if(!box) return output.write(idx, "Box{null}"_v);

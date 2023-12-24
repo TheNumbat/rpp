@@ -64,7 +64,6 @@ Utilities
 
 To-Do:
 - Release
-    - Pool Allocator & use for range allocator?
     - Refactor tests
     - CI
     - Update readme

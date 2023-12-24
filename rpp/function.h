@@ -1,7 +1,9 @@
 
 #pragma once
 
-#include "base.h"
+#ifndef RPP_BASE
+#error "Include base.h instead."
+#endif
 
 namespace rpp {
 

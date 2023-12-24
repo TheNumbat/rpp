@@ -151,14 +151,16 @@ f32 strtof(const char* str, char** endptr);
 
 #include "queue.h"
 
+#include "map.h"
+
 #include "string1.h"
 
-#include "box.h"
-
-#include "map.h"
+#include "function.h"
 
 #include "profile.h"
 
 #include "alloc1.h"
+
+#include "box.h"
 
 #include "format1.h"

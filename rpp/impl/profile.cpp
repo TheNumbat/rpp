@@ -190,7 +190,19 @@ void Profile::alloc(Alloc a) {
     }
 }
 
+void Profile::finalizer(Function<void()> f) {
+    Thread::Lock lock(finalizers_lock);
+    finalizers.push(move(f));
+}
+
 void Profile::finalize() {
+    {
+        Thread::Lock flock(finalizers_lock);
+        for(auto& f : finalizers) {
+            f();
+        }
+        finalizers.~Vec();
+    }
     {
         Thread::Lock alock(allocs_lock);
         Thread::Lock tlock(threads_lock);

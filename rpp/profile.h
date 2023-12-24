@@ -101,6 +101,7 @@ struct Profile {
         }
     }
 
+    static void finalizer(Function<void()> f);
     static void finalize();
 
 private:
@@ -138,9 +139,11 @@ private:
 
     static inline Thread::Mutex threads_lock;
     static inline Thread::Mutex allocs_lock;
+    static inline Thread::Mutex finalizers_lock;
     static inline thread_local Thread_Profile this_thread;
     static inline Map<Thread::Id, Ref<Thread_Profile>, Mhidden> threads;
     static inline Map<String_View, Alloc_Profile, Mhidden> allocs;
+    static inline Vec<Function<void()>, Mhidden> finalizers;
 };
 
 namespace Reflect {

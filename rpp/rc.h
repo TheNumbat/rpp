@@ -21,7 +21,8 @@ struct Arc_Data {
 
 } // namespace detail
 
-template<typename T, Allocator A = Mdefault>
+template<typename T, typename A = Mdefault>
+    requires Pool_Allocator<A, T>
 struct Rc {
     using Data = detail::Rc_Data<T>;
 
@@ -33,8 +34,15 @@ struct Rc {
     template<typename... Args>
         requires Constructable<T, Args...>
     explicit Rc(Args&&... args) {
-        data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(data_) Data{1, T{forward<Args>(args)...}};
+        data_ = make_(forward<Args>(args)...);
+    }
+
+    static Rc make()
+        requires Default_Constructable<T>
+    {
+        Rc ret;
+        ret.data_ = make_();
+        return ret;
     }
 
     Rc(const Rc& src) = delete;
@@ -87,13 +95,33 @@ struct Rc {
     }
 
 private:
+    template<typename... Args>
+        requires Constructable<T, Args...>
+    static Data* make_(Args&&... args) {
+        if constexpr(Allocator<A>) {
+            Data* data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
+            new(data_) Data{static_cast<u64>(1), T{forward<Args>(args)...}};
+            return data_;
+        } else {
+            static_assert(Pool<A, T>);
+            return A::template make<Data>(static_cast<u64>(1), T{forward<Args>(args)...});
+        }
+    }
+
     void drop() {
         if(!data_) return;
 
         data_->references--;
         if(data_->references == 0) {
-            data_->~Data();
-            A::free(data_);
+            if constexpr(Allocator<A>) {
+                if constexpr(Must_Destruct<Data>) {
+                    data_->~Data();
+                }
+                A::free(data_);
+            } else {
+                static_assert(Pool<A, T>);
+                A::template destroy<Data>(data_);
+            }
         }
 
         data_ = null;
@@ -104,7 +132,8 @@ private:
     friend struct Reflect::Refl<Rc<T>>;
 };
 
-template<typename T, Allocator A = Mdefault>
+template<typename T, typename A = Mdefault>
+    requires Pool_Allocator<A, T>
 struct Arc {
     using Data = detail::Arc_Data<T>;
 
@@ -116,16 +145,14 @@ struct Arc {
     template<typename... Args>
         requires Constructable<T, Args...>
     explicit Arc(Args&&... args) {
-        data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(data_) Data{Thread::Atomic{1}, T{forward<Args>(args)...}};
+        data_ = make_(forward<Args>(args)...);
     }
 
     static Arc make()
         requires Default_Constructable<T>
     {
         Arc ret;
-        ret.data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-        new(ret.data_) Data{Thread::Atomic{1}, T{}};
+        ret.data_ = make_();
         return ret;
     }
 
@@ -179,12 +206,32 @@ struct Arc {
     }
 
 private:
+    template<typename... Args>
+        requires Constructable<T, Args...>
+    static Data* make_(Args&&... args) {
+        if constexpr(Allocator<A>) {
+            Data* data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
+            new(data_) Data{Thread::Atomic{1}, T{forward<Args>(args)...}};
+            return data_;
+        } else {
+            static_assert(Pool<A, T>);
+            return A::template make<Data>(Thread::Atomic{1}, T{forward<Args>(args)...});
+        }
+    }
+
     void drop() {
         if(!data_) return;
 
         if(data_->references.decr() == 0) {
-            data_->~Data();
-            A::free(data_);
+            if constexpr(Allocator<A>) {
+                if constexpr(Must_Destruct<Data>) {
+                    data_->~Data();
+                }
+                A::free(data_);
+            } else {
+                static_assert(Pool<A, T>);
+                A::template destroy<Data>(data_);
+            }
         }
 
         data_ = null;
@@ -200,7 +247,7 @@ namespace Reflect {
 template<typename R>
 struct Refl<::rpp::detail::Rc_Data<R>> {
     using T = ::rpp::detail::Rc_Data<R>;
-    static constexpr Literal name = "Rc_Data";
+    static constexpr Literal name = "Rc";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value), FIELD(references)>;
 };
@@ -216,7 +263,7 @@ struct Refl<Rc<R>> {
 template<typename R>
 struct Refl<::rpp::detail::Arc_Data<R>> {
     using T = ::rpp::detail::Arc_Data<R>;
-    static constexpr Literal name = "Arc_Data";
+    static constexpr Literal name = "Arc";
     static constexpr Kind kind = Kind::record_;
     using members = List<FIELD(value), FIELD(references)>;
 };

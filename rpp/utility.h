@@ -567,6 +567,9 @@ struct Constant {
 
 struct Literal {
     static constexpr u64 max_len = 24;
+
+    constexpr Literal() = default;
+
     template<size_t N>
     constexpr Literal(const char (&literal)[N]) {
         static_assert(N <= max_len);

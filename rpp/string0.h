@@ -13,13 +13,16 @@ struct String;
 struct String_View {
 
     String_View() = default;
+
     explicit String_View(const char* c_string)
         : data_(reinterpret_cast<const u8*>(c_string)), length_(Libc::strlen(c_string)) {
     }
+
     explicit String_View(const Literal& literal)
-        : data_(reinterpret_cast<const u8*>(literal.c_string)),
-          length_(Libc::strlen(literal.c_string)) {
+        : data_(reinterpret_cast<const u8*>(literal.c_string)) {
+        while(length_ < Literal::max_len && literal.c_string[length_]) length_++;
     }
+
     explicit String_View(const u8* data, u64 length) : data_(data), length_(length) {
     }
 
