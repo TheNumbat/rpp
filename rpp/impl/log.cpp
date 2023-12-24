@@ -6,12 +6,12 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
 #include "../w32/w32_util.h"
 #include <windows.h>
 #endif
 
-#ifdef OS_LINUX
+#ifdef RPP_OS_LINUX
 #include <errno.h>
 #include <signal.h>
 #endif
@@ -28,7 +28,7 @@ struct Static_Data {
     FILE* file = null;
 
     Static_Data() {
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
         if(fopen_s(&file, "debug.log", "w")) file = null;
 #else
         file = fopen("debug.log", "w");
@@ -43,7 +43,7 @@ struct Static_Data {
 static Static_Data g_log_data;
 static thread_local u64 g_log_indent = 0;
 
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
 
 String_View sys_error() {
 
@@ -106,7 +106,7 @@ String_View sys_time_string(Time timestamp_) {
     static thread_local char buffer[buffer_size];
 
     ::tm tm_info;
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
     localtime_s(&tm_info, &timestamp);
 #else
     localtime_r(&timestamp, &tm_info);

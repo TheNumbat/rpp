@@ -70,7 +70,7 @@ struct Measure {
         } else if constexpr(R::kind == Kind::i32_) {
             return Libc::snprintf(null, 0, "%d", value);
         } else if constexpr(R::kind == Kind::i64_) {
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
             return Libc::snprintf(null, 0, "%lld", value);
 #else
             return Libc::snprintf(null, 0, "%ld", value);
@@ -82,7 +82,7 @@ struct Measure {
         } else if constexpr(R::kind == Kind::u32_) {
             return Libc::snprintf(null, 0, "%u", value);
         } else if constexpr(R::kind == Kind::u64_) {
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
             return Libc::snprintf(null, 0, "%llu", value);
 #else
             return Libc::snprintf(null, 0, "%lu", value);
@@ -134,7 +134,7 @@ struct Write {
         } else if constexpr(R::kind == Kind::i32_) {
             return snprintf(output, idx, "%d", value);
         } else if constexpr(R::kind == Kind::i64_) {
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
             return snprintf(output, idx, "%lld", value);
 #else
             return snprintf(output, idx, "%ld", value);
@@ -146,7 +146,7 @@ struct Write {
         } else if constexpr(R::kind == Kind::u32_) {
             return snprintf(output, idx, "%u", value);
         } else if constexpr(R::kind == Kind::u64_) {
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
             return snprintf(output, idx, "%llu", value);
 #else
             return snprintf(output, idx, "%lu", value);

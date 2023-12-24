@@ -1,7 +1,7 @@
 
 #include "../base.h"
 
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
 #include <intrin.h>
 #endif
 
@@ -107,7 +107,7 @@ i64 abs(i64 v) {
 }
 
 u32 popcount(u32 val) {
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
     return __popcnt(val);
 #else
     return __builtin_popcount(val);
@@ -115,7 +115,7 @@ u32 popcount(u32 val) {
 }
 
 u64 popcount(u64 val) {
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
     return __popcnt64(val);
 #else
     return __builtin_popcountll(val);
@@ -123,7 +123,7 @@ u64 popcount(u64 val) {
 }
 
 u32 ctlz(u32 val) {
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
     return __lzcnt(val);
 #else
     if(val == 0) return 32;
@@ -132,7 +132,7 @@ u32 ctlz(u32 val) {
 }
 
 u64 ctlz(u64 val) {
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
     return __lzcnt64(val);
 #else
     if(val == 0) return 64;

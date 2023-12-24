@@ -53,7 +53,7 @@ struct Final_Suspend {
     void await_resume() noexcept {
     }
 
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
     // Compiler bug: remove this when fix released
     // https://developercommunity.visualstudio.com/t/destroy-coroutine-from-final_suspend-r/10096047
     template<typename R, Allocator A>
@@ -237,14 +237,14 @@ struct Event {
     void reset() const;
     bool try_wait() const;
 
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
     static Event of_sys(void* event);
 #else
     static Event of_sys(i32 fd, i32 mask);
 #endif
 
 private:
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
     Event(void* event) : event_{event} {
     }
     void* event_ = null;

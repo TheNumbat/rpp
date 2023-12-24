@@ -7,7 +7,7 @@
 namespace rpp {
 namespace Thread {
 
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
 using OS_Thread = void*;
 using OS_Thread_Ret = u32;
 constexpr OS_Thread OS_Thread_Null = null;

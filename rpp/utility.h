@@ -384,19 +384,19 @@ constexpr typename Add_Rvalue_Reference<T>::type declval() noexcept {
 }
 
 template<typename T>
-MSVC_INTRINSIC FORCE_INLINE constexpr typename Remove_Reference<T>::type&&
+RPP_MSVC_INTRINSIC RPP_FORCE_INLINE constexpr typename Remove_Reference<T>::type&&
 move(T&& value) noexcept {
     return static_cast<typename Remove_Reference<T>::type&&>(value);
 }
 
 template<typename T>
-MSVC_INTRINSIC FORCE_INLINE constexpr T&&
+RPP_MSVC_INTRINSIC RPP_FORCE_INLINE constexpr T&&
 forward(typename Remove_Reference<T>::type& value) noexcept {
     return static_cast<T&&>(value);
 }
 
 template<typename T>
-MSVC_INTRINSIC FORCE_INLINE constexpr T&&
+RPP_MSVC_INTRINSIC RPP_FORCE_INLINE constexpr T&&
 forward(typename Remove_Reference<T>::type&& value) noexcept {
     static_assert(!Is_Lvalue_Reference<T>::value, "Bad forward call.");
     return static_cast<T&&>(value);

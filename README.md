@@ -65,12 +65,8 @@ Utilities
 To-Do:
 - Release
     - Refactor tests
-    - Refactor limits
-    - Require compiler version
-    - Update cmake (no werror)
     - Update readme
     - CI
-    - Change defines
     - Pool Allocator
 - Result<T,E> type
 - Thread pool

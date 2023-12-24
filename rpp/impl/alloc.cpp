@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
 namespace std {
 enum class align_val_t : rpp::u64 {};
 }

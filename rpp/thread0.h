@@ -40,7 +40,7 @@ struct Flag {
     bool ready();
 
 private:
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
     i16 value_ = 0;
 #else
     i32 value_ = 0;
@@ -63,7 +63,7 @@ struct Mutex {
     bool try_lock();
 
 private:
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
     void* lock_ = null;
 #else
     pthread_mutex_t lock_ = PTHREAD_MUTEX_INITIALIZER;
@@ -140,7 +140,7 @@ struct Cond {
     void wait(Mutex& mut);
 
 private:
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
     void* cond_ = null;
 #else
     pthread_cond_t cond_ = PTHREAD_COND_INITIALIZER;

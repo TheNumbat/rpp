@@ -3,7 +3,7 @@
 
 #include "base.h"
 
-#ifdef OS_LINUX
+#ifdef RPP_OS_LINUX
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
@@ -23,7 +23,7 @@ struct Address {
     explicit Address(String_View address, u16 port);
 
 private:
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
     alignas(4) u8 sockaddr_storage[16];
 #else
     sockaddr_in sockaddr_;
@@ -52,7 +52,7 @@ struct Udp {
     Opt<Data> recv(Packet& in);
 
 private:
-#ifdef OS_WINDOWS
+#ifdef RPP_OS_WINDOWS
     u64 socket;
 #else
     i32 fd;

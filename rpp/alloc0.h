@@ -5,7 +5,7 @@
 #error "Include base.h instead."
 #endif
 
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
 void* operator new(rpp::u64, std::align_val_t, void* ptr) noexcept;
 void* operator new[](rpp::u64, std::align_val_t, void* ptr) noexcept;
 void operator delete(void*, std::align_val_t, void*) noexcept;

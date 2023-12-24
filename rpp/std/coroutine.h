@@ -10,7 +10,7 @@
 #define _LIBCPP_COROUTINE
 #define _GLIBCXX_COROUTINE
 
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
 #include <vcruntime_new.h>
 #endif
 

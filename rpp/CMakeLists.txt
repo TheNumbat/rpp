@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.16)
 
 project(rpp LANGUAGES CXX)
 
@@ -56,6 +56,10 @@ set(SOURCES_RPP
     "impl/vmath.cpp"
 )
 
+if(UNIX AND NOT APPLE)
+    set(LINUX TRUE)
+endif()
+
 if(WIN32)
     set(SOURCES_RPP ${SOURCES_RPP}
         "w32/w32_util.h"
@@ -66,13 +70,7 @@ if(WIN32)
         "w32/files_w32.cpp"
         "w32/net_w32.cpp"
     )
-endif()
-
-if(UNIX AND NOT APPLE)
-    set(LINUX TRUE)
-endif()
-
-if(APPLE OR LINUX)
+elseif(LINUX)
     set(SOURCES_RPP ${SOURCES_RPP}
         "pos/async_pos.cpp"
         "pos/asyncio_pos.cpp"
@@ -80,23 +78,30 @@ if(APPLE OR LINUX)
         "pos/files_pos.cpp"
         "pos/net_pos.cpp"
     )
+else()
+    message(FATAL_ERROR "Unsupported platform: only Windows and Linux are supported.")
 endif()
 
 add_library(rpp STATIC ${SOURCES_RPP})
 set_target_properties(rpp PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS OFF LINKER_LANGUAGE CXX)
 
-target_compile_definitions(rpp
-    PRIVATE
-    $<$<CONFIG:Debug>:DEBUG_BUILD>
-    $<$<CONFIG:RelWithDebInfo>:RELWITHDEBINFO_BUILD>
-    $<$<CONFIG:Release>:RELEASE_BUILD>
-    $<$<CONFIG:MinSizeRel>:RELEASE_BUILD>
-)
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    set(CLANG TRUE)
+endif()
 
 if(MSVC)
-    string(REPLACE "/GR" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+    if(MSVC_VERSION LESS 1939)
+        message(FATAL_ERROR "Unsupported MSVC version: only 19.39+ is supported.")
+    endif()
+
     target_compile_definitions(rpp PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX _HAS_EXCEPTIONS=0)
-    target_compile_options(rpp PRIVATE /MP /W4 /WX /GR- /GS- /EHa- /wd4201 /wd4840 /wd4100 /arch:AVX2)
+    target_compile_options(rpp PRIVATE /MP /W4 /GR- /GS- /EHa- /wd4201 /wd4840 /wd4100)
+elseif(CLANG)
+    if(CLANG_VERSION_MAJOR LESS 17)
+        message(FATAL_ERROR "Unsupported Clang version: only 17+ is supported.")
+    endif()
+
+    target_compile_options(rpp PRIVATE -Wall -Wextra -Wno-reorder -Wno-missing-braces -Wno-unused-parameter -fno-exceptions -fno-rtti)
 else()
-    target_compile_options(rpp PRIVATE -mavx2 -Wall -Wextra -Werror -Wno-reorder -Wno-missing-braces -Wno-unused-parameter -fno-exceptions -fno-rtti)
+    message(FATAL_ERROR "Unsupported compiler: only MSVC and Clang are supported.")
 endif()

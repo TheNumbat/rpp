@@ -5,7 +5,7 @@
 #error "Include base.h instead."
 #endif
 
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
 #define __PRETTY_FUNCTION__ __FUNCTION__
 #endif
 

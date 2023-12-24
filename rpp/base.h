@@ -2,47 +2,53 @@
 #pragma once
 
 #ifdef _MSC_VER
-#define COMPILER_MSVC
+
+#define RPP_COMPILER_MSVC
+#define RPP_FORCE_INLINE __forceinline
+#define RPP_MSVC_INTRINSIC [[msvc::intrinsic]]
+
+#if _MSC_VER < 1939
+#error "Unsupported MSVC version: only 19.39+ is supported."
+#endif
+
 #elif defined __clang__
-#define COMPILER_CLANG
+
+#define RPP_COMPILER_CLANG
+#define RPP_FORCE_INLINE __attribute__((always_inline))
+#define RPP_MSVC_INTRINSIC
+#include <new>
+
+#if __clang_major__ < 17
+#error "Unsupported Clang version: only 17+ is supported."
+#endif
+
 #else
-#error "Unsupported compiler."
+#error "Unsupported compiler: only MSVC and Clang are supported."
 #endif
 
 #ifdef _WIN64
-#define OS_WINDOWS
+
+#define RPP_OS_WINDOWS
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+
 #elif defined __linux__
-#define OS_LINUX
+
+#define RPP_OS_LINUX
+#include <pthread.h>
+
 #else
-#error "Unsupported OS."
+#error "Unsupported OS: only Windows and Linux are supported."
 #endif
 
 #if defined __x86_64__ || defined _M_X64
-#define ARCH_X64
+#define RPP_ARCH_X64
 #else
-#error "Unsupported architecture."
-#endif
-
-#ifdef COMPILER_MSVC
-#define FORCE_INLINE __forceinline
-#define MSVC_INTRINSIC [[msvc::intrinsic]]
-#else
-#define MSVC_INTRINSIC
-#endif
-
-#ifdef COMPILER_CLANG
-#define FORCE_INLINE __attribute__((always_inline))
-#include <new>
-#endif
-
-#ifdef OS_LINUX
-#include <pthread.h>
+#error "Unsupported architecture: only x64 is supported."
 #endif
 
 #define null nullptr
@@ -59,7 +65,7 @@ typedef unsigned int u32;
 typedef float f32;
 typedef double f64;
 
-#ifdef COMPILER_MSVC
+#ifdef RPP_COMPILER_MSVC
 typedef unsigned __int64 uptr;
 typedef unsigned long long u64;
 #else
