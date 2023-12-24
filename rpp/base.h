@@ -7,7 +7,8 @@
 #define RPP_FORCE_INLINE __forceinline
 #define RPP_MSVC_INTRINSIC [[msvc::intrinsic]]
 
-#if _MSC_VER < 1939
+// TODO(max): bump when they fix the coroutine bug
+#if _MSC_VER < 1937
 #error "Unsupported MSVC version: only 19.39+ is supported."
 #endif
 
@@ -49,6 +50,12 @@
 #define RPP_ARCH_X64
 #else
 #error "Unsupported architecture: only x64 is supported."
+#endif
+
+#ifdef __AVX2__
+#define RPP_ARCH_AVX2
+#else
+#error "Unsupported architecture: AVX2 is required."
 #endif
 
 #define null nullptr

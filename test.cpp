@@ -1231,7 +1231,7 @@ i32 main() {
                 info("5.1 begin");
                 co_await pool.suspend();
                 info("5.1 on thread");
-                // TODO: to be able to block on a job in a coroutine, the scheduler
+                // TODO(max): to be able to block on a job in a coroutine, the scheduler
                 // needs to support CPU affinity again.
                 info("5.1: co_await 1ms job");
                 i32 i = co_await job(1);

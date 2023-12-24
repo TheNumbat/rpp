@@ -5,12 +5,12 @@
 #error "Include base.h instead."
 #endif
 
+// Adapted from the MSVC STL <initializer_list> header
+
 #if !defined _INITIALIZER_LIST_ && !defined _LIBCPP_INITIALIZER_LIST && !defined _INITIALIZER_LIST
 #define _INITIALIZER_LIST_
 #define _LIBCPP_INITIALIZER_LIST
 #define _INITIALIZER_LIST
-
-#define RPP_NODISCARD [[nodiscard]]
 
 namespace std {
 
@@ -32,15 +32,15 @@ public:
         : _First(_First_arg), _Last(_Last_arg) {
     }
 
-    RPP_NODISCARD constexpr const _Elem* begin() const noexcept {
+    [[nodiscard]] constexpr const _Elem* begin() const noexcept {
         return _First;
     }
 
-    RPP_NODISCARD constexpr const _Elem* end() const noexcept {
+    [[nodiscard]] constexpr const _Elem* end() const noexcept {
         return _Last;
     }
 
-    RPP_NODISCARD constexpr size_t size() const noexcept {
+    [[nodiscard]] constexpr size_t size() const noexcept {
         return static_cast<size_t>(_Last - _First);
     }
 
@@ -50,17 +50,15 @@ private:
 };
 
 template<class _Elem>
-RPP_NODISCARD constexpr const _Elem* begin(initializer_list<_Elem> _Ilist) noexcept {
+[[nodiscard]] constexpr const _Elem* begin(initializer_list<_Elem> _Ilist) noexcept {
     return _Ilist.begin();
 }
 
 template<class _Elem>
-RPP_NODISCARD constexpr const _Elem* end(initializer_list<_Elem> _Ilist) noexcept {
+[[nodiscard]] constexpr const _Elem* end(initializer_list<_Elem> _Ilist) noexcept {
     return _Ilist.end();
 }
 
 } // namespace std
-
-#undef RPP_NODISCARD
 
 #endif
