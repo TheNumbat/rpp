@@ -31,11 +31,13 @@ struct Pool {
     template<typename... Args>
         requires Constructable<T, Args...>
     static T* make(Args&&... args) {
+        finalizer.keep_alive();
         Thread::Lock lock(mutex);
         return list.make(forward<Args>(args)...);
     }
 
     static void destroy(T* value) {
+        finalizer.keep_alive();
         Thread::Lock lock(mutex);
         list.destroy(value);
     }
@@ -46,6 +48,8 @@ private:
     struct Finalizer {
         Finalizer(Free_List<T, Backing>& l) {
             Profile::finalizer([&l]() { l.clear(); });
+        }
+        RPP_FORCE_INLINE void keep_alive() {
         }
     };
 

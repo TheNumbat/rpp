@@ -196,8 +196,8 @@ void Profile::finalizer(Function<void()> f) {
 }
 
 void Profile::finalize() {
+    Thread::Lock flock(finalizers_lock);
     {
-        Thread::Lock flock(finalizers_lock);
         for(auto& f : finalizers) {
             f();
         }
