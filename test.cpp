@@ -1346,7 +1346,6 @@ i32 main() {
     }();
 
     Profile::end_frame();
-    Profile::end_thread();
     Profile::finalize();
 
     return 0;

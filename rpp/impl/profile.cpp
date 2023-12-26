@@ -196,16 +196,16 @@ void Profile::finalizer(Function<void()> f) {
 }
 
 void Profile::finalize() {
-    Thread::Lock flock(finalizers_lock);
     {
+        Thread::Lock lock(finalizers_lock);
         for(auto& f : finalizers) {
             f();
         }
         finalizers.~Vec();
     }
+    end_thread();
     {
-        Thread::Lock alock(allocs_lock);
-        Thread::Lock tlock(threads_lock);
+        Thread::Lock lock(allocs_lock);
         for(auto& prof : allocs) {
             info("Allocation stats for [%]:", prof.first);
             info("\tAllocs: %", prof.second.allocates);
@@ -217,9 +217,12 @@ void Profile::finalize() {
                 warn("\tUnbalanced size: %", prof.second.current_set_size);
             }
         }
+        allocs.~Map();
     }
-    threads.~Map();
-    allocs.~Map();
+    {
+        Thread::Lock lock(threads_lock);
+        threads.~Map();
+    }
     i64 net = sys_net_allocs();
     if(net != 0) {
         warn("Unbalanced allocations: %", net);
