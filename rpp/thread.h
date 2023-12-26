@@ -85,7 +85,7 @@ private:
     friend struct Reflect::Refl<Promise<void>>;
 };
 
-template<typename T, Allocator A = Alloc>
+template<typename T, Scalar_Allocator A = Alloc>
 using Future = Arc<Promise<T>, A>;
 
 template<Allocator A = Alloc>

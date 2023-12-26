@@ -25,14 +25,41 @@ concept Allocator = requires(u64 size, void* address) {
     { A::free(address) } -> Same<void>;
 };
 
-template<typename A, typename T>
-concept Pool = requires(T&& t) {
-    { A::template make<T>(t) } -> Same<T*>;
-    { A::template destroy<T>(&t) } -> Same<void>;
+template<typename A>
+concept Pool = requires(Empty<> t) { // Can't express forall types T
+    { A::template make<Empty<>>(t) } -> Same<Empty<>*>;
+    { A::template destroy<Empty<>>(&t) } -> Same<void>;
 };
 
-template<typename A, typename T>
-concept Pool_Allocator = Allocator<A> || Pool<A, T>;
+template<typename A>
+concept Scalar_Allocator = Allocator<A> || Pool<A>;
+
+namespace detail {
+
+template<typename A>
+struct Scalar_Adaptor {
+    template<typename T, typename... Args>
+        requires Allocator<A> && Constructable<T, Args...>
+    static T* make(Args&&... args) {
+        T* mem = reinterpret_cast<T*>(A::alloc(sizeof(T)));
+        new(mem) T{forward<Args>(args)...};
+        return mem;
+    }
+
+    template<typename T>
+        requires Allocator<A>
+    static void destroy(T* mem) {
+        if constexpr(Must_Destruct<T>) {
+            mem->~T();
+        }
+        A::free(mem);
+    }
+};
+
+} // namespace detail
+
+template<typename P>
+using Pool_Adaptor = If<Allocator<P>, detail::Scalar_Adaptor<P>, P>;
 
 template<Literal N, bool Log = true>
 struct Mallocator {

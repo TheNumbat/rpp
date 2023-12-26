@@ -5,22 +5,22 @@
 
 namespace rpp {
 
-template<typename T, typename A = Mdefault>
-    requires Pool_Allocator<A, T>
+template<typename T, Scalar_Allocator P = Mdefault>
 struct Box {
+    using A = Pool_Adaptor<P>;
 
     Box() = default;
 
     explicit Box(T&& value)
         requires Move_Constructable<T>
     {
-        data_ = make(move(value));
+        data_ = A::template make<T>(move(value));
     }
 
     template<typename... Args>
         requires Constructable<T, Args...>
     explicit Box(Args&&... args) {
-        data_ = make(forward<Args>(args)...);
+        data_ = A::template make<T>(forward<Args>(args)...);
     }
 
     template<Derived_From<T> D>
@@ -45,16 +45,13 @@ struct Box {
 
     ~Box() {
         if(data_) {
-            if constexpr(Must_Destruct<T>) {
-                data_->~T();
-            }
-            destroy(data_);
+            A::template destroy<T>(data_);
             data_ = null;
         }
     }
 
-    template<Allocator B = A>
-    Box<T, B> clone() const
+    template<Scalar_Allocator R = P>
+    Box<T, R> clone() const
         requires(Clone<T> || Copy_Constructable<T>)
     {
         if(!data_) return Box{};
@@ -69,7 +66,7 @@ struct Box {
     template<typename... Args>
     void emplace(Args&&... args) {
         this->~Box();
-        data_ = make(forward<Args>(args)...);
+        data_ = A::template make<T>(forward<Args>(args)...);
     }
 
     operator bool() const {
@@ -94,31 +91,6 @@ struct Box {
     }
 
 private:
-    template<typename... Args>
-        requires Constructable<T, Args...>
-    static T* make(Args&&... args) {
-        if constexpr(Allocator<A>) {
-            T* data_ = reinterpret_cast<T*>(A::alloc(sizeof(T)));
-            new(data_) T{forward<Args>(args)...};
-            return data_;
-        } else {
-            static_assert(Pool<A, T>);
-            return A::template make<T>(forward<Args>(args)...);
-        }
-    }
-
-    static void destroy(T* value) {
-        if constexpr(Allocator<A>) {
-            if constexpr(Must_Destruct<T>) {
-                value->~T();
-            }
-            A::free(value);
-        } else {
-            static_assert(Pool<A, T>);
-            A::template destroy<T>(value);
-        }
-    }
-
     T* data_ = null;
 
     friend struct Reflect::Refl<Box>;

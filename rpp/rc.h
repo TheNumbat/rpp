@@ -9,21 +9,39 @@ namespace detail {
 
 template<typename T>
 struct Rc_Data {
+    explicit Rc_Data(u64 r)
+        requires Default_Constructable<T>
+        : references(r) {
+    }
+    explicit Rc_Data(u64 r, T&& t)
+        requires Move_Constructable<T>
+        : references(r), value(move(t)) {
+    }
+
     u64 references = 0;
     T value;
 };
 
 template<typename T>
 struct Arc_Data {
+    explicit Arc_Data(Thread::Atomic r)
+        requires Default_Constructable<T>
+        : references(r) {
+    }
+    explicit Arc_Data(Thread::Atomic r, T&& t)
+        requires Move_Constructable<T>
+        : references(r), value(move(t)) {
+    }
+
     Thread::Atomic references;
     T value;
 };
 
 } // namespace detail
 
-template<typename T, typename A = Mdefault>
-    requires Pool_Allocator<A, T>
+template<typename T, Scalar_Allocator P = Mdefault>
 struct Rc {
+    using A = Pool_Adaptor<P>;
     using Data = detail::Rc_Data<T>;
 
     Rc() = default;
@@ -32,16 +50,16 @@ struct Rc {
     }
 
     template<typename... Args>
-        requires Constructable<T, Args...>
+        requires Constructable<T, Args...> && Move_Constructable<T>
     explicit Rc(Args&&... args) {
-        data_ = make_(forward<Args>(args)...);
+        data_ = A::template make<Data>(static_cast<u64>(1), T{forward<Args>(args)...});
     }
 
     static Rc make()
         requires Default_Constructable<T>
     {
         Rc ret;
-        ret.data_ = make_();
+        ret.data_ = A::template make<Data>(static_cast<u64>(1));
         return ret;
     }
 
@@ -95,35 +113,12 @@ struct Rc {
     }
 
 private:
-    template<typename... Args>
-        requires Constructable<T, Args...>
-    static Data* make_(Args&&... args) {
-        if constexpr(Allocator<A>) {
-            Data* data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-            new(data_) Data{static_cast<u64>(1), T{forward<Args>(args)...}};
-            return data_;
-        } else {
-            static_assert(Pool<A, T>);
-            return A::template make<Data>(static_cast<u64>(1), T{forward<Args>(args)...});
-        }
-    }
-
     void drop() {
         if(!data_) return;
-
         data_->references--;
         if(data_->references == 0) {
-            if constexpr(Allocator<A>) {
-                if constexpr(Must_Destruct<Data>) {
-                    data_->~Data();
-                }
-                A::free(data_);
-            } else {
-                static_assert(Pool<A, T>);
-                A::template destroy<Data>(data_);
-            }
+            A::template destroy<Data>(data_);
         }
-
         data_ = null;
     }
 
@@ -132,9 +127,9 @@ private:
     friend struct Reflect::Refl<Rc<T>>;
 };
 
-template<typename T, typename A = Mdefault>
-    requires Pool_Allocator<A, T>
+template<typename T, Scalar_Allocator P = Mdefault>
 struct Arc {
+    using A = Pool_Adaptor<P>;
     using Data = detail::Arc_Data<T>;
 
     Arc() = default;
@@ -143,16 +138,16 @@ struct Arc {
     }
 
     template<typename... Args>
-        requires Constructable<T, Args...>
+        requires Constructable<T, Args...> && Move_Constructable<T>
     explicit Arc(Args&&... args) {
-        data_ = make_(forward<Args>(args)...);
+        data_ = A::template make<Data>(Thread::Atomic{1}, T{forward<Args>(args)...});
     }
 
     static Arc make()
         requires Default_Constructable<T>
     {
         Arc ret;
-        ret.data_ = make_();
+        ret.data_ = A::template make<Data>(Thread::Atomic{1});
         return ret;
     }
 
@@ -206,34 +201,11 @@ struct Arc {
     }
 
 private:
-    template<typename... Args>
-        requires Constructable<T, Args...>
-    static Data* make_(Args&&... args) {
-        if constexpr(Allocator<A>) {
-            Data* data_ = reinterpret_cast<Data*>(A::alloc(sizeof(Data)));
-            new(data_) Data{Thread::Atomic{1}, T{forward<Args>(args)...}};
-            return data_;
-        } else {
-            static_assert(Pool<A, T>);
-            return A::template make<Data>(Thread::Atomic{1}, T{forward<Args>(args)...});
-        }
-    }
-
     void drop() {
         if(!data_) return;
-
         if(data_->references.decr() == 0) {
-            if constexpr(Allocator<A>) {
-                if constexpr(Must_Destruct<Data>) {
-                    data_->~Data();
-                }
-                A::free(data_);
-            } else {
-                static_assert(Pool<A, T>);
-                A::template destroy<Data>(data_);
-            }
+            A::template destroy<Data>(data_);
         }
-
         data_ = null;
     }
 

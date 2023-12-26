@@ -557,7 +557,7 @@ template<typename F, typename... Args>
     requires Invocable<F, Args...>
 using Invoke_Result = detail::Return_Type<F, Args...>::type;
 
-template<typename T>
+template<typename T = void>
 struct Empty {};
 
 template<typename T, T N>
