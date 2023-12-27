@@ -10,3 +10,6 @@ build/
 *.exe
 *.out
 *.nv-gpudmp
+test/large_file
+test/debug.log
+test/*.corrected
