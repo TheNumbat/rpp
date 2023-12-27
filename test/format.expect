@@ -11,12 +11,12 @@
 [Level::info] (null)
 [Level::info] Box<i32> Box{null}
 [Level::info] Box{0}
-[Level::info] Pair<i32,f32> Pair{23, 13.000000}
+[Level::info] Pair<i32, f32> Pair{23, 13.000000}
 [Level::info] Tuple<> Tuple{}
 [Level::info] Tuple<f32, i32, String_View> Tuple{1.000000, 2, Hello}
-[Level::info] Variant<i32,f32> Variant{1}
+[Level::info] Variant<i32, f32> Variant{1}
 [Level::info] Variant{1.000000}
-[Level::info] Variant<One,Two> Variant{One{1}}
+[Level::info] Variant<One, Two> Variant{One{1}}
 [Level::info] Variant{Two{2}}
 [Level::info] Function<void()> Function{void()}
 [Level::info] Function<void(i32)> Function{void(i32)}
@@ -26,7 +26,7 @@
 [Level::info] Storage<Ints> Storage<Ints>
 [Level::info] Opt<i32> Opt{None}
 [Level::info] Opt{5}
-[Level::info] Array<i32,2> [1, 2]
+[Level::info] Array<i32, 2> [1, 2]
 [Level::info] [0, 0]
 [Level::info] Vec<i32> Vec[1, 2]
 [Level::info] Vec[]
@@ -38,7 +38,7 @@
 [Level::info] Queue[]
 [Level::info] Heap<i32> Heap[1, 2]
 [Level::info] Heap[]
-[Level::info] Map<i32,i32> Map[{3 : 4}, {1 : 2}]
+[Level::info] Map<i32, i32> Map[{3 : 4}, {1 : 2}]
 [Level::info] Map[]
 [Level::info] Rc<i32> Rc{null}
 [Level::info] Rc[1]{5}
@@ -46,7 +46,7 @@
 [Level::info] Arc[1]{5}
 [Level::info] Atomic{value_ : 3}
 [Level::info] Vecs{i : Vec[1, 2], u : Vec[3, 4]}
-[Level::info] Array<Vec<i32>,2> [Vec[1, 2], Vec[3, 4]]
+[Level::info] Array<Vec<i32>, 2> [Vec[1, 2], Vec[3, 4]]
 [Level::info] Rc[2]{5}
 [Level::info] Arc[2]{5}
 [Level::info] Vec2{1.000000, 2.000000}

@@ -334,7 +334,7 @@ struct Typename<T<T0>> {
     }
 };
 
-template<template<typename, typename> typename T, Reflectable T0, Allocator A0>
+template<template<typename, typename> typename T, Reflectable T0, Scalar_Allocator A0>
     requires Reflectable<T<T0, A0>>
 struct Typename<T<T0, A0>> {
     template<Allocator A>
@@ -345,12 +345,12 @@ struct Typename<T<T0, A0>> {
 };
 
 template<template<typename, typename, typename> typename T, Reflectable T0, Reflectable T1,
-         Allocator A0>
+         Scalar_Allocator A0>
     requires Reflectable<T<T0, T1, A0>>
 struct Typename<T<T0, T1, A0>> {
     template<Allocator A>
     static String<A> name() {
-        return format<A>("%<%,%>"_v, String_View{Refl<T<T0, T1, A0>>::name},
+        return format<A>("%<%, %>"_v, String_View{Refl<T<T0, T1, A0>>::name},
                          Typename<T0>::template name<A>(), Typename<T1>::template name<A>());
     }
 };
@@ -370,7 +370,7 @@ template<template<typename, u64> typename T, Reflectable T0, u64 N>
 struct Typename<T<T0, N>> {
     template<Allocator A>
     static String<A> name() {
-        return format<A>("%<%,%>"_v, String_View{Refl<T<T0, N>>::name},
+        return format<A>("%<%, %>"_v, String_View{Refl<T<T0, N>>::name},
                          Typename<T0>::template name<A>(), N);
     }
 };
@@ -380,7 +380,7 @@ template<template<typename, typename> typename T, Reflectable T0, typename T1>
 struct Typename<T<T0, T1>> {
     template<Allocator A>
     static String<A> name() {
-        return format<A>("%<%,%>"_v, String_View{Refl<T<T0, T1>>::name},
+        return format<A>("%<%, %>"_v, String_View{Refl<T<T0, T1>>::name},
                          Typename<T0>::template name<A>(), Typename<T1>::template name<A>());
     }
 };
