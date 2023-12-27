@@ -35,7 +35,7 @@ i32 main() {
         }
         {
             Vec<Thread::Future<void>> tasks;
-            for(u64 i = 0; i < Thread::hardware_threads(); i++) {
+            for(u64 i = 0; i < 8; i++) {
                 tasks.push(Thread::spawn([]() { info("Hello from thread"); }));
             }
 
