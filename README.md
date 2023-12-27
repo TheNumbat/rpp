@@ -1,5 +1,8 @@
 # rpp
 
+[![Windows](https://github.com/TheNumbat/rpp/actions/workflows/windows.yml/badge.svg?branch=main)](https://github.com/TheNumbat/rpp/actions/workflows/windows.yml)
+[![Linux](https://github.com/TheNumbat/rpp/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/ubuntu.yml)
+
 Minimal Rust-inspired C++20 standard library (mostly) replacement.
 
 - Optimizes for fast compile times.
