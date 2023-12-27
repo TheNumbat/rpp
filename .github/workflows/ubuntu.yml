@@ -7,8 +7,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Configure
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      run: CC=clang-17 CXX=clang++-17 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     - name: Build
       run: cmake --build build
     - name: Test
-      run: ctest --test-dir build
+      run: ctest --test-dir build --output-on-failure
