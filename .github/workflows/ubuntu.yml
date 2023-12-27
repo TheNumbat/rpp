@@ -6,6 +6,11 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Install Clang 17
+      run: |
+       wget https://apt.llvm.org/llvm.sh
+       chmod +x ./llvm.sh
+       sudo ./llvm.sh 17
     - name: Configure
       run: CC=clang-17 CXX=clang++-17 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     - name: Build
