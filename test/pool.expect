@@ -1,0 +1,25 @@
+[Level::info] Hello from coroutine 1 on thread pool
+[Level::info] Job returned 1
+[Level::info] Hello from coroutine 4.1 on thread pool
+[Level::info] Hello from coroutine 4.2 on thread pool
+[Level::info] Hello from coroutine 4.3 on thread pool
+[Level::info] 5.1 begin
+[Level::info] 5.1 on thread
+[Level::info] 5.1: co_await 1ms job
+[Level::info] 5.2 begin 1
+[Level::info] 5.2 on thread 1
+[Level::info] 5.1: launch 0s job
+[Level::info] 5.2 begin 0
+[Level::info] 5.1: co_await 100ms job
+[Level::info] 5.2 begin 100
+[Level::info] 5.2 on thread 0
+[Level::info] 5.2 on thread 100
+[Level::info] 5.1: co_await 0s job
+[Level::info] 5.1 done: 1 1 1
+[Level::info] coWaiting 100ms.
+[Level::info] coWaited 100ms.
+[Level::info] Waited 100ms.
+[Level::info] Read file: 4097
+[Level::info] coReading file.
+[Level::info] coRead file: 4097
+[Level::info] Read file: 4097

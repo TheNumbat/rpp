@@ -215,31 +215,6 @@ struct Range_Allocator {
         return stats;
     }
 
-    static void test() {
-
-        Range_Allocator<A, Buckets, Bias> allocator(Math::GB(8));
-
-        RNG::Stream rng(0);
-        info("Testing allocator...");
-
-        for(u64 i = 0; i < 1000; i++) {
-            Region_Scope(R);
-            Vec<Range, Mregion<R>> allocations(1000), leaks(1000);
-            for(u64 j = 0; j < 1000; j++) {
-                u64 align = rng.range(static_cast<u64>(1), Math::MB(1));
-                u64 size = rng.range(static_cast<u64>(1), Math::MB(1));
-                auto mem = *allocator.allocate(size, align);
-                assert(mem->offset % align == 0);
-                allocations.push(mem);
-            }
-            rng.shuffle(allocations);
-            for(auto& mem : allocations) {
-                allocator.free(mem);
-            }
-            allocator.statistics().assert_clear();
-        }
-    }
-
 private:
     Thread::Mutex mutex;
     Free_List<Block, A> blocks;

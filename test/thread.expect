@@ -1,0 +1,10 @@
+[Level::info] Hello from thread2
+[Level::info] Thread 1 returned Vec[2, 3]
+[Level::info] Hello from thread
+[Level::info] Hello from thread
+[Level::info] Hello from thread
+[Level::info] Hello from thread
+[Level::info] Hello from thread
+[Level::info] Hello from thread
+[Level::info] Hello from thread
+[Level::info] Hello from thread

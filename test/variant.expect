@@ -1,0 +1,8 @@
+[Level::info] variant has 1.000000
+[Level::info] sizeof variant 8
+[Level::info] variant has 1
+[Level::info] variant has 1
+[Level::info] variant has string view Hello
+[Level::info] variant has string view Hello
+[Level::info] returned string from match
+[Level::info] variant has 1: 1{1}

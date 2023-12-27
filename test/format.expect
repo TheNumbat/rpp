@@ -1,0 +1,66 @@
+[Level::info] %
+[Level::info] true
+[Level::info] false
+[Level::info] i32[] [1, 2]
+[Level::info] Ints Ints{i : 10, u : 2}
+[Level::info] Kind Kind::enum_
+[Level::info] Hello
+[Level::info] Hello
+[Level::info] Ref<i32> Ref{null}
+[Level::info] Ref{0}
+[Level::info] (null)
+[Level::info] Box<i32> Box{null}
+[Level::info] Box{0}
+[Level::info] Pair<i32,f32> Pair{23, 13.000000}
+[Level::info] Tuple<> Tuple{}
+[Level::info] Tuple<f32, i32, String_View> Tuple{1.000000, 2, Hello}
+[Level::info] Variant<i32,f32> Variant{1}
+[Level::info] Variant{1.000000}
+[Level::info] Variant<One,Two> Variant{One{1}}
+[Level::info] Variant{Two{2}}
+[Level::info] Function<void()> Function{void()}
+[Level::info] Function<void(i32)> Function{void(i32)}
+[Level::info] Function<void(i32, i32)> Function{void(i32, i32)}
+[Level::info] Function<void(i32, i32)> Function{i32(i32, i32)}
+[Level::info] Function<i32(Function<Function<void()>(f32)>)> Function{i32(Function<Function<void()>(f32)>)}
+[Level::info] Storage<Ints> Storage<Ints>
+[Level::info] Opt<i32> Opt{None}
+[Level::info] Opt{5}
+[Level::info] Array<i32,2> [1, 2]
+[Level::info] [0, 0]
+[Level::info] Vec<i32> Vec[1, 2]
+[Level::info] Vec[]
+[Level::info] Slice<i32> Slice[1, 2]
+[Level::info] Slice[]
+[Level::info] Stack<i32> Stack[1, 2]
+[Level::info] Stack[]
+[Level::info] Queue<i32> Queue[1, 2]
+[Level::info] Queue[]
+[Level::info] Heap<i32> Heap[1, 2]
+[Level::info] Heap[]
+[Level::info] Map<i32,i32> Map[{3 : 4}, {1 : 2}]
+[Level::info] Map[]
+[Level::info] Rc<i32> Rc{null}
+[Level::info] Rc[1]{5}
+[Level::info] Arc<i32> Arc{null}
+[Level::info] Arc[1]{5}
+[Level::info] Atomic{value_ : 3}
+[Level::info] Vecs{i : Vec[1, 2], u : Vec[3, 4]}
+[Level::info] Array<Vec<i32>,2> [Vec[1, 2], Vec[3, 4]]
+[Level::info] Rc[2]{5}
+[Level::info] Arc[2]{5}
+[Level::info] Vec2{1.000000, 2.000000}
+[Level::info] Vec3{1.000000, 2.000000, 3.000000}
+[Level::info] Vec4{1.000000, 2.000000, 3.000000, 4.000000}
+[Level::info] Vec5{1.000000, 2.000000, 3.000000, 4.000000, 5.000000}
+[Level::info] Vec2i{1, 2}
+[Level::info] Vec3i{1, 2, 3}
+[Level::info] Vec4i{1, 2, 3, 4}
+[Level::info] Vec5i{1, 2, 3, 4, 5}
+[Level::info] Vec2u{1, 2}
+[Level::info] Vec3u{1, 2, 3}
+[Level::info] Vec4u{1, 2, 3, 4}
+[Level::info] Vec5u{1, 2, 3, 4, 5}
+[Level::info] Quat{1.000000, 2.000000, 3.000000, 4.000000}
+[Level::info] BBox{{1.000000, 2.000000, 3.000000}, {4.000000, 5.000000, 6.000000}}
+[Level::info] Mat4{{1.000000, 2.000000, 3.000000, 4.000000}, {5.000000, 6.000000, 7.000000, 8.000000}, {9.000000, 10.000000, 11.000000, 12.000000}, {13.000000, 14.000000, 15.000000, 16.000000}}

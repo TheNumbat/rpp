@@ -64,7 +64,6 @@ Utilities
 
 To-Do:
 - Release
-    - Refactor tests
     - CI
     - Update readme
 - Result<T,E> type

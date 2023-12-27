@@ -7,7 +7,7 @@ i32 main() {
     Profile::begin_frame();
 
     {
-        Test test{"template"_v};
+        Test test{"empty"_v};
         //
     }
 

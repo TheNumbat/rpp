@@ -1,0 +1,12 @@
+[Level::info] Hello from coroutine 1
+[Level::info] Hello from coroutine 2
+[Level::info] Hello from coroutine 3
+[Level::info] Hello from coroutine 5
+[Level::info] Hello from coroutine 4
+[Level::info] Coroutine 5 got 1
+[Level::info] Hello from coroutine 6
+[Level::info] Hello from coroutine 7
+[Level::info] Coroutine 7 got 1
+[Level::info] Hello from coroutine 8
+[Level::info] Hello from coroutine 9
+[Level::info] Coroutine 9 got 1
