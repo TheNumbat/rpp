@@ -14,13 +14,13 @@ struct Opt {
 
     explicit Opt(T&& value)
         requires Move_Constructable<T>
-        : value_(move(value)), ok_(true) {
+        : ok_(true), value_(move(value)) {
     }
 
     template<typename... Args>
     explicit Opt(Args&&... args)
         requires Constructable<T, Args...>
-        : value_(forward<Args>(args)...), ok_(true) {
+        : ok_(true), value_(forward<Args>(args)...) {
     }
 
     ~Opt() {

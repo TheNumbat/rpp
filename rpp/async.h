@@ -22,7 +22,7 @@ struct Suspend {
     }
     void await_resume() noexcept {
     }
-    void await_suspend(std::coroutine_handle<> handle) noexcept {
+    void await_suspend(std::coroutine_handle<>) noexcept {
     }
 };
 
@@ -32,7 +32,7 @@ struct Continue {
     }
     void await_resume() noexcept {
     }
-    void await_suspend(std::coroutine_handle<> handle) noexcept {
+    void await_suspend(std::coroutine_handle<>) noexcept {
     }
 };
 

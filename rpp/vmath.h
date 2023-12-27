@@ -4,6 +4,11 @@
 #include "base.h"
 #include "simd.h"
 
+#ifdef RPP_COMPILER_CLANG
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-braces"
+#endif
+
 namespace rpp {
 namespace Math {
 
@@ -1186,3 +1191,7 @@ struct Write<O, Math::BBox> {
 
 } // namespace Format
 } // namespace rpp
+
+#ifdef RPP_COMPILER_CLANG
+#pragma clang diagnostic pop
+#endif

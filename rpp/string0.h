@@ -85,7 +85,7 @@ struct String {
 
     String() = default;
     explicit String(u64 capacity)
-        : data_(reinterpret_cast<u8*>(A::alloc(capacity))), capacity_(capacity), length_(0) {
+        : data_(reinterpret_cast<u8*>(A::alloc(capacity))), length_(0), capacity_(capacity) {
     }
 
     ~String() {

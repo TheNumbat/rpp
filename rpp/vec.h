@@ -15,8 +15,8 @@ struct Vec {
 
     Vec() = default;
     explicit Vec(u64 capacity)
-        : data_(reinterpret_cast<T*>(A::alloc(capacity * sizeof(T)))), capacity_(capacity),
-          length_(0) {
+        : data_(reinterpret_cast<T*>(A::alloc(capacity * sizeof(T)))), length_(0),
+          capacity_(capacity) {
     }
 
     static Vec make(u64 length)

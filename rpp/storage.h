@@ -82,13 +82,13 @@ namespace Format {
 
 template<Reflectable T>
 struct Measure<Storage<T>> {
-    static u64 measure(const Storage<T>& storage) {
+    static u64 measure(const Storage<T>&) {
         return 9 + String_View{Reflect::Refl<T>::name}.length();
     }
 };
 template<Allocator O, Reflectable T>
 struct Write<O, Storage<T>> {
-    static u64 write(String<O>& output, u64 idx, const Storage<T>& storage) {
+    static u64 write(String<O>& output, u64 idx, const Storage<T>&) {
         idx = output.write(idx, "Storage<"_v);
         idx = output.write(idx, String_View{Reflect::Refl<T>::name});
         return output.write(idx, '>');

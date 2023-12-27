@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.17)
 
 project(rpp LANGUAGES CXX)
 
@@ -43,10 +43,8 @@ set(SOURCES_RPP
     "variant.h"
     "vec.h"
     "vmath.h"
-
     "std/coroutine.h"
     "std/initializer_list.h"
-
     "impl/alloc.cpp"
     "impl/base.cpp"
     "impl/log.cpp"
@@ -89,6 +87,10 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CLANG TRUE)
 endif()
 
+if(WIN32)
+    target_link_libraries(rpp PRIVATE ws2_32 Synchronization)
+endif()
+
 if(MSVC)
     if(MSVC_VERSION LESS 1937)
         message(FATAL_ERROR "Unsupported MSVC version: only 19.37+ is supported.")
@@ -97,13 +99,13 @@ if(MSVC)
     string(REPLACE "/GR" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 
     target_compile_definitions(rpp PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX _HAS_EXCEPTIONS=0)
-    target_compile_options(rpp PRIVATE /arch:AVX2 /MP /W4 /GR- /GS- /EHa- /wd4201 /wd4840 /wd4100)
+    target_compile_options(rpp PRIVATE /arch:AVX2 /MP /W4 /GR- /GS- /EHa- /wd4201)
 elseif(CLANG)
     if(CLANG_VERSION_MAJOR LESS 17)
         message(FATAL_ERROR "Unsupported Clang version: only 17+ is supported.")
     endif()
 
-    target_compile_options(rpp PRIVATE -mavx2 -Wall -Wextra -Wno-reorder -Wno-missing-braces -Wno-unused-parameter -fno-exceptions -fno-rtti)
+    target_compile_options(rpp PRIVATE -mavx2 -Wall -Wextra -fno-exceptions -fno-rtti)
 else()
     message(FATAL_ERROR "Unsupported compiler: only MSVC and Clang are supported.")
 endif()

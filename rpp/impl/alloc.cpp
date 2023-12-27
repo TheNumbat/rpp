@@ -8,15 +8,15 @@
 namespace std {
 enum class align_val_t : rpp::u64 {};
 }
-void* operator new(rpp::u64, std::align_val_t align, void* ptr) noexcept {
+void* operator new(rpp::u64, std::align_val_t, void* ptr) noexcept {
     return ptr;
 }
-void* operator new[](rpp::u64, std::align_val_t align, void* ptr) noexcept {
+void* operator new[](rpp::u64, std::align_val_t, void* ptr) noexcept {
     return ptr;
 }
-void operator delete(void*, std::align_val_t align, void* ptr) noexcept {
+void operator delete(void*, std::align_val_t, void*) noexcept {
 }
-void operator delete[](void*, std::align_val_t align, void* ptr) noexcept {
+void operator delete[](void*, std::align_val_t, void*) noexcept {
 }
 #endif
 
@@ -88,6 +88,7 @@ void Region_Allocator::begin(Region brand) {
 
 void Region_Allocator::end(Region brand) {
     assert(current_region > 0);
+    assert_brand(brand);
     u64 end_offset = region_offsets[current_region];
     current_region--;
     u64 start_offset = region_offsets[current_region];

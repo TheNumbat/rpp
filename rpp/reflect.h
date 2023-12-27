@@ -95,7 +95,7 @@ struct Iter;
 template<typename F>
 struct Iter<F, Nil> {
     template<typename G>
-    static constexpr void apply(G&& f) {
+    static constexpr void apply(G&&) {
     }
 };
 

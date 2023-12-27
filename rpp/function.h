@@ -131,7 +131,7 @@ template<Reflectable R, typename... Args>
     requires(Reflectable<Args> && ...)
 struct Measure<Function<R(Args...)>> {
     using Fn = R(Args...);
-    static u64 measure(const Function<Fn>& function) {
+    static u64 measure(const Function<Fn>&) {
         Region_Scope(Rg);
         u64 length = 10;
         length += String_View{Reflect::Refl<R>::name}.length();
@@ -162,7 +162,7 @@ template<Allocator O, Reflectable R, typename... Args>
 struct Write<O, Function<R(Args...)>> {
     using Fn = R(Args...);
     static constexpr u64 N = sizeof...(Args);
-    static u64 write(String<O>& output, u64 idx, const Function<Fn>& function) {
+    static u64 write(String<O>& output, u64 idx, const Function<Fn>&) {
         idx = output.write(idx, "Function{"_v);
         idx = output.write(idx, String_View{Reflect::Refl<R>::name});
         idx = output.write(idx, '(');
