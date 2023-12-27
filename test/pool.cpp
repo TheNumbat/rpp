@@ -88,9 +88,7 @@ i32 main() {
             {
                 auto job = [&pool_ = pool](i32 ms) -> Async::Task<i32> {
                     auto& pool = pool_;
-                    info("5.2 begin %", ms);
                     co_await pool.suspend();
-                    info("5.2 on thread %", ms);
                     Thread::sleep(ms);
                     co_return 1;
                 };
@@ -99,21 +97,14 @@ i32 main() {
                     auto& job = job_;
                     info("5.1 begin");
                     co_await pool.suspend();
-                    info("5.1 on thread");
-                    // TODO(max): to be able to block on a job in a coroutine, the scheduler
-                    // needs to support CPU affinity again.
                     info("5.1: co_await 1ms job");
                     i32 i = co_await job(1);
                     info("5.1: launch 0s job");
-                    auto wait =
-                        job(0); // should run on another thread, we don't yield until the next
+                    auto wait = job(0);
                     info("5.1: co_await 100ms job");
                     i32 j = co_await job(100);
-                    // same thread should pick up the job as we wait immediately
-                    // continues on the same thread via continuation
                     info("5.1: co_await 0s job");
                     i32 k = co_await wait;
-                    // does not wait or use continuation because already done
                     info("5.1 done: % % %", i, j, k);
                     co_return i + j + k;
                 };
