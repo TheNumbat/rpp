@@ -7,8 +7,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Configure
-      runs: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     - name: Build
-      runs: cmake --build build
+      run: cmake --build build
     - name: Test
-      runs: ctest --test-dir build
+      run: ctest --test-dir build

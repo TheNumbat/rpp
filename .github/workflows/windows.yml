@@ -7,8 +7,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Configure
-      runs: cmake -S . -B build
+      run: cmake -S . -B build
     - name: Build
-      runs: cmake --build build --config Release
+      run: cmake --build build --config Release
     - name: Test
-      runs: ctest --test-dir build -C Release
+      run: ctest --test-dir build -C Release
