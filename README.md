@@ -63,9 +63,7 @@ Utilities
 - Thread pool that schedules coroutines
 
 To-Do:
-- Release
-    - CI
-    - Update readme
+- Update readme
 - Result<T,E> type
 - Thread pool
     - Priorities & CPU affinity

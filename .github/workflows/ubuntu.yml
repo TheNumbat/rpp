@@ -1,0 +1,13 @@
+name: Ubuntu
+on: [push]
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Configure
+      uses: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+    - name: Build
+      runs: cmake --build build
+    - name: Test
+      runs: ctest --test-dir build

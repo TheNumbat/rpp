@@ -1,0 +1,13 @@
+name: Windows
+on: [push]
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Configure
+      uses: cmake -S . -B build
+    - name: Build
+      runs: cmake --build build --config Release
+    - name: Test
+      runs: ctest --test-dir build -C Release
