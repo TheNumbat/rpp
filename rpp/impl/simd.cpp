@@ -7,6 +7,8 @@ namespace rpp::SIMD {
 
 static_assert(sizeof(F32x4) == 16);
 static_assert(alignof(F32x4) == 16);
+static_assert(sizeof(F32x8) == 32);
+static_assert(alignof(F32x8) == 32);
 
 static __m128 of(F32x4 a) {
     return *reinterpret_cast<__m128*>(a.data);
