@@ -71,7 +71,6 @@ void* Region_Allocator::alloc(Region brand, u64 size) {
     u8* ret = reinterpret_cast<u8*>(chunks) + sizeof(Chunk) + chunks->used;
     chunks->used += size;
     region_offsets[current_region] += size;
-    Libc::memset(ret, 0, size);
     return ret;
 }
 

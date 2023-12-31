@@ -77,6 +77,7 @@ struct Map {
         usable_ = (capacity_ / 4) * 3;
         length_ = 0;
         data_ = reinterpret_cast<Slot*>(A::alloc(capacity_ * sizeof(Slot)));
+        Libc::memset(data_, 0, capacity_ * sizeof(Slot));
     }
 
     template<typename... Ss>
@@ -153,6 +154,7 @@ struct Map {
 
         capacity_ = new_capacity;
         data_ = reinterpret_cast<Slot*>(A::alloc(capacity_ * sizeof(Slot)));
+        Libc::memset(data_, 0, capacity_ * sizeof(Slot));
         usable_ = (capacity_ / 4) * 3;
         shift_ = Math::ctlz(capacity_) + 1;
 
