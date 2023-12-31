@@ -11,7 +11,7 @@ namespace rpp {
 // but begin_frame and end_frame will still keep track of frame timing, and
 // data structures will be allocated.
 
-#ifdef RELEASE_BUILD
+#ifdef RPP_RELEASE_BUILD
 constexpr bool DO_PROFILE = false;
 #else
 constexpr bool DO_PROFILE = true;

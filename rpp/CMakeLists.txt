@@ -83,6 +83,14 @@ endif()
 add_library(rpp STATIC ${SOURCES_RPP})
 set_target_properties(rpp PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS OFF LINKER_LANGUAGE CXX)
 
+target_compile_definitions(rpp
+    PRIVATE
+    $<$<CONFIG:Debug>:RPP_DEBUG_BUILD>
+    $<$<CONFIG:RelWithDebInfo>:RPP_RELWITHDEBINFO_BUILD>
+    $<$<CONFIG:Release>:RPP_RELEASE_BUILD _NO_DEBUG_HEAP=1>
+    $<$<CONFIG:MinSizeRel>:RPP_RELEASE_BUILD _NO_DEBUG_HEAP=1>
+)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CLANG TRUE)
 endif()
