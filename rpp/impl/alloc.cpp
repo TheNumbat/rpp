@@ -116,7 +116,7 @@ u64 Region_Allocator::size() {
 }
 
 void* sys_alloc(u64 sz) {
-    void* ret = calloc(sz, 1);
+    void* ret = malloc(sz);
     assert(ret);
 #ifndef RPP_RELEASE_BUILD
     g_net_allocs.incr();
