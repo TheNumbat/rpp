@@ -23,7 +23,7 @@ Headers
 - function.h, heap.h, rc.h, stack.h, tuple.h, variant.h: see containers
 
 Supported configurations
-- Windows / x86_64 / MSVC 19.38+
+- Windows / x86_64 / MSVC 19.37+
 - Linux / x86_64 / Clang 17+
 
 Pointers

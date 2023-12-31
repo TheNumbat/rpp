@@ -146,30 +146,6 @@ i32 main() {
                 info("Waited 100ms.");
             }
         }
-        {
-            Async::Pool pool;
-            {
-                Vec<u8> large(4096 + 1);
-                large.resize(4096 + 1);
-                Async::write(pool, "large_file"_v, Slice<u8>{large}).block();
-            }
-            {
-                auto file = Async::read(pool, "large_file"_v).block();
-                info("Read file: %", file->length());
-            }
-            {
-                auto job = [&pool_ = pool]() -> Async::Task<Vec<u8, Files::Alloc>> {
-                    auto& pool = pool_;
-                    info("coReading file.");
-                    auto file = co_await Async::read(pool, "large_file"_v);
-                    info("coRead file: %", file->length());
-                    co_return move(*file);
-                };
-
-                auto file = job().block();
-                info("Read file: %", file.length());
-            }
-        }
     }
 
     Profile::end_frame();

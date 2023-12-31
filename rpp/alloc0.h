@@ -120,20 +120,6 @@ struct Mregion {
 using Mdefault = Mallocator<"Default">;
 using Mhidden = Mallocator<"Hidden", false>;
 
-template<Allocator A, typename T, typename... Args>
-    requires Constructable<T, Args...>
-T* make(Args&&... args) {
-    return new(A::alloc(sizeof(T))) T{forward<Args>(args)...};
-}
-
-template<Allocator A, typename T>
-void destroy(T* value) {
-    if constexpr(Must_Destruct<T>) {
-        value->~T();
-    }
-    A::free(value);
-}
-
 template<typename T, Allocator Base>
 struct Free_List {
 

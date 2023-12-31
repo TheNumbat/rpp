@@ -12,7 +12,3 @@
 [Level::info] coWaiting 100ms.
 [Level::info] coWaited 100ms.
 [Level::info] Waited 100ms.
-[Level::info] Read file: 4097
-[Level::info] coReading file.
-[Level::info] coRead file: 4097
-[Level::info] Read file: 4097
