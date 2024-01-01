@@ -48,23 +48,23 @@ static_assert(sizeof(sockaddr_in) == 16);
 static_assert(alignof(sockaddr_in) == 4);
 
 Address::Address(String_View address_, u16 port) {
+    Region(R) {
+        auto address = address_.terminate<Mregion<R>>();
 
-    Region_Scope(R);
-    auto address = address_.terminate<Mregion<R>>();
+        sockaddr_in& sockaddr_ = *reinterpret_cast<sockaddr_in*>(sockaddr_storage);
+        sockaddr_ = {};
+        sockaddr_.sin_family = AF_INET;
+        sockaddr_.sin_port = htons(port);
 
-    sockaddr_in& sockaddr_ = *reinterpret_cast<sockaddr_in*>(sockaddr_storage);
-    sockaddr_ = {};
-    sockaddr_.sin_family = AF_INET;
-    sockaddr_.sin_port = htons(port);
+        int ret = inet_pton(AF_INET, reinterpret_cast<const char*>(address.data()),
+                            &sockaddr_.sin_addr.s_addr);
 
-    int ret = inet_pton(AF_INET, reinterpret_cast<const char*>(address.data()),
-                        &sockaddr_.sin_addr.s_addr);
-
-    if(ret == 0) {
-        warn("Failed to create address: Invalid address.");
-    }
-    if(ret == -1) {
-        warn("Failed to create address: %", wsa_error());
+        if(ret == 0) {
+            warn("Failed to create address: Invalid address.");
+        }
+        if(ret == -1) {
+            warn("Failed to create address: %", wsa_error());
+        }
     }
 }
 

@@ -10,43 +10,43 @@ namespace rpp {
 template<typename A, typename B>
 struct Pair {
 
-    Pair()
+    explicit constexpr Pair()
         requires Default_Constructable<A> && Default_Constructable<B>
     = default;
 
-    explicit Pair(const A& first, const B& second)
-        requires Trivial<A> && Trivial<B>
+    explicit constexpr Pair(const A& first, const B& second)
+        requires Copy_Constructable<A> && Copy_Constructable<B>
         : first(A{first}), second(B{second}) {
     }
 
-    explicit Pair(A&& first, B&& second)
+    explicit constexpr Pair(A&& first, B&& second)
         requires Move_Constructable<A> && Move_Constructable<B>
         : first(move(first)), second(move(second)) {
     }
 
-    explicit Pair(const A& first, B&& second)
-        requires Trivial<A> && Move_Constructable<B>
+    explicit constexpr Pair(const A& first, B&& second)
+        requires Copy_Constructable<A> && Move_Constructable<B>
         : first(A{first}), second(move(second)) {
     }
 
-    explicit Pair(A&& first, const B& second)
-        requires Move_Constructable<A> && Trivial<B>
+    explicit constexpr Pair(A&& first, const B& second)
+        requires Move_Constructable<A> && Copy_Constructable<B>
         : first(move(first)), second(B{second}) {
     }
 
     ~Pair() = default;
 
-    Pair(const Pair& src)
-        requires Trivial<A> && Trivial<B>
+    constexpr Pair(const Pair& src)
+        requires Copy_Constructable<A> && Copy_Constructable<B>
     = default;
-    Pair& operator=(const Pair& src)
-        requires Trivial<A> && Trivial<B>
+    constexpr Pair& operator=(const Pair& src)
+        requires Copy_Constructable<A> && Copy_Constructable<B>
     = default;
 
-    Pair(Pair&& src) = default;
-    Pair& operator=(Pair&& src) = default;
+    constexpr Pair(Pair&& src) = default;
+    constexpr Pair& operator=(Pair&& src) = default;
 
-    Pair<A, B> clone() const
+    constexpr Pair<A, B> clone() const
         requires(Clone<A> || Copy_Constructable<A>) && (Clone<B> || Copy_Constructable<B>)
     {
         if constexpr(Clone<A> && Clone<B>) {
@@ -62,12 +62,12 @@ struct Pair {
     }
 
     template<u64 Index>
-    auto& get() {
+    constexpr auto& get() {
         if constexpr(Index == 0) return first;
         if constexpr(Index == 1) return second;
     }
     template<u64 Index>
-    const auto& get() const {
+    constexpr const auto& get() const {
         if constexpr(Index == 0) return first;
         if constexpr(Index == 1) return second;
     }

@@ -6,22 +6,23 @@
 namespace rpp {
 
 Pair<wchar_t*, int> utf8_to_ucs2(String_View utf8_) {
+    Region(R) {
+        auto utf8 = utf8_.terminate<Mregion<R>>();
 
-    Region_Scope(R);
-    auto utf8 = utf8_.terminate<Mregion<R>>();
+        constexpr int buffer_size = MAX_PATH;
+        static thread_local wchar_t wbuffer[buffer_size];
 
-    constexpr int buffer_size = MAX_PATH;
-    static thread_local wchar_t wbuffer[buffer_size];
+        int written = MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<const char*>(utf8.data()),
+                                          static_cast<u32>(utf8.length()), wbuffer, buffer_size);
 
-    int written = MultiByteToWideChar(CP_UTF8, 0, reinterpret_cast<const char*>(utf8.data()),
-                                      static_cast<u32>(utf8.length()), wbuffer, buffer_size);
-    if(written == 0) {
-        warn("Failed to convert utf8 to ucs2: %", Log::sys_error());
-        return Pair{static_cast<wchar_t*>(null), 0};
+        if(written == 0) {
+            warn("Failed to convert utf8 to ucs2: %", Log::sys_error());
+            return Pair{static_cast<wchar_t*>(null), 0};
+        }
+        assert(written <= buffer_size);
+
+        return Pair{static_cast<wchar_t*>(wbuffer), written};
     }
-    assert(written <= buffer_size);
-
-    return Pair{static_cast<wchar_t*>(wbuffer), written};
 }
 
 String_View ucs2_to_utf8(const wchar_t* ucs2, int ucs2_len) {

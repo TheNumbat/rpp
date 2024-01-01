@@ -5,7 +5,7 @@
 #error "Include base.h instead."
 #endif
 
-#define LOCATION_HASH (::rpp::hash_literal(__FILE__, __LINE__))
+#define LOCATION_HASH ::rpp::hash_literal(__FILE__, __LINE__)
 
 namespace rpp {
 
@@ -99,7 +99,7 @@ consteval u64 hash_literal(const char (&literal)[N], u64 seed = 0) {
     for(size_t i = 0; i < N - 1; i++) {
         seed = Hash::hash_combine(seed, hash(literal[i]));
     }
-    return seed;
+    return seed ? seed : 1;
 }
 
 } // namespace rpp

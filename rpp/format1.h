@@ -19,29 +19,31 @@ constexpr Literal enum_name(E value) {
 }
 
 inline Opt<Pair<i64, String_View>> parse_i64(String_View input) {
-    Region_Scope(R);
-    auto term = input.terminate<Mregion<R>>();
-    const char* start = reinterpret_cast<const char*>(term.data());
-    char* end = null;
-    i64 ret = Libc::strtoll(start, &end, 10);
-    if(start == end) {
-        return {};
+    Region(R) {
+        auto term = input.terminate<Mregion<R>>();
+        const char* start = reinterpret_cast<const char*>(term.data());
+        char* end = null;
+        i64 ret = Libc::strtoll(start, &end, 10);
+        if(start == end) {
+            return {};
+        }
+        String_View rest = input.sub(end - start, input.length());
+        return Opt<Pair<i64, String_View>>{Pair{ret, move(rest)}};
     }
-    String_View rest = input.sub(end - start, input.length());
-    return Opt<Pair<i64, String_View>>{Pair{ret, move(rest)}};
 }
 
 inline Opt<Pair<f32, String_View>> parse_f32(String_View input) {
-    Region_Scope(R);
-    auto term = input.terminate<Mregion<R>>();
-    const char* start = reinterpret_cast<const char*>(term.data());
-    char* end = null;
-    f32 ret = Libc::strtof(start, &end);
-    if(start == end) {
-        return {};
+    Region(R) {
+        auto term = input.terminate<Mregion<R>>();
+        const char* start = reinterpret_cast<const char*>(term.data());
+        char* end = null;
+        f32 ret = Libc::strtof(start, &end);
+        if(start == end) {
+            return {};
+        }
+        String_View rest = input.sub(end - start, input.length());
+        return Opt<Pair<f32, String_View>>{Pair{ret, move(rest)}};
     }
-    String_View rest = input.sub(end - start, input.length());
-    return Opt<Pair<f32, String_View>>{Pair{ret, move(rest)}};
 }
 
 inline Opt<Pair<String_View, String_View>> parse_string(String_View s) {

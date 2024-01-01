@@ -132,12 +132,13 @@ template<Reflectable R, typename... Args>
 struct Measure<Function<R(Args...)>> {
     using Fn = R(Args...);
     static u64 measure(const Function<Fn>&) {
-        Region_Scope(Rg);
         u64 length = 10;
         length += String_View{Reflect::Refl<R>::name}.length();
         length += 2;
-        if constexpr(sizeof...(Args) > 0)
-            length += (format_typename<Args, Mregion<Rg>>().length() + ...);
+        Region(Rg) {
+            if constexpr(sizeof...(Args) > 0)
+                length += (format_typename<Args, Mregion<Rg>>().length() + ...);
+        }
         if constexpr(sizeof...(Args) > 1) length += 2 * (sizeof...(Args) - 1);
         return length;
     }
@@ -147,8 +148,9 @@ template<Allocator O, u64 N>
 struct Write_Type {
     template<typename Arg>
     void apply() {
-        Region_Scope(R);
-        idx = output.write(idx, format_typename<Arg, Mregion<R>>());
+        Region(R) {
+            idx = output.write(idx, format_typename<Arg, Mregion<R>>());
+        }
         if(n + 1 < N) idx = output.write(idx, ", "_v);
         n++;
     }

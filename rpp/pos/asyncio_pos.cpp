@@ -14,12 +14,14 @@ Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path_) {
 
     // TODO(max): io_uring
 
-    Region_Scope(R);
-    auto path = path_.terminate<Mregion<R>>();
+    int fd = -1;
+    Region(R) {
+        auto path = path_.terminate<Mregion<R>>();
+        fd = open(reinterpret_cast<const char*>(path.data()), O_RDONLY);
+    }
 
-    int fd = open(reinterpret_cast<const char*>(path.data()), O_RDONLY);
     if(fd == -1) {
-        warn("Failed to open file %: %", path, Log::sys_error());
+        warn("Failed to open file %: %", path_, Log::sys_error());
         co_return {};
     }
 
@@ -32,7 +34,7 @@ Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path_) {
     data.resize(static_cast<u64>(full_size));
 
     if(::read(fd, data.data(), full_size) == -1) {
-        warn("Failed to read file %: %", path, Log::sys_error());
+        warn("Failed to read file %: %", path_, Log::sys_error());
         co_return {};
     }
 
@@ -44,17 +46,19 @@ Task<bool> write(Pool<>& pool, String_View path_, Slice<u8> data) {
 
     // TODO(max): io_uring
 
-    Region_Scope(R);
-    auto path = path_.terminate<Mregion<R>>();
+    int fd = -1;
+    Region(R) {
+        auto path = path_.terminate<Mregion<R>>();
+        fd = open(reinterpret_cast<const char*>(path.data()), O_WRONLY | O_CREAT | O_TRUNC);
+    }
 
-    int fd = open(reinterpret_cast<const char*>(path.data()), O_WRONLY | O_CREAT | O_TRUNC);
     if(fd == -1) {
-        warn("Failed to create file %: %", path, Log::sys_error());
+        warn("Failed to create file %: %", path_, Log::sys_error());
         co_return false;
     }
 
     if(::write(fd, data.data(), data.length()) == -1) {
-        warn("Failed to write file %: %", path, Log::sys_error());
+        warn("Failed to write file %: %", path_, Log::sys_error());
         co_return false;
     }
 

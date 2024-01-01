@@ -9,12 +9,14 @@ namespace rpp::Files {
 
 Opt<Vec<u8, Alloc>> read(String_View path_) {
 
-    Region_Scope(R);
-    auto path = path_.terminate<Mregion<R>>();
+    int fd = -1;
+    Region(R) {
+        auto path = path_.terminate<Mregion<R>>();
+        fd = open(reinterpret_cast<const char*>(path.data()), O_RDONLY);
+    }
 
-    int fd = open(reinterpret_cast<const char*>(path.data()), O_RDONLY);
     if(fd == -1) {
-        warn("Failed to open file %: %", path, Log::sys_error());
+        warn("Failed to open file %: %", path_, Log::sys_error());
         return {};
     }
 
@@ -27,7 +29,7 @@ Opt<Vec<u8, Alloc>> read(String_View path_) {
     data.resize(static_cast<u64>(full_size));
 
     if(::read(fd, data.data(), full_size) == -1) {
-        warn("Failed to read file %: %", path, Log::sys_error());
+        warn("Failed to read file %: %", path_, Log::sys_error());
         return {};
     }
 
@@ -37,17 +39,19 @@ Opt<Vec<u8, Alloc>> read(String_View path_) {
 
 bool write(String_View path_, Slice<u8> data) {
 
-    Region_Scope(R);
-    auto path = path_.terminate<Mregion<R>>();
+    int fd = -1;
+    Region(R) {
+        auto path = path_.terminate<Mregion<R>>();
+        fd = open(reinterpret_cast<const char*>(path.data()), O_RDONLY);
+    }
 
-    int fd = open(reinterpret_cast<const char*>(path.data()), O_WRONLY | O_CREAT | O_TRUNC);
     if(fd == -1) {
-        warn("Failed to create file %: %", path, Log::sys_error());
+        warn("Failed to create file %: %", path_, Log::sys_error());
         return false;
     }
 
     if(::write(fd, data.data(), data.length()) == -1) {
-        warn("Failed to write file %: %", path, Log::sys_error());
+        warn("Failed to write file %: %", path_, Log::sys_error());
         return false;
     }
 
@@ -56,17 +60,16 @@ bool write(String_View path_, Slice<u8> data) {
 }
 
 Opt<File_Time> last_write_time(String_View path_) {
+    Region(R) {
+        auto path = path_.terminate<Mregion<R>>();
 
-    Region_Scope(R);
-    auto path = path_.terminate<Mregion<R>>();
-
-    struct stat info;
-    if(stat(reinterpret_cast<const char*>(path.data()), &info)) {
-        warn("Failed to stat file %: %", path, Log::sys_error());
-        return {};
+        struct stat info;
+        if(stat(reinterpret_cast<const char*>(path.data()), &info)) {
+            warn("Failed to stat file %: %", path_, Log::sys_error());
+            return {};
+        }
+        return Opt{static_cast<File_Time>(info.st_mtime)};
     }
-
-    return Opt{static_cast<File_Time>(info.st_mtime)};
 }
 
 bool before(const File_Time& first, const File_Time& second) {

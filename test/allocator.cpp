@@ -10,19 +10,15 @@ i32 main() {
 
     {
         Test test{"empty"_v};
-        {
-            Region_Scope(R0);
+        Region(R0) {
             auto v0 = Vec<u8, Mregion<R0>>::make(Math::MB(2));
-            {
-                Region_Scope(R1);
+            Region(R1) {
                 auto v1 = Vec<u8, Mregion<R1>>::make(Math::MB(4));
-                {
-                    Region_Scope(R2);
+                Region(R2) {
                     auto v2 = Vec<u8, Mregion<R2>>::make(256);
                     auto v3 = Vec<u8, Mregion<R2>>::make(256);
                     auto v4 = Vec<u8, Mregion<R2>>::make(256);
-                    {
-                        Region_Scope(R3);
+                    Region(R3) {
                         auto v5 = Vec<u8, Mregion<R3>>::make(256);
                         auto v6 = Vec<u8, Mregion<R3>>::make(256);
                         auto v7 = Vec<u8, Mregion<R3>>::make(Math::MB(2));

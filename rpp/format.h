@@ -19,12 +19,13 @@ struct Write;
 
 template<Allocator A, Reflectable T>
 u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) {
-    Region_Scope(R);
-    u64 val_len = Libc::snprintf(null, 0, fmt, value);
-    String<Mregion<R>> buffer{val_len + 1};
-    buffer.set_length(val_len + 1);
-    Libc::snprintf(buffer.data(), buffer.length(), fmt, value);
-    return output.write(idx, buffer.sub(0, val_len));
+    Region(R) {
+        u64 val_len = Libc::snprintf(null, 0, fmt, value);
+        String<Mregion<R>> buffer{val_len + 1};
+        buffer.set_length(val_len + 1);
+        Libc::snprintf(buffer.data(), buffer.length(), fmt, value);
+        return output.write(idx, buffer.sub(0, val_len));
+    }
 }
 
 template<u64 N>

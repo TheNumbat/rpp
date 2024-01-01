@@ -79,7 +79,9 @@ struct Region_Allocator {
         ~Scope() {
             end(R);
         }
-
+        consteval operator bool() {
+            return true;
+        }
         Scope(const Scope&) = delete;
         Scope& operator=(const Scope&) = delete;
         Scope(Scope&&) = delete;
@@ -110,12 +112,12 @@ struct Mregion {
     }
 };
 
-#define REGION_SCOPE2(counter) __region_scope_##counter
-#define REGION_SCOPE1(R, brand, counter)                                                           \
-    ::rpp::Region_Allocator::Scope<brand> REGION_SCOPE2(counter);                                  \
-    static constexpr u64 R = brand;
+#define REGION2(counter) __region_##counter
+#define REGION1(R, brand, counter)                                                                 \
+    if constexpr(constexpr u64 R = brand)                                                          \
+        if(::rpp::Region_Allocator::Scope<brand> REGION2(counter) = {})
 
-#define Region_Scope(R) REGION_SCOPE1(R, LOCATION_HASH, __COUNTER__)
+#define Region(R) REGION1(R, LOCATION_HASH, __COUNTER__)
 
 using Mdefault = Mallocator<"Default">;
 using Mhidden = Mallocator<"Hidden", false>;
