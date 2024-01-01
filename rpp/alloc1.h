@@ -57,7 +57,7 @@ private:
     using Backing = Mallocator<name>;
 
     struct Block {
-        alignas(N) u8 data[N];
+        alignas(Math::min<u64>(N, 16)) u8 data[N];
     };
 
     struct Finalizer {
