@@ -14,6 +14,7 @@ template<typename T, Allocator A = Mdefault>
 struct Vec {
 
     Vec() = default;
+
     explicit Vec(u64 capacity)
         : data_(reinterpret_cast<T*>(A::alloc(capacity * sizeof(T)))), length_(0),
           capacity_(capacity) {
