@@ -7,13 +7,8 @@ namespace rpp::Math {
 
 namespace detail {
 
-static __m128 of(F32x4 a) {
-    return *reinterpret_cast<__m128*>(a.data);
-}
-
-static F32x4 to(__m128 a) {
-    return *reinterpret_cast<F32x4*>(&a);
-}
+using SIMD::of;
+using SIMD::to;
 
 #define MakeShuffleMask(x, y, z, w) (x | (y << 2) | (z << 4) | (w << 6))
 #define VecSwizzleMask(vec, mask) _mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(vec), mask))

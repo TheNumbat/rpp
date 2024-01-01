@@ -45,13 +45,7 @@ set(SOURCES_RPP
     "vmath.h"
     "std/coroutine.h"
     "std/initializer_list.h"
-    "impl/alloc.cpp"
-    "impl/base.cpp"
-    "impl/log.cpp"
-    "impl/math.cpp"
-    "impl/profile.cpp"
-    "impl/simd.cpp"
-    "impl/vmath.cpp"
+    "impl/unify.cpp"
 )
 
 if(UNIX AND NOT APPLE)
@@ -59,23 +53,9 @@ if(UNIX AND NOT APPLE)
 endif()
 
 if(WIN32)
-    set(SOURCES_RPP ${SOURCES_RPP}
-        "w32/w32_util.h"
-        "w32/w32_util.cpp"
-        "w32/async_w32.cpp"
-        "w32/asyncio_w32.cpp"
-        "w32/thread_w32.cpp"
-        "w32/files_w32.cpp"
-        "w32/net_w32.cpp"
-    )
+    set(SOURCES_RPP ${SOURCES_RPP} "w32/w32_util.h" "w32/unify.cpp")
 elseif(LINUX)
-    set(SOURCES_RPP ${SOURCES_RPP}
-        "pos/async_pos.cpp"
-        "pos/asyncio_pos.cpp"
-        "pos/thread_pos.cpp"
-        "pos/files_pos.cpp"
-        "pos/net_pos.cpp"
-    )
+    set(SOURCES_RPP ${SOURCES_RPP} "pos/unify.cpp")
 else()
     message(FATAL_ERROR "Unsupported platform: only Windows and Linux are supported.")
 endif()
