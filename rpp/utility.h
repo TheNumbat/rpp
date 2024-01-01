@@ -470,10 +470,10 @@ concept Distinct = detail::Distinct<Ts...>::value;
 template<typename F, typename... Args>
 concept Invocable = detail::Is_Invocable<F, Args...>::value;
 
-template<typename B, typename D>
+template<typename D, typename B>
 concept Base_Of = __is_base_of(B, D);
 
-template<typename D, typename B>
+template<typename B, typename D>
 concept Derived_From = __is_base_of(B, D);
 
 template<typename T>

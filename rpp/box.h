@@ -23,8 +23,8 @@ struct Box {
         data_ = A::template make<T>(forward<Args>(args)...);
     }
 
-    template<Derived_From<T> D>
-    explicit Box(Box<D, A>&& derived) {
+    template<Base_Of<T> D>
+    explicit Box(Box<D, P>&& derived) {
         data_ = derived.data_;
         derived.data_ = null;
     }
@@ -93,6 +93,8 @@ struct Box {
 private:
     T* data_ = null;
 
+    template<typename T2, Scalar_Allocator P2>
+    friend struct Box;
     friend struct Reflect::Refl<Box>;
 };
 
