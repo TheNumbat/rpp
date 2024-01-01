@@ -9,44 +9,59 @@ namespace rpp {
 
 namespace detail {
 
-static consteval Literal pool_name(const Literal& name) {
-    Literal ret;
-    ret.c_string[0] = 'P';
-    ret.c_string[1] = 'o';
-    ret.c_string[2] = 'o';
-    ret.c_string[3] = 'l';
-    ret.c_string[4] = '<';
-    u64 i = 0;
-    for(; i < Literal::max_len - 6 && name.c_string[i]; i++) {
-        ret.c_string[i + 5] = name.c_string[i];
+static consteval Literal pool_name(u64 N) {
+    Literal ret{"Pool<"};
+    u64 n = 0;
+    for(u64 i = N; i > 0; i /= 10) {
+        n++;
     }
-    ret.c_string[i + 5] = '>';
+    u64 i = 5;
+    for(; n > 0 && i < Literal::max_len - 1; n--, i++) {
+        ret.c_string[i] = '0' + (N / Math::pow<u64>(10, n - 1)) % 10;
+    }
+    ret.c_string[i] = '>';
     return ret;
 }
 
-template<typename T>
+template<u64 N>
 struct Pool {
-    static constexpr Literal name = pool_name(Reflect::Refl<T>::name);
+    static constexpr Literal name = pool_name(N);
 
-    template<typename... Args>
-        requires Constructable<T, Args...>
+    template<typename T, typename... Args>
+        requires(sizeof(T) == N) && Constructable<T, Args...>
     static T* make(Args&&... args) {
         finalizer.keep_alive();
-        Thread::Lock lock(mutex);
-        return list.make(forward<Args>(args)...);
+        Block* block = null;
+        {
+            Thread::Lock lock(mutex);
+            block = list.make();
+        }
+        new(block->data) T{forward<Args>(args)...};
+        return reinterpret_cast<T*>(block);
     }
 
+    template<typename T>
+        requires(sizeof(T) == N)
     static void destroy(T* value) {
         finalizer.keep_alive();
-        Thread::Lock lock(mutex);
-        list.destroy(value);
+        if constexpr(Must_Destruct<T>) {
+            value->~T();
+        }
+        {
+            Thread::Lock lock(mutex);
+            list.destroy(reinterpret_cast<Block*>(value));
+        }
     }
 
 private:
     using Backing = Mallocator<name>;
 
+    struct Block {
+        alignas(N) u8 data[N];
+    };
+
     struct Finalizer {
-        Finalizer(Free_List<T, Backing>& l) {
+        Finalizer(Free_List<Block, Backing>& l) {
             Profile::finalizer([&l]() { l.clear(); });
         }
         RPP_FORCE_INLINE void keep_alive() {
@@ -54,7 +69,7 @@ private:
     };
 
     static inline Thread::Mutex mutex;
-    static inline Free_List<T, Backing> list;
+    static inline Free_List<Block, Backing> list;
     static inline Finalizer finalizer{list};
 };
 
@@ -64,12 +79,12 @@ struct Mpool {
     template<typename T, typename... Args>
         requires Constructable<T, Args...>
     static T* make(Args&&... args) {
-        return detail::Pool<T>::make(forward<Args>(args)...);
+        return detail::Pool<sizeof(T)>::template make<T, Args...>(forward<Args>(args)...);
     }
 
     template<typename T>
     static void destroy(T* value) {
-        detail::Pool<T>::destroy(value);
+        detail::Pool<sizeof(T)>::template destroy<T>(value);
     }
 };
 

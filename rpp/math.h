@@ -60,6 +60,19 @@ constexpr T degrees(T v) {
     return v * T{180.0f / PI32};
 }
 
+template<Int I>
+constexpr I pow(I base, I exp) {
+    I result = 1;
+    while(exp) {
+        if(exp & 1) {
+            result *= base;
+        }
+        exp >>= 1;
+        base *= base;
+    }
+    return result;
+}
+
 f32 cos(f32 v);
 f64 cos(f64 v);
 f32 sin(f32 v);
