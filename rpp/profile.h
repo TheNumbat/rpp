@@ -146,16 +146,6 @@ private:
     static inline Vec<Function<void()>, Mhidden> finalizers;
 };
 
-namespace Reflect {
-
-template<>
-struct Refl<Profile::Alloc> {
-    using T = Profile::Alloc;
-    static constexpr Literal name = "Alloc";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(name), FIELD(address), FIELD(size)>;
-};
-
-} // namespace Reflect
+RPP_RECORD(Profile::Alloc, RPP_FIELD(name), RPP_FIELD(address), RPP_FIELD(size));
 
 } // namespace rpp

@@ -122,25 +122,11 @@ private:
     friend struct Reflect::Refl<Tuple<T, Ts...>>;
 };
 
-namespace Reflect {
-
 template<>
-struct Refl<Tuple<>> {
-    using T = Tuple<>;
-    static constexpr Literal name = "Tuple";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<>;
-};
+RPP_TEMPLATE_RECORD(Tuple, RPP_PACK());
 
 template<typename F, typename... Ts>
-struct Refl<Tuple<F, Ts...>> {
-    using T = Tuple<F, Ts...>;
-    static constexpr Literal name = "Tuple";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(first), FIELD(rest)>;
-};
-
-}; // namespace Reflect
+RPP_TEMPLATE_RECORD(Tuple, RPP_PACK(F, Ts...), RPP_FIELD(first), RPP_FIELD(rest));
 
 namespace Format {
 

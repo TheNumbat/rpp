@@ -82,28 +82,8 @@ void log(Level level, const Location& loc, String_View fmt, const Ts&... args) {
 
 } // namespace Log
 
-namespace Reflect {
-
-template<>
-struct Refl<Log::Level> {
-    using T = Log::Level;
-    using underlying = u8;
-    static constexpr char name[] = "Level";
-    static constexpr Kind kind = Kind::enum_;
-    static constexpr Log::Level default_ = Log::Level::info;
-    using members = List<CASE(info), CASE(warn), CASE(fatal)>;
-    static_assert(Enum<T>);
-};
-
-template<>
-struct Refl<Log::Location> {
-    using T = Log::Location;
-    static constexpr char name[] = "Location";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(function), FIELD(file), FIELD(line)>;
-};
-
-} // namespace Reflect
+RPP_NAMED_ENUM(Log::Level, "Level", info, RPP_CASE(info), RPP_CASE(warn), RPP_CASE(fatal));
+RPP_NAMED_RECORD(Log::Location, "Location", RPP_FIELD(function), RPP_FIELD(file), RPP_FIELD(line));
 
 namespace Hash {
 

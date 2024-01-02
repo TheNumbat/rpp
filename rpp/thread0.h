@@ -151,27 +151,9 @@ private:
 
 } // namespace Thread
 
-namespace Reflect {
+RPP_NAMED_RECORD(Thread::Atomic, "Atomic", RPP_FIELD(value_));
 
-template<>
-struct Refl<Thread::Atomic> {
-    using T = Thread::Atomic;
-    static constexpr Literal name = "Atomic";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(value_)>;
-};
-
-template<>
-struct Refl<Thread::Priority> {
-    using T = Thread::Priority;
-    using underlying = u8;
-    static constexpr Literal name = "Priority";
-    static constexpr Kind kind = Kind::enum_;
-    static constexpr Thread::Priority default_ = Thread::Priority::normal;
-    using members = List<CASE(low), CASE(normal), CASE(high), CASE(critical)>;
-    static_assert(Enum<T>);
-};
-
-} // namespace Reflect
+RPP_NAMED_ENUM(Thread::Priority, "Priority", normal, RPP_CASE(low), RPP_CASE(normal),
+               RPP_CASE(high), RPP_CASE(critical));
 
 } // namespace rpp

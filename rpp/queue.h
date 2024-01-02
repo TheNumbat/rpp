@@ -349,17 +349,9 @@ private:
     friend struct Iterator;
 };
 
-namespace Reflect {
-
-template<typename Q, Allocator A>
-struct Refl<Queue<Q, A>> {
-    using T = Queue<Q, A>;
-    static constexpr Literal name = "Queue";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_), FIELD(length_), FIELD(last_), FIELD(capacity_)>;
-};
-
-} // namespace Reflect
+template<typename T, Allocator A>
+RPP_TEMPLATE_RECORD(Queue, RPP_PACK(T, A), RPP_FIELD(data_), RPP_FIELD(length_), RPP_FIELD(last_),
+                    RPP_FIELD(capacity_));
 
 namespace Format {
 

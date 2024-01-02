@@ -67,6 +67,12 @@ struct Vect : Vect_Base<T, N> {
     constexpr explicit Vect(S... args) : Base{args...} {
     }
 
+    ~Vect() = default;
+    Vect(const Vect&) = default;
+    Vect& operator=(const Vect&) = default;
+    Vect(Vect&&) = default;
+    Vect& operator=(Vect&&) = default;
+
     T& operator[](u64 idx) {
         return this->data[idx];
     }
@@ -561,7 +567,7 @@ struct Mat4 {
         Vec4 columns[4];
     };
 
-    Mat4()
+    explicit Mat4()
         : columns{Vec4{1.0f, 0.0f, 0.0f, 0.0f}, Vec4{0.0f, 1.0f, 0.0f, 0.0f},
                   Vec4{0.0f, 0.0f, 1.0f, 0.0f}, Vec4{0.0f, 0.0f, 0.0f, 1.0f}} {
     }
@@ -572,6 +578,12 @@ struct Mat4 {
         requires Length<16, Ts...> && All_Are<f32, Ts...>
     explicit Mat4(Ts... args) : data{args...} {
     }
+
+    ~Mat4() = default;
+    Mat4(const Mat4&) = default;
+    Mat4& operator=(const Mat4&) = default;
+    Mat4(Mat4&&) = default;
+    Mat4& operator=(Mat4&&) = default;
 
     static Mat4 look_at(Vec3 pos, Vec3 at, Vec3 up);
     static Mat4 scale(Vec3 s);
@@ -621,14 +633,20 @@ struct Quat : detail::Vect_Base<f32, 4> {
 
     using Base = detail::Vect_Base<f32, 4>;
 
-    Quat() : Base{0.0f, 0.0f, 0.0f, 1.0f} {
+    explicit Quat() : Base{0.0f, 0.0f, 0.0f, 1.0f} {
     }
-    Quat(f32 x, f32 y, f32 z, f32 w) : Base{x, y, z, w} {
+    explicit Quat(f32 x, f32 y, f32 z, f32 w) : Base{x, y, z, w} {
     }
-    Quat(Vec3 complex, f32 real) : Base{complex.x, complex.y, complex.z, real} {
+    explicit Quat(Vec3 complex, f32 real) : Base{complex.x, complex.y, complex.z, real} {
     }
-    Quat(Vec4 src) : Base{src} {
+    explicit Quat(Vec4 src) : Base{src} {
     }
+
+    ~Quat() = default;
+    Quat(const Quat&) = default;
+    Quat& operator=(const Quat&) = default;
+    Quat(Quat&&) = default;
+    Quat& operator=(Quat&&) = default;
 
     static Quat axis_angle(Vec3 axis, f32 angle) {
         axis.normalize();
@@ -744,14 +762,17 @@ struct Quat : detail::Vect_Base<f32, 4> {
 
 struct BBox {
 
-    BBox() : min(Limits<f32>::max()), max(Limits<f32>::min()) {
+    explicit BBox() : min(Limits<f32>::max()), max(Limits<f32>::min()) {
     }
-    BBox(Vec3 min, Vec3 max) : min(min), max(max) {
+    explicit BBox(Vec3 min, Vec3 max) : min(min), max(max) {
     }
-
-    BBox(const BBox&) = default;
-    BBox& operator=(const BBox&) = default;
     ~BBox() = default;
+
+    explicit BBox(const BBox&) = default;
+    BBox& operator=(const BBox&) = default;
+
+    BBox(BBox&&) = default;
+    BBox& operator=(BBox&&) = default;
 
     void reset() {
         min = Vec3(Limits<f32>::max());
@@ -834,6 +855,25 @@ struct BBox {
 
 } // namespace Math
 
+using Math::Vec2;
+using Math::Vec3;
+using Math::Vec4;
+using Math::VecN;
+
+using Math::Vec2i;
+using Math::Vec3i;
+using Math::Vec4i;
+using Math::VecNi;
+
+using Math::Vec2u;
+using Math::Vec3u;
+using Math::Vec4u;
+using Math::VecNu;
+
+using Math::BBox;
+using Math::Mat4;
+using Math::Quat;
+
 template<typename T, u64 N>
 Math::Vect<T, N> operator+(T s, Math::Vect<T, N> v) {
     if constexpr(Math::Vect<T, N>::is_simd)
@@ -878,148 +918,27 @@ Math::Vect<T, N> operator/(T s, Math::Vect<T, N> v) {
     }
 }
 
-using Math::Vec2;
-using Math::Vec3;
-using Math::Vec4;
-using Math::VecN;
-
-using Math::Vec2i;
-using Math::Vec3i;
-using Math::Vec4i;
-using Math::VecNi;
-
-using Math::Vec2u;
-using Math::Vec3u;
-using Math::Vec4u;
-using Math::VecNu;
-
-using Math::BBox;
-using Math::Mat4;
-using Math::Quat;
-
-namespace Reflect {
-
-template<>
-struct Refl<Math::Vec2> {
-    using T = Math::Vec2;
-    static constexpr Literal name = "Vec2";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y)>;
-};
-
-template<>
-struct Refl<Math::Vec3> {
-    using T = Math::Vec3;
-    static constexpr Literal name = "Vec3";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z)>;
-};
-
-template<>
-struct Refl<Math::Vec4> {
-    using T = Math::Vec4;
-    static constexpr Literal name = "Vec4";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
-};
-
-template<>
-struct Refl<Math::Vec2i> {
-    using T = Math::Vec2i;
-    static constexpr Literal name = "Vec2i";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y)>;
-};
-
-template<>
-struct Refl<Math::Vec3i> {
-    using T = Math::Vec3i;
-    static constexpr Literal name = "Vec3i";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z)>;
-};
-
-template<>
-struct Refl<Math::Vec4i> {
-    using T = Math::Vec4i;
-    static constexpr Literal name = "Vec4i";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
-};
-
-template<>
-struct Refl<Math::Vec2u> {
-    using T = Math::Vec2u;
-    static constexpr Literal name = "Vec2u";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y)>;
-};
-
-template<>
-struct Refl<Math::Vec3u> {
-    using T = Math::Vec3u;
-    static constexpr Literal name = "Vec3u";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z)>;
-};
-
-template<>
-struct Refl<Math::Vec4u> {
-    using T = Math::Vec4u;
-    static constexpr Literal name = "Vec4u";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(x), FIELD(y), FIELD(z), FIELD(w)>;
-};
-
+RPP_RECORD(Vec2, RPP_FIELD(x), RPP_FIELD(y));
+RPP_RECORD(Vec3, RPP_FIELD(x), RPP_FIELD(y), RPP_FIELD(z));
+RPP_RECORD(Vec4, RPP_FIELD(x), RPP_FIELD(y), RPP_FIELD(z), RPP_FIELD(w));
 template<u64 N>
-struct Refl<Math::VecN<N>> {
-    using T = Math::VecN<N>;
-    static constexpr Literal name = "VecN";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data)>;
-};
+RPP_TEMPLATE_RECORD(VecN, N, RPP_FIELD(data));
 
+RPP_RECORD(Vec2i, RPP_FIELD(x), RPP_FIELD(y));
+RPP_RECORD(Vec3i, RPP_FIELD(x), RPP_FIELD(y), RPP_FIELD(z));
+RPP_RECORD(Vec4i, RPP_FIELD(x), RPP_FIELD(y), RPP_FIELD(z), RPP_FIELD(w));
 template<u64 N>
-struct Refl<Math::VecNi<N>> {
-    using T = Math::VecNi<N>;
-    static constexpr Literal name = "VecNi";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data)>;
-};
+RPP_TEMPLATE_RECORD(VecNi, N, RPP_FIELD(data));
 
+RPP_RECORD(Vec2u, RPP_FIELD(x), RPP_FIELD(y));
+RPP_RECORD(Vec3u, RPP_FIELD(x), RPP_FIELD(y), RPP_FIELD(z));
+RPP_RECORD(Vec4u, RPP_FIELD(x), RPP_FIELD(y), RPP_FIELD(z), RPP_FIELD(w));
 template<u64 N>
-struct Refl<Math::VecNu<N>> {
-    using T = Math::VecNu<N>;
-    static constexpr Literal name = "VecNu";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data)>;
-};
+RPP_TEMPLATE_RECORD(VecNu, N, RPP_FIELD(data));
 
-template<>
-struct Refl<Math::Mat4> {
-    using T = Math::Mat4;
-    static constexpr Literal name = "Mat4";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(columns)>;
-};
-
-template<>
-struct Refl<Math::Quat> {
-    using T = Math::Quat;
-    static constexpr Literal name = "Quat";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data)>;
-};
-
-template<>
-struct Refl<Math::BBox> {
-    using T = Math::BBox;
-    static constexpr Literal name = "BBox";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(min), FIELD(max)>;
-};
-
-} // namespace Reflect
+RPP_RECORD(Mat4, RPP_FIELD(columns));
+RPP_RECORD(BBox, RPP_FIELD(min), RPP_FIELD(max));
+RPP_RECORD(Quat, RPP_FIELD(x), RPP_FIELD(y), RPP_FIELD(z), RPP_FIELD(w));
 
 namespace Hash {
 
@@ -1190,6 +1109,7 @@ struct Write<O, Math::BBox> {
 };
 
 } // namespace Format
+
 } // namespace rpp
 
 #ifdef RPP_COMPILER_CLANG

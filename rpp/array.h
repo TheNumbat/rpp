@@ -95,18 +95,6 @@ private:
     friend struct Reflect::Refl<Array>;
 };
 
-namespace Reflect {
-
-template<typename T, u64 N>
-struct Refl<Array<T, N>> {
-    using underlying = T;
-    static constexpr Literal name = "Array";
-    static constexpr Kind kind = Kind::array_;
-    static constexpr u64 length = N;
-};
-
-} // namespace Reflect
-
 namespace Format {
 
 template<Reflectable T, u64 N>
@@ -133,5 +121,13 @@ struct Write<O, Array<T, N>> {
 };
 
 } // namespace Format
+
+template<typename T, u64 N>
+struct Reflect::Refl<Array<T, N>> {
+    using underlying = T;
+    static constexpr Literal name = "Array";
+    static constexpr Kind kind = Kind::array_;
+    static constexpr u64 length = N;
+};
 
 } // namespace rpp

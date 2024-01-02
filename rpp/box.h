@@ -98,17 +98,8 @@ private:
     friend struct Reflect::Refl<Box>;
 };
 
-namespace Reflect {
-
-template<typename B, typename A>
-struct Refl<Box<B, A>> {
-    using T = Box<B, A>;
-    static constexpr Literal name = "Box";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_)>;
-};
-
-} // namespace Reflect
+template<typename T, Scalar_Allocator P>
+RPP_TEMPLATE_RECORD(Box, RPP_PACK(T, P), RPP_FIELD(data_));
 
 namespace Format {
 

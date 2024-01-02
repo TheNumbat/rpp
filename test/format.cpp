@@ -13,30 +13,14 @@ struct Ints {
     i32 i;
     u16 u;
 };
+
 struct Vecs {
     Vec<i32> i;
     Vec<u32> u;
 };
 
-namespace rpp::Reflect {
-
-template<>
-struct Refl<Ints> {
-    using T = Ints;
-    static constexpr Literal name = "Ints";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(i), FIELD(u)>;
-};
-
-template<>
-struct Refl<Vecs> {
-    using T = Vecs;
-    static constexpr Literal name = "Vecs";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(i), FIELD(u)>;
-};
-
-} // namespace rpp::Reflect
+RPP_RECORD(Ints, RPP_FIELD(i), RPP_FIELD(u));
+RPP_RECORD(Vecs, RPP_FIELD(i), RPP_FIELD(u));
 
 i32 main() {
 

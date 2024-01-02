@@ -172,32 +172,13 @@ auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
 
 } // namespace Thread
 
-namespace Reflect {
-
-template<typename P>
-struct Refl<Thread::Promise<P>> {
-    using T = Thread::Promise<P>;
-    static constexpr Literal name = "Promise";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(flag), FIELD(value)>;
-};
+template<typename T>
+RPP_NAMED_TEMPLATE_RECORD(::rpp::Thread::Promise, "Promise", T, RPP_FIELD(flag), RPP_FIELD(value));
 
 template<>
-struct Refl<Thread::Promise<void>> {
-    using T = Thread::Promise<void>;
-    static constexpr Literal name = "Promise";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(flag)>;
-};
+RPP_NAMED_TEMPLATE_RECORD(::rpp::Thread::Promise, "Promise", void, RPP_FIELD(flag));
 
 template<Allocator A>
-struct Refl<Thread::Thread<A>> {
-    using T = Thread::Thread<A>;
-    static constexpr Literal name = "Thread";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(thread)>;
-};
-
-} // namespace Reflect
+RPP_NAMED_TEMPLATE_RECORD(::rpp::Thread::Thread, "Thread", A, RPP_FIELD(thread));
 
 } // namespace rpp

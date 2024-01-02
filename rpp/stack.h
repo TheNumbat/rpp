@@ -96,17 +96,8 @@ private:
     friend struct Reflect::Refl<Stack>;
 };
 
-namespace Reflect {
-
-template<typename S, Allocator A>
-struct Refl<Stack<S, A>> {
-    using T = Stack<S, A>;
-    static constexpr Literal name = "Stack";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_)>;
-};
-
-} // namespace Reflect
+template<typename T, Allocator A>
+RPP_TEMPLATE_RECORD(Stack, RPP_PACK(T, A), RPP_FIELD(data_));
 
 namespace Format {
 

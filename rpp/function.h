@@ -113,18 +113,6 @@ using Function = detail::Function<4, F>;
 template<u64 Words, typename F>
 using FunctionN = detail::Function<Words, F>;
 
-namespace Reflect {
-
-template<u64 Words, typename Fn>
-struct Refl<::rpp::detail::Function<Words, Fn>> {
-    using T = ::rpp::detail::Function<Words, Fn>;
-    static constexpr Literal name = "Function";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<>;
-};
-
-} // namespace Reflect
-
 namespace Format {
 
 template<Reflectable R, typename... Args>
@@ -185,5 +173,11 @@ struct Typename<Function<R(Args...)>> {
 };
 
 } // namespace Format
+
+template<typename F>
+RPP_TEMPLATE_RECORD(Function, F);
+
+template<u64 N, typename F>
+RPP_TEMPLATE_RECORD(FunctionN, RPP_PACK(N, F));
 
 } // namespace rpp

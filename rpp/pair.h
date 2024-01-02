@@ -76,17 +76,8 @@ struct Pair {
     B second;
 };
 
-namespace Reflect {
-
 template<typename A, typename B>
-struct Refl<Pair<A, B>> {
-    using T = Pair<A, B>;
-    static constexpr Literal name = "Pair";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(first), FIELD(second)>;
-};
-
-} // namespace Reflect
+RPP_TEMPLATE_RECORD(Pair, RPP_PACK(A, B), RPP_FIELD(first), RPP_FIELD(second));
 
 namespace Format {
 

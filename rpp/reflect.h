@@ -5,10 +5,68 @@
 #error "Include base.h instead."
 #endif
 
-#define RPP_OFFSETOF(s, m) __builtin_offsetof(s, m)
+#define RPP_PACK(...) __VA_ARGS__
+#define RPP_CONCAT(A, B) A##B
+#define RPP_OFFSETOF(TYPE, FIELD) __builtin_offsetof(TYPE, FIELD)
+#define RPP_CASE(CASE) ::rpp::Reflect::Case<__T, __T::CASE, #CASE>
+#define RPP_FIELD(FIELD)                                                                           \
+    ::rpp::Reflect::Field<decltype(__T::FIELD), RPP_OFFSETOF(__T, FIELD), #FIELD>
 
-#define CASE(case_) ::rpp::Reflect::Case<T, T::case_, #case_>
-#define FIELD(field) ::rpp::Reflect::Field<decltype(T::field), RPP_OFFSETOF(T, field), #field>
+#define RPP_ENUM(TYPE, DEFAULT, ...)                                                               \
+    template<>                                                                                     \
+    struct ::rpp::Reflect::Refl<TYPE> {                                                            \
+        using __T = TYPE;                                                                          \
+        using underlying = Underlying<TYPE>;                                                       \
+        static constexpr Literal name = #TYPE;                                                     \
+        static constexpr Kind kind = Kind::enum_;                                                  \
+        static constexpr TYPE default_ = TYPE::DEFAULT;                                            \
+        using members = List<__VA_ARGS__>;                                                         \
+    }
+
+#define RPP_NAMED_ENUM(TYPE, NAME, DEFAULT, ...)                                                   \
+    template<>                                                                                     \
+    struct ::rpp::Reflect::Refl<TYPE> {                                                            \
+        using __T = TYPE;                                                                          \
+        using underlying = Underlying<TYPE>;                                                       \
+        static constexpr Literal name = NAME;                                                      \
+        static constexpr Kind kind = Kind::enum_;                                                  \
+        static constexpr TYPE default_ = TYPE::DEFAULT;                                            \
+        using members = List<__VA_ARGS__>;                                                         \
+    }
+
+#define RPP_RECORD(TYPE, ...)                                                                      \
+    template<>                                                                                     \
+    struct ::rpp::Reflect::Refl<TYPE> {                                                            \
+        using __T = TYPE;                                                                          \
+        static constexpr Literal name = #TYPE;                                                     \
+        static constexpr Kind kind = Kind::record_;                                                \
+        using members = List<__VA_ARGS__>;                                                         \
+    }
+
+#define RPP_NAMED_RECORD(TYPE, NAME, ...)                                                          \
+    template<>                                                                                     \
+    struct ::rpp::Reflect::Refl<TYPE> {                                                            \
+        using __T = TYPE;                                                                          \
+        static constexpr Literal name = NAME;                                                      \
+        static constexpr Kind kind = Kind::record_;                                                \
+        using members = List<__VA_ARGS__>;                                                         \
+    }
+
+#define RPP_TEMPLATE_RECORD(TYPE, ARG_PACK, ...)                                                   \
+    struct ::rpp::Reflect::Refl<TYPE<ARG_PACK>> {                                                  \
+        using __T = TYPE<ARG_PACK>;                                                                \
+        static constexpr Literal name = #TYPE;                                                     \
+        static constexpr Kind kind = Kind::record_;                                                \
+        using members = List<__VA_ARGS__>;                                                         \
+    }
+
+#define RPP_NAMED_TEMPLATE_RECORD(TYPE, NAME, ARG_PACK, ...)                                       \
+    struct ::rpp::Reflect::Refl<TYPE<ARG_PACK>> {                                                  \
+        using __T = TYPE<ARG_PACK>;                                                                \
+        static constexpr Literal name = NAME;                                                      \
+        static constexpr Kind kind = Kind::record_;                                                \
+        using members = List<__VA_ARGS__>;                                                         \
+    }
 
 namespace rpp {
 
@@ -420,15 +478,15 @@ struct Refl<bool> {
 
 template<>
 struct Refl<Kind> {
-    using T = Kind;
+    using __T = Kind;
     using underlying = u8;
     static constexpr Literal name = "Kind";
     static constexpr Kind kind = Kind::enum_;
     static constexpr Kind default_ = Kind::void_;
-    using members = List<CASE(void_), CASE(i8_), CASE(i16_), CASE(i32_), CASE(i64_), CASE(u8_),
-                         CASE(u16_), CASE(u32_), CASE(u64_), CASE(f32_), CASE(f64_), CASE(bool_),
-                         CASE(array_), CASE(pointer_), CASE(enum_), CASE(record_)>;
-    static_assert(Enum<T>);
+    using members = List<RPP_CASE(void_), RPP_CASE(i8_), RPP_CASE(i16_), RPP_CASE(i32_),
+                         RPP_CASE(i64_), RPP_CASE(u8_), RPP_CASE(u16_), RPP_CASE(u32_),
+                         RPP_CASE(u64_), RPP_CASE(f32_), RPP_CASE(f64_), RPP_CASE(bool_),
+                         RPP_CASE(array_), RPP_CASE(pointer_), RPP_CASE(enum_), RPP_CASE(record_)>;
 };
 
 } // namespace Reflect

@@ -249,17 +249,9 @@ private:
     friend struct Reflect::Refl<Heap>;
 };
 
-namespace Reflect {
-
-template<typename H, Allocator A>
-struct Refl<Heap<H, A>> {
-    using T = Heap<H, A>;
-    static constexpr Literal name = "Heap";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
-};
-
-} // namespace Reflect
+template<typename T, Allocator A>
+RPP_TEMPLATE_RECORD(Heap, RPP_PACK(T, A), RPP_FIELD(data_), RPP_FIELD(length_),
+                    RPP_FIELD(capacity_));
 
 namespace Format {
 

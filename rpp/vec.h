@@ -353,25 +353,12 @@ private:
     friend struct Reflect::Refl<Slice<T>>;
 };
 
-namespace Reflect {
+template<typename T, Allocator A>
+RPP_TEMPLATE_RECORD(Vec, RPP_PACK(T, A), RPP_FIELD(data_), RPP_FIELD(length_),
+                    RPP_FIELD(capacity_));
 
-template<typename V, Allocator A>
-struct Refl<Vec<V, A>> {
-    using T = Vec<V, A>;
-    static constexpr Literal name = "Vec";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
-};
-
-template<typename V>
-struct Refl<Slice<V>> {
-    using T = Slice<V>;
-    static constexpr Literal name = "Slice";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_), FIELD(length_)>;
-};
-
-} // namespace Reflect
+template<typename T>
+RPP_TEMPLATE_RECORD(Slice, T, RPP_FIELD(data_), RPP_FIELD(length_));
 
 namespace Format {
 

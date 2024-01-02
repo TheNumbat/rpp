@@ -509,6 +509,9 @@ concept Must_Destruct = !__is_trivially_destructible(T);
 template<typename T>
 concept Trivial = __is_trivially_constructible(T) && __is_trivially_copyable(T);
 
+template<typename E>
+using Underlying = __underlying_type(E);
+
 template<u64... Is>
 using Index_Sequence = detail::Index_Sequence<u64, Is...>;
 
@@ -535,6 +538,9 @@ concept Clone = Move_Constructable<T> && requires(const T& value) {
 
 template<u64 N, typename... Ts>
 concept Length = sizeof...(Ts) == N;
+
+template<typename F, typename X>
+concept Predicate = requires() { Same<bool, decltype(F::template value<X>)>; };
 
 template<typename... Ts>
 using Index_Sequence_For = Make_Index_Sequence<sizeof...(Ts)>;

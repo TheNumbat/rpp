@@ -260,6 +260,28 @@ constexpr bool is_whitespace(u8 c) {
 
 } // namespace ascii
 
+namespace detail {
+
+template<typename T>
+struct Is_String {
+    static constexpr bool value = false;
+};
+
+template<Allocator A>
+struct Is_String<String<A>> {
+    static constexpr bool value = true;
+};
+
+} // namespace detail
+
+template<typename T>
+concept Any_String = detail::Is_String<T>::value;
+
+RPP_RECORD(String_View, RPP_FIELD(data_), RPP_FIELD(length_));
+
+template<Allocator A>
+RPP_TEMPLATE_RECORD(String, A, RPP_FIELD(data_), RPP_FIELD(length_), RPP_FIELD(capacity_));
+
 namespace Hash {
 
 template<Allocator A>
@@ -281,38 +303,5 @@ struct Hash<String_View> {
 };
 
 } // namespace Hash
-
-namespace Reflect {
-
-template<typename T>
-struct Is_String {
-    static constexpr bool value = false;
-};
-
-template<Allocator A>
-struct Is_String<String<A>> {
-    static constexpr bool value = true;
-};
-
-template<>
-struct Refl<String_View> {
-    using T = String_View;
-    static constexpr Literal name = "String_View";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_), FIELD(length_)>;
-};
-
-template<Allocator A>
-struct Refl<String<A>> {
-    using T = String<A>;
-    static constexpr Literal name = "String";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_), FIELD(length_), FIELD(capacity_)>;
-};
-
-} // namespace Reflect
-
-template<typename T>
-concept Some_String = Reflect::Is_String<T>::value;
 
 } // namespace rpp

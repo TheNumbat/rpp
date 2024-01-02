@@ -114,17 +114,8 @@ protected:
     friend struct Reflect::Refl<Opt>;
 };
 
-namespace Reflect {
-
-template<typename O>
-struct Refl<Opt<O>> {
-    using T = Opt<O>;
-    static constexpr Literal name = "Opt";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(ok_), FIELD(value_)>;
-};
-
-}; // namespace Reflect
+template<typename T>
+RPP_TEMPLATE_RECORD(Opt, T, RPP_FIELD(ok_), RPP_FIELD(value_));
 
 namespace Format {
 

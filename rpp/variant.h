@@ -186,25 +186,11 @@ private:
     friend struct Reflect::Refl<Variant<Ts...>>;
 };
 
-namespace Reflect {
-
-template<Literal N, typename NT>
-struct Refl<Named<N, NT>> {
-    using T = Named<N, NT>;
-    static constexpr Literal name = N;
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(value)>;
-};
+template<Literal N, typename T>
+RPP_NAMED_TEMPLATE_RECORD(Named, RPP_PACK(Named<N, T>)::name, RPP_PACK(N, T), RPP_FIELD(value));
 
 template<typename... Ts>
-struct Refl<Variant<Ts...>> {
-    using T = Variant<Ts...>;
-    static constexpr Literal name = "Variant";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_), FIELD(index_)>;
-};
-
-} // namespace Reflect
+RPP_TEMPLATE_RECORD(Variant, RPP_PACK(Ts...), RPP_FIELD(data_), RPP_FIELD(index_));
 
 namespace Format {
 

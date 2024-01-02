@@ -66,17 +66,8 @@ protected:
     friend struct Reflect::Refl<Storage>;
 };
 
-namespace Reflect {
-
-template<typename S>
-struct Refl<Storage<S>> {
-    using T = Storage<S>;
-    static constexpr Literal name = "Storage";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(value_)>;
-};
-
-} // namespace Reflect
+template<typename T>
+RPP_TEMPLATE_RECORD(Storage, T, RPP_FIELD(value_));
 
 namespace Format {
 

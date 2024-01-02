@@ -214,41 +214,19 @@ private:
     friend struct Reflect::Refl<Arc<T>>;
 };
 
-namespace Reflect {
+template<typename T>
+RPP_NAMED_TEMPLATE_RECORD(::rpp::detail::Rc_Data, "Rc_Data", T, RPP_FIELD(references),
+                          RPP_FIELD(value));
 
-template<typename R>
-struct Refl<::rpp::detail::Rc_Data<R>> {
-    using T = ::rpp::detail::Rc_Data<R>;
-    static constexpr Literal name = "Rc";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(value), FIELD(references)>;
-};
+template<typename T>
+RPP_NAMED_TEMPLATE_RECORD(::rpp::detail::Arc_Data, "Arc_Data", T, RPP_FIELD(references),
+                          RPP_FIELD(value));
 
-template<typename R>
-struct Refl<Rc<R>> {
-    using T = Rc<R>;
-    static constexpr Literal name = "Rc";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_)>;
-};
+template<typename T>
+RPP_TEMPLATE_RECORD(Rc, T, RPP_FIELD(data_));
 
-template<typename R>
-struct Refl<::rpp::detail::Arc_Data<R>> {
-    using T = ::rpp::detail::Arc_Data<R>;
-    static constexpr Literal name = "Arc";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(value), FIELD(references)>;
-};
-
-template<typename R>
-struct Refl<Arc<R>> {
-    using T = Arc<R>;
-    static constexpr Literal name = "Arc";
-    static constexpr Kind kind = Kind::record_;
-    using members = List<FIELD(data_)>;
-};
-
-} // namespace Reflect
+template<typename T>
+RPP_TEMPLATE_RECORD(Arc, T, RPP_FIELD(data_));
 
 namespace Format {
 
