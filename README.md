@@ -67,6 +67,9 @@ Utilities
 
 To-Do:
 - Update readme
+- Modules
+- More constexpr
+- More nodiscard
 - Result<T,E> type
 - Thread pool
     - Priorities & CPU affinity
