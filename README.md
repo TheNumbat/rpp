@@ -67,7 +67,6 @@ Utilities
 
 To-Do:
 - Update readme
-- Switch to refl macros
 - Switch refl iterators to operator()
 - Modules
 - More constexpr
