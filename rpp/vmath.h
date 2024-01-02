@@ -567,7 +567,7 @@ struct Mat4 {
         Vec4 columns[4];
     };
 
-    explicit Mat4()
+    Mat4()
         : columns{Vec4{1.0f, 0.0f, 0.0f, 0.0f}, Vec4{0.0f, 1.0f, 0.0f, 0.0f},
                   Vec4{0.0f, 0.0f, 1.0f, 0.0f}, Vec4{0.0f, 0.0f, 0.0f, 1.0f}} {
     }
@@ -633,7 +633,7 @@ struct Quat : detail::Vect_Base<f32, 4> {
 
     using Base = detail::Vect_Base<f32, 4>;
 
-    explicit Quat() : Base{0.0f, 0.0f, 0.0f, 1.0f} {
+    Quat() : Base{0.0f, 0.0f, 0.0f, 1.0f} {
     }
     explicit Quat(f32 x, f32 y, f32 z, f32 w) : Base{x, y, z, w} {
     }
@@ -762,7 +762,7 @@ struct Quat : detail::Vect_Base<f32, 4> {
 
 struct BBox {
 
-    explicit BBox() : min(Limits<f32>::max()), max(Limits<f32>::min()) {
+    BBox() : min(Limits<f32>::max()), max(Limits<f32>::min()) {
     }
     explicit BBox(Vec3 min, Vec3 max) : min(min), max(max) {
     }
