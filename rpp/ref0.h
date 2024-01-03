@@ -10,32 +10,32 @@ namespace rpp {
 template<typename T>
 struct Ref {
 
-    Ref() = default;
-    explicit Ref(T& value) : value_(&value) {
+    constexpr Ref() = default;
+    constexpr explicit Ref(T& value) : value_(&value) {
     }
-    ~Ref() {
+    constexpr ~Ref() {
         value_ = null;
     }
 
-    Ref(const Ref& src) = default;
-    Ref& operator=(const Ref&) = default;
+    constexpr Ref(const Ref& src) = default;
+    constexpr Ref& operator=(const Ref&) = default;
 
-    Ref(Ref&& src) : value_(src.value_) {
+    constexpr Ref(Ref&& src) : value_(src.value_) {
         src.value_ = null;
     }
-    Ref& operator=(Ref&& src) {
+    constexpr Ref& operator=(Ref&& src) {
         value_ = src.value_;
         src.value_ = null;
         return *this;
     }
 
-    T& operator*();
-    const T& operator*() const;
+    constexpr T& operator*();
+    constexpr const T& operator*() const;
 
-    T* operator->();
-    const T* operator->() const;
+    constexpr T* operator->();
+    constexpr const T* operator->() const;
 
-    operator bool() const {
+    constexpr operator bool() const {
         return value_ != null;
     }
 

@@ -37,118 +37,118 @@ struct Limits;
 
 template<>
 struct Limits<u8> {
-    static constexpr u8 max() {
+    [[nodiscard]] consteval static u8 max() noexcept {
         return RPP_UINT8_MAX;
     }
-    static constexpr u8 min() {
+    [[nodiscard]] consteval static u8 min() noexcept {
         return 0;
     }
 };
 
 template<>
 struct Limits<u16> {
-    static constexpr u16 max() {
+    [[nodiscard]] consteval static u16 max() noexcept {
         return RPP_UINT16_MAX;
     }
-    static constexpr u16 min() {
+    [[nodiscard]] consteval static u16 min() noexcept {
         return 0;
     }
 };
 
 template<>
 struct Limits<u32> {
-    static constexpr u32 max() {
+    [[nodiscard]] consteval static u32 max() noexcept {
         return RPP_UINT32_MAX;
     }
-    static constexpr u32 min() {
+    [[nodiscard]] consteval static u32 min() noexcept {
         return 0;
     }
 };
 
 template<>
 struct Limits<u64> {
-    static constexpr u64 max() {
+    [[nodiscard]] consteval static u64 max() noexcept {
         return RPP_UINT64_MAX;
     }
-    static constexpr u64 min() {
+    [[nodiscard]] consteval static u64 min() noexcept {
         return 0;
     }
 };
 
 template<>
 struct Limits<i8> {
-    static constexpr i8 max() {
+    [[nodiscard]] consteval static i8 max() noexcept {
         return RPP_INT8_MAX;
     }
-    static constexpr i8 min() {
+    [[nodiscard]] consteval static i8 min() noexcept {
         return RPP_INT8_MIN;
     }
 };
 
 template<>
 struct Limits<i16> {
-    static constexpr i16 max() {
+    [[nodiscard]] consteval static i16 max() noexcept {
         return RPP_INT16_MAX;
     }
-    static constexpr i16 min() {
+    [[nodiscard]] consteval static i16 min() noexcept {
         return RPP_INT16_MIN;
     }
 };
 
 template<>
 struct Limits<i32> {
-    static constexpr i32 max() {
+    [[nodiscard]] consteval static i32 max() noexcept {
         return RPP_INT32_MAX;
     }
-    static constexpr i32 min() {
+    [[nodiscard]] consteval static i32 min() noexcept {
         return RPP_INT32_MIN;
     }
 };
 
 template<>
 struct Limits<i64> {
-    static constexpr i64 max() {
+    [[nodiscard]] consteval static i64 max() noexcept {
         return RPP_INT64_MAX;
     }
-    static constexpr i64 min() {
+    [[nodiscard]] consteval static i64 min() noexcept {
         return RPP_INT64_MIN;
     }
 };
 
 template<>
 struct Limits<f32> {
-    static constexpr f32 max() {
+    [[nodiscard]] consteval static f32 max() noexcept {
         return RPP_FLT_MAX;
     }
-    static constexpr f32 min() {
+    [[nodiscard]] consteval static f32 min() noexcept {
         return -RPP_FLT_MAX;
     }
-    static constexpr f32 smallest_norm() {
+    [[nodiscard]] consteval static f32 smallest_norm() noexcept {
         return RPP_FLT_MIN;
     }
-    static constexpr f32 smallest_denorm() {
+    [[nodiscard]] consteval static f32 smallest_denorm() noexcept {
         return RPP_FLT_TRUE_MIN;
     }
-    static constexpr f32 epsilon() {
+    [[nodiscard]] consteval static f32 epsilon() noexcept {
         return RPP_FLT_EPSILON;
     }
 };
 
 template<>
 struct Limits<f64> {
-    static constexpr f64 max() {
+    [[nodiscard]] consteval static f64 max() noexcept {
         return RPP_DBL_MAX;
     }
-    static constexpr f64 min() {
+    [[nodiscard]] consteval static f64 min() noexcept {
         return -RPP_DBL_MAX;
     }
-    static constexpr f64 smallest_norm() {
+    [[nodiscard]] consteval static f64 smallest_norm() noexcept {
         return RPP_DBL_MIN;
     }
-    static constexpr f64 smallest_denorm() {
+    [[nodiscard]] consteval static f64 smallest_denorm() noexcept {
         return RPP_DBL_TRUE_MIN;
     }
-    static constexpr f64 epsilon() {
+    [[nodiscard]] consteval static f64 epsilon() noexcept {
         return RPP_DBL_EPSILON;
     }
 };

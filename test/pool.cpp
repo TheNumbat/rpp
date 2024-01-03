@@ -64,7 +64,7 @@ i32 main() {
                     info("Hello from coroutine 4.3 on thread pool");
                     co_return 1;
                 };
-                job().block();
+                static_cast<void>(job().block());
             }
             {
                 auto job = [&pool_ = pool]() -> Async::Task<i32> {

@@ -9,8 +9,8 @@ namespace rpp {
 template<Allocator A = Mdefault, u64 Buckets = 24, u64 Bias = 8>
 struct Range_Allocator {
 
-    Range_Allocator() = default;
-    explicit Range_Allocator(u64 heap_size) {
+    Range_Allocator() noexcept = default;
+    explicit Range_Allocator(u64 heap_size) noexcept {
         assert(heap_size);
         Block* primary = blocks.make(Block{0, 0, heap_size, null, null});
         insert_free_block(primary);
@@ -18,18 +18,18 @@ struct Range_Allocator {
         stats.free_size = heap_size;
         stats.total_capacity = heap_size;
     }
-    ~Range_Allocator() {
+    ~Range_Allocator() noexcept {
         Thread::Lock lock(mutex);
         reset();
     }
 
-    Range_Allocator(const Range_Allocator&) = delete;
-    Range_Allocator& operator=(const Range_Allocator&) = delete;
+    Range_Allocator(const Range_Allocator&) noexcept = delete;
+    Range_Allocator& operator=(const Range_Allocator&) noexcept = delete;
 
-    Range_Allocator(Range_Allocator&& src) {
+    Range_Allocator(Range_Allocator&& src) noexcept {
         *this = move(src);
     }
-    Range_Allocator& operator=(Range_Allocator&& src) {
+    Range_Allocator& operator=(Range_Allocator&& src) noexcept {
         this->~Range_Allocator();
 
         Thread::Lock lock(src.mutex);
@@ -45,15 +45,16 @@ struct Range_Allocator {
 
     struct Block {
         u64 offset;
-        u64 length() const {
+        [[nodiscard]] u64 length() const noexcept {
             return size - (offset - start);
         }
-        u64 padding() const {
+        [[nodiscard]] u64 padding() const noexcept {
             return offset - start;
         }
 
     private:
-        explicit Block(u64 start, u64 offset, u64 size, Block* next_block, Block* prev_block)
+        explicit Block(u64 start, u64 offset, u64 size, Block* next_block,
+                       Block* prev_block) noexcept
             : start(start), offset(offset), size(size), next_block(next_block),
               prev_block(prev_block){};
 
@@ -69,7 +70,7 @@ struct Range_Allocator {
     };
     using Range = Block*;
 
-    Opt<Range> allocate(u64 size, u64 alignment) {
+    [[nodiscard]] Opt<Range> allocate(u64 size, u64 alignment) noexcept {
 
         assert(size && alignment);
 
@@ -135,7 +136,7 @@ struct Range_Allocator {
         return Opt<Range>{block};
     }
 
-    void free(Range allocation) {
+    void free(Range allocation) noexcept {
 
         Thread::Lock lock(mutex);
 
@@ -198,7 +199,7 @@ struct Range_Allocator {
         u64 total_alloc_size = 0;
         u64 total_capacity = 0;
 
-        void assert_clear() {
+        void assert_clear() noexcept {
             assert(total_allocs == total_frees);
             assert(total_alloc_size == total_free_size);
             assert(free_blocks == 1 || (free_blocks == 0 && total_capacity == 0));
@@ -211,7 +212,7 @@ struct Range_Allocator {
         }
     };
 
-    Stats statistics() {
+    [[nodiscard]] Stats statistics() noexcept {
         return stats;
     }
 
@@ -221,13 +222,13 @@ private:
     Array<Block*, Buckets> free_blocks;
     Stats stats;
 
-    u8 size_to_idx(u64 size) {
+    [[nodiscard]] u8 size_to_idx(u64 size) noexcept {
         u64 idx = Math::log2(size);
         idx = idx >= Bias ? idx - Bias : 0;
         return static_cast<u8>(Math::min(idx, Buckets - 1ul));
     }
 
-    void insert_free_block(Block* block) {
+    void insert_free_block(Block* block) noexcept {
         block->free = true;
         u8 idx = size_to_idx(block->size);
         block->prev_free = null;
@@ -237,7 +238,7 @@ private:
         stats.bucket_sizes[idx] += 1;
     }
 
-    void remove_free_block(Block* block) {
+    void remove_free_block(Block* block) noexcept {
         block->free = false;
         u8 idx = size_to_idx(block->size);
         if(block->prev_free) block->prev_free->next_free = block->next_free;
@@ -248,7 +249,7 @@ private:
         stats.bucket_sizes[idx] -= 1;
     }
 
-    void reset() {
+    void reset() noexcept {
         for(u64 i = 0; i < Buckets; i++) {
             Block* block = free_blocks[i];
             while(block) {

@@ -12,10 +12,6 @@
 #define _LIBCPP_COROUTINE
 #define _GLIBCXX_COROUTINE
 
-#ifdef RPP_COMPILER_MSVC
-#include <vcruntime_new.h>
-#endif
-
 namespace rpp::detail {
 template<typename T>
 constexpr T* addressof(T& _Val) noexcept {
@@ -62,7 +58,7 @@ struct coroutine_handle<void> {
         return _Ptr;
     }
 
-    [[nodiscard]] static constexpr coroutine_handle
+    [[nodiscard]] constexpr static coroutine_handle
     from_address(void* const _Addr) noexcept { // strengthened
         coroutine_handle _Result;
         _Result._Ptr = _Addr;
@@ -117,7 +113,7 @@ struct coroutine_handle {
         return _Ptr;
     }
 
-    [[nodiscard]] static constexpr coroutine_handle
+    [[nodiscard]] constexpr static coroutine_handle
     from_address(void* const _Addr) noexcept { // strengthened
         coroutine_handle _Result;
         _Result._Ptr = _Addr;

@@ -9,9 +9,7 @@ i32 main() {
 
     {
         Test test{"empty"_v};
-        {
-            Prof_Scope("Ref0/1");
-
+        Trace("Ref0/1") {
             i32 i = 5;
             Ref<i32> r{i};
 
@@ -21,9 +19,7 @@ i32 main() {
             Ref<Ref<i32>> rr{r};
             assert(**rr == 10);
         }
-        {
-            Prof_Scope("Box");
-
+        Trace("Box") {
             Box<i32> b{5};
             assert(b && *b == 5);
 
@@ -43,7 +39,7 @@ i32 main() {
             Box<Thread::Mutex> m;
             m.emplace();
         }
-        {
+        Trace("Rc") {
             Rc<i32> r0;
             assert(!r0);
 
@@ -60,7 +56,7 @@ i32 main() {
             assert(r1.references() == 2 && r3.references() == 2);
             assert(!r2 && r2.references() == 0);
         }
-        {
+        Trace("Arc") {
             Arc<i32> r0;
             assert(!r0);
 

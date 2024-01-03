@@ -3,19 +3,19 @@
 
 namespace rpp {
 
-Profile::Time_Point Profile::timestamp() {
+[[nodiscard]] Profile::Time_Point Profile::timestamp() noexcept {
     return Thread::perf_counter();
 }
 
-f32 Profile::ms(Profile::Time_Point duration) {
+[[nodiscard]] f32 Profile::ms(Profile::Time_Point duration) noexcept {
     return static_cast<f32>(duration / (Thread::perf_frequency() / 1000.0));
 }
 
-f32 Profile::s(Profile::Time_Point duration) {
+[[nodiscard]] f32 Profile::s(Profile::Time_Point duration) noexcept {
     return static_cast<f32>(duration / static_cast<f64>(Thread::perf_frequency()));
 }
 
-void Profile::start_thread() {
+void Profile::start_thread() noexcept {
     Thread::Lock lock(threads_lock);
 
     Thread::Id id = Thread::this_id();
@@ -25,7 +25,7 @@ void Profile::start_thread() {
     threads.insert(id, Ref{this_thread});
 }
 
-void Profile::end_thread() {
+void Profile::end_thread() noexcept {
     Thread::Lock lock(threads_lock);
 
     Thread::Id id = Thread::this_id();
@@ -34,13 +34,13 @@ void Profile::end_thread() {
     this_thread.~Thread_Profile();
 }
 
-Profile::Time_Point Profile::Frame_Profile::begin() {
+[[nodiscard]] Profile::Time_Point Profile::Frame_Profile::begin() noexcept {
     assert(current_node == 0 && nodes.empty());
     Timing_Node& node = nodes.push(Timing_Node::make(Log::Location{"Frame"_v, {}, 0}, 0));
     return node.begin;
 }
 
-void Profile::Frame_Profile::end() {
+void Profile::Frame_Profile::end() noexcept {
     assert(current_node == 0);
     Timing_Node& root = nodes.front();
     root.end = timestamp();
@@ -48,7 +48,7 @@ void Profile::Frame_Profile::end() {
     compute_self_times(0);
 }
 
-void Profile::Frame_Profile::compute_self_times(u64 idx) {
+void Profile::Frame_Profile::compute_self_times(u64 idx) noexcept {
     Timing_Node& node = nodes[idx];
     u64 child_time = 0;
     for(u64 child : node.children) {
@@ -58,7 +58,7 @@ void Profile::Frame_Profile::compute_self_times(u64 idx) {
     node.self_time = node.heir_time - child_time;
 }
 
-float Profile::begin_frame() {
+f32 Profile::begin_frame() noexcept {
 
     Thread_Profile& prof = this_thread;
     Thread::Lock lock(prof.frames_lock);
@@ -71,7 +71,7 @@ float Profile::begin_frame() {
 
     Time_Point t = new_frame.begin();
 
-    float ret = 0.0f;
+    f32 ret = 0.0f;
     if(prof.frames.length() > 1) {
         Frame_Profile& prev_frame = prof.frames.penultimate();
         assert(!prev_frame.nodes.empty());
@@ -82,7 +82,7 @@ float Profile::begin_frame() {
     return ret;
 }
 
-void Profile::end_frame() {
+void Profile::end_frame() noexcept {
 
     Thread_Profile& prof = this_thread;
     Thread::Lock lock(prof.frames_lock);
@@ -95,20 +95,20 @@ void Profile::end_frame() {
     prof.during_frame = false;
 }
 
-void Profile::enter(String_View name) {
+void Profile::enter(String_View name) noexcept {
     if constexpr(DO_PROFILE) {
         enter(Log::Location{move(name), ""_v, 0});
     }
 }
 
-void Profile::enter(Log::Location loc) {
+void Profile::enter(Log::Location loc) noexcept {
     if constexpr(DO_PROFILE) {
         Thread::Lock lock(this_thread.frames_lock);
         this_thread.frames.back().enter(move(loc));
     }
 }
 
-void Profile::Frame_Profile::enter(Log::Location loc) {
+void Profile::Frame_Profile::enter(Log::Location loc) noexcept {
 
     bool repeat = false;
     Timing_Node& node = nodes[current_node];
@@ -132,14 +132,14 @@ void Profile::Frame_Profile::enter(Log::Location loc) {
     }
 }
 
-void Profile::exit() {
+void Profile::exit() noexcept {
     if constexpr(DO_PROFILE) {
         Thread::Lock lock(this_thread.frames_lock);
         this_thread.frames.back().exit();
     }
 }
 
-void Profile::Frame_Profile::exit() {
+void Profile::Frame_Profile::exit() noexcept {
 
     Frame_Profile& frame = this_thread.frames.back();
     Timing_Node& node = frame.nodes[frame.current_node];
@@ -149,7 +149,7 @@ void Profile::Frame_Profile::exit() {
     frame.current_node = node.parent;
 }
 
-void Profile::alloc(Alloc a) {
+void Profile::alloc(Alloc a) noexcept {
     if constexpr(DO_PROFILE) {
         {
             Thread::Lock lock(allocs_lock);
@@ -190,12 +190,12 @@ void Profile::alloc(Alloc a) {
     }
 }
 
-void Profile::finalizer(Function<void()> f) {
+void Profile::finalizer(Function<void()> f) noexcept {
     Thread::Lock lock(finalizers_lock);
     finalizers.push(move(f));
 }
 
-void Profile::finalize() {
+void Profile::finalize() noexcept {
     {
         Thread::Lock lock(finalizers_lock);
         for(auto& f : finalizers) {

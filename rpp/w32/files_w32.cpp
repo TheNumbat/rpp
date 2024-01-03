@@ -6,7 +6,7 @@
 
 namespace rpp::Files {
 
-Opt<File_Time> last_write_time(String_View path) {
+[[nodiscard]] Opt<File_Time> last_write_time(String_View path) noexcept {
 
     WIN32_FILE_ATTRIBUTE_DATA attrib = {};
 
@@ -25,7 +25,7 @@ Opt<File_Time> last_write_time(String_View path) {
                static_cast<u64>(attrib.ftLastWriteTime.dwLowDateTime)};
 }
 
-bool before(const File_Time& first, const File_Time& second) {
+[[nodiscard]] bool before(const File_Time& first, const File_Time& second) noexcept {
     FILETIME f, s;
     f.dwLowDateTime = static_cast<u32>(first);
     f.dwHighDateTime = static_cast<u32>(first >> 32);
@@ -34,7 +34,7 @@ bool before(const File_Time& first, const File_Time& second) {
     return CompareFileTime(&f, &s) == -1;
 }
 
-Opt<Vec<u8, Alloc>> read(String_View path) {
+[[nodiscard]] Opt<Vec<u8, Alloc>> read(String_View path) noexcept {
 
     auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
     if(ucs2_path_len == 0) {
@@ -72,7 +72,7 @@ Opt<Vec<u8, Alloc>> read(String_View path) {
     return Opt{move(data)};
 }
 
-bool write(String_View path, Slice<u8> data) {
+[[nodiscard]] bool write(String_View path, Slice<u8> data) noexcept {
 
     auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
     if(ucs2_path_len == 0) {

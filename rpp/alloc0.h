@@ -5,18 +5,11 @@
 #error "Include base.h instead."
 #endif
 
-#ifdef RPP_COMPILER_MSVC
-void* operator new(rpp::u64, std::align_val_t, void* ptr) noexcept;
-void* operator new[](rpp::u64, std::align_val_t, void* ptr) noexcept;
-void operator delete(void*, std::align_val_t, void*) noexcept;
-void operator delete[](void*, std::align_val_t, void*) noexcept;
-#endif
-
 namespace rpp {
 
-void* sys_alloc(u64 size);
-void sys_free(void* mem);
-i64 sys_net_allocs();
+[[nodiscard]] void* sys_alloc(u64 size) noexcept;
+void sys_free(void* mem) noexcept;
+[[nodiscard]] i64 sys_net_allocs() noexcept;
 
 template<typename A>
 concept Allocator = requires(u64 size, void* address) {
@@ -40,7 +33,7 @@ template<typename A>
 struct Scalar_Adaptor {
     template<typename T, typename... Args>
         requires Allocator<A> && Constructable<T, Args...>
-    static T* make(Args&&... args) {
+    [[nodiscard]] static T* make(Args&&... args) noexcept {
         T* mem = reinterpret_cast<T*>(A::alloc(sizeof(T)));
         new(mem) T{forward<Args>(args)...};
         return mem;
@@ -48,7 +41,7 @@ struct Scalar_Adaptor {
 
     template<typename T>
         requires Allocator<A>
-    static void destroy(T* mem) {
+    static void destroy(T* mem) noexcept {
         if constexpr(Must_Destruct<T>) {
             mem->~T();
         }
@@ -63,9 +56,9 @@ using Pool_Adaptor = If<Allocator<P>, detail::Scalar_Adaptor<P>, P>;
 
 template<Literal N, bool Log = true>
 struct Mallocator {
-    static constexpr Literal name = N;
-    static void* alloc(u64 size);
-    static void free(void* mem);
+    constexpr static Literal name = N;
+    static void* alloc(u64 size) noexcept;
+    static void free(void* mem) noexcept;
 };
 
 using Region = u64;
@@ -79,7 +72,7 @@ struct Region_Allocator {
         ~Scope() {
             end(R);
         }
-        consteval operator bool() {
+        [[nodiscard]] consteval operator bool() {
             return true;
         }
         Scope(const Scope&) = delete;
@@ -88,34 +81,34 @@ struct Region_Allocator {
         Scope& operator=(Scope&&) = delete;
     };
 
-    static void* alloc(Region region, u64 size);
-    static void free(Region region, void* mem);
+    [[nodiscard]] static void* alloc(Region region, u64 size) noexcept;
+    static void free(Region region, void* mem) noexcept;
 
-    static u64 depth();
-    static u64 size();
+    static u64 depth() noexcept;
+    static u64 size() noexcept;
 
 private:
-    static void begin(Region region);
-    static void end(Region region);
+    static void begin(Region region) noexcept;
+    static void end(Region region) noexcept;
 
     friend struct Stack_Scope;
 };
 
 template<Region R>
 struct Mregion {
-    static constexpr Literal name = "Region";
-    static void* alloc(u64 size) {
+    constexpr static Literal name = "Region";
+    [[nodiscard]] static void* alloc(u64 size) noexcept {
         return Region_Allocator::alloc(R, size);
     }
-    static void free(void* mem) {
+    static void free(void* mem) noexcept {
         Region_Allocator::free(R, mem);
     }
 };
 
-#define REGION2(counter) __region_##counter
-#define REGION1(R, brand, counter)                                                                 \
-    if constexpr(constexpr u64 R = brand)                                                          \
-        if(::rpp::Region_Allocator::Scope<brand> REGION2(counter) = {})
+#define REGION2(COUNTER) __region_##COUNTER
+#define REGION1(R, BRAND, COUNTER)                                                                 \
+    if constexpr(constexpr u64 R = BRAND)                                                          \
+        if(::rpp::Region_Allocator::Scope<BRAND> REGION2(COUNTER){})
 
 #define Region(R) REGION1(R, LOCATION_HASH, __COUNTER__)
 
@@ -125,18 +118,18 @@ using Mhidden = Mallocator<"Hidden", false>;
 template<typename T, Allocator Base>
 struct Free_List {
 
-    Free_List() = default;
-    ~Free_List() {
+    Free_List() noexcept = default;
+    ~Free_List() noexcept {
         clear();
     }
 
-    Free_List(const Free_List&) = delete;
-    Free_List& operator=(const Free_List&) = delete;
+    Free_List(const Free_List&) noexcept = delete;
+    Free_List& operator=(const Free_List&) noexcept = delete;
 
-    Free_List(Free_List&& src) : list_(src.list_) {
+    Free_List(Free_List&& src) noexcept : list_(src.list_) {
         src.list_ = null;
     }
-    Free_List& operator=(Free_List&& src) {
+    Free_List& operator=(Free_List&& src) noexcept {
         this->~Free_List();
         list_ = src.list_;
         src.list_ = null;
@@ -145,18 +138,18 @@ struct Free_List {
 
     template<typename... Args>
         requires Constructable<T, Args...>
-    T* make(Args&&... args) {
+    [[nodiscard]] T* make(Args&&... args) noexcept {
         return new(alloc()) T{forward<Args>(args)...};
     }
 
-    void destroy(T* value) {
+    void destroy(T* value) noexcept {
         if constexpr(Must_Destruct<T>) {
             value->~T();
         }
         free(value);
     }
 
-    void clear() {
+    void clear() noexcept {
         while(list_) {
             Free_Node* next = list_->next;
             Base::free(list_);
@@ -165,7 +158,7 @@ struct Free_List {
     }
 
 private:
-    T* alloc() {
+    [[nodiscard]] T* alloc() noexcept {
         if(list_) {
             Free_Node* ret = list_;
             list_ = list_->next;
@@ -175,7 +168,7 @@ private:
         return reinterpret_cast<T*>(new_node);
     }
 
-    void free(T* mem) {
+    void free(T* mem) noexcept {
         Free_Node* node = reinterpret_cast<Free_Node*>(mem);
         node->next = list_;
         list_ = node;

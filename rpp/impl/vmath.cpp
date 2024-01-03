@@ -20,22 +20,22 @@ using SIMD::to;
 #define VecShuffle_0101(vec1, vec2) _mm_movelh_ps(vec1, vec2)
 #define VecShuffle_2323(vec1, vec2) _mm_movehl_ps(vec2, vec1)
 
-static __m128 Mat2Mul(__m128 vec1, __m128 vec2) {
+static __m128 Mat2Mul(__m128 vec1, __m128 vec2) noexcept {
     return _mm_add_ps(_mm_mul_ps(vec1, VecSwizzle(vec2, 0, 3, 0, 3)),
                       _mm_mul_ps(VecSwizzle(vec1, 1, 0, 3, 2), VecSwizzle(vec2, 2, 1, 2, 1)));
 }
 
-static __m128 Mat2AdjMul(__m128 vec1, __m128 vec2) {
+static __m128 Mat2AdjMul(__m128 vec1, __m128 vec2) noexcept {
     return _mm_sub_ps(_mm_mul_ps(VecSwizzle(vec1, 3, 3, 0, 0), vec2),
                       _mm_mul_ps(VecSwizzle(vec1, 1, 1, 2, 2), VecSwizzle(vec2, 2, 3, 0, 1)));
 }
 
-static __m128 Mat2MulAdj(__m128 vec1, __m128 vec2) {
+static __m128 Mat2MulAdj(__m128 vec1, __m128 vec2) noexcept {
     return _mm_sub_ps(_mm_mul_ps(vec1, VecSwizzle(vec2, 3, 0, 3, 0)),
                       _mm_mul_ps(VecSwizzle(vec1, 1, 0, 3, 2), VecSwizzle(vec2, 2, 1, 2, 1)));
 }
 
-static Mat4 inverse(Mat4 m) {
+static Mat4 inverse(Mat4 m) noexcept {
     __m128 A = VecShuffle_0101(of(m.pack[0]), of(m.pack[1]));
     __m128 B = VecShuffle_2323(of(m.pack[0]), of(m.pack[1]));
     __m128 C = VecShuffle_0101(of(m.pack[2]), of(m.pack[3]));
@@ -89,7 +89,7 @@ Mat4 Mat4::zero = Mat4{0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 Mat4 Mat4::swap_x_z = Mat4{0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
                            1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f};
 
-Mat4 Mat4::look_at(Vec3 pos, Vec3 at, Vec3 up) {
+Mat4 Mat4::look_at(Vec3 pos, Vec3 at, Vec3 up) noexcept {
     Mat4 ret = Mat4::zero;
     Vec3 F = normalize(at - pos);
     Vec3 S = normalize(cross(F, up));
@@ -110,7 +110,7 @@ Mat4 Mat4::look_at(Vec3 pos, Vec3 at, Vec3 up) {
     return ret;
 }
 
-Mat4 Mat4::scale(Vec3 s) {
+Mat4 Mat4::scale(Vec3 s) noexcept {
     Mat4 ret;
     ret[0][0] = s.x;
     ret[1][1] = s.y;
@@ -118,7 +118,7 @@ Mat4 Mat4::scale(Vec3 s) {
     return ret;
 }
 
-Mat4 Mat4::rotate(f32 a, Vec3 axis) {
+Mat4 Mat4::rotate(f32 a, Vec3 axis) noexcept {
     Mat4 ret;
     f32 c = Math::cos(Math::radians(a));
     f32 s = Math::sin(Math::radians(a));
@@ -136,13 +136,13 @@ Mat4 Mat4::rotate(f32 a, Vec3 axis) {
     return ret;
 }
 
-Mat4 Mat4::translate(Vec3 v) {
+Mat4 Mat4::translate(Vec3 v) noexcept {
     Mat4 ret;
     ret[3].xyz() = v;
     return ret;
 }
 
-Mat4 Mat4::ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
+Mat4 Mat4::ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) noexcept {
     Mat4 ret;
     ret[0][0] = 2.0f / (r - l);
     ret[1][1] = 2.0f / (t - b);
@@ -153,7 +153,7 @@ Mat4 Mat4::ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) {
     return ret;
 }
 
-Mat4 Mat4::proj(f32 fov, f32 ar, f32 n) {
+Mat4 Mat4::proj(f32 fov, f32 ar, f32 n) noexcept {
     f32 f = 1.0f / Math::tan(Math::radians(fov) / 2.0f);
     Mat4 ret;
     ret[0][0] = f / ar;
@@ -165,7 +165,7 @@ Mat4 Mat4::proj(f32 fov, f32 ar, f32 n) {
     return ret;
 }
 
-Mat4 Mat4::rotate_y_to(Vec3 dir) {
+Mat4 Mat4::rotate_y_to(Vec3 dir) noexcept {
 
     dir.normalize();
 
@@ -181,7 +181,7 @@ Mat4 Mat4::rotate_y_to(Vec3 dir) {
     }
 }
 
-Mat4 Mat4::rotate_z_to(Vec3 dir) {
+Mat4 Mat4::rotate_z_to(Vec3 dir) noexcept {
     Mat4 y = rotate_y_to(dir);
     Vec4 _y = y[1];
     Vec4 _z = y[2];
@@ -190,40 +190,40 @@ Mat4 Mat4::rotate_z_to(Vec3 dir) {
     return y;
 }
 
-Mat4 Mat4::inverse(Mat4 m) {
+Mat4 Mat4::inverse(Mat4 m) noexcept {
     return detail::inverse(m);
 }
 
-Mat4 Mat4::transpose(Mat4 m) {
+Mat4 Mat4::transpose(Mat4 m) noexcept {
     Mat4 ret;
     for(u64 i = 0; i < 4; i++)
         for(u64 j = 0; j < 4; j++) ret[i][j] = m[j][i];
     return ret;
 }
 
-bool Mat4::operator==(Mat4 m) const {
+bool Mat4::operator==(Mat4 m) const noexcept {
     return columns[0] == m.columns[0] && columns[1] == m.columns[1] && columns[2] == m.columns[2] &&
            columns[3] == m.columns[3];
 }
 
-bool Mat4::operator!=(Mat4 m) const {
+bool Mat4::operator!=(Mat4 m) const noexcept {
     return columns[0] != m.columns[0] || columns[1] != m.columns[1] || columns[2] != m.columns[2] ||
            columns[3] != m.columns[3];
 }
 
-Mat4 Mat4::operator+(Mat4 m) const {
+Mat4 Mat4::operator+(Mat4 m) const noexcept {
     Mat4 ret;
     for(u64 i = 0; i < 4; i++) ret.pack[i] = F32x4::add(pack[i], m.pack[i]);
     return ret;
 }
 
-Mat4 Mat4::operator-(Mat4 m) const {
+Mat4 Mat4::operator-(Mat4 m) const noexcept {
     Mat4 ret;
     for(u64 i = 0; i < 4; i++) ret.pack[i] = F32x4::sub(pack[i], m.pack[i]);
     return ret;
 }
 
-Mat4 Mat4::operator*(Mat4 m) const {
+Mat4 Mat4::operator*(Mat4 m) const noexcept {
     Mat4 ret;
     for(u64 i = 0; i < 4; i++) {
         ret.pack[i] = F32x4::add(F32x4::add(F32x4::mul(F32x4::set1(m[i][0]), pack[0]),
@@ -234,75 +234,75 @@ Mat4 Mat4::operator*(Mat4 m) const {
     return ret;
 }
 
-Mat4 Mat4::operator+(f32 s) const {
+Mat4 Mat4::operator+(f32 s) const noexcept {
     Mat4 ret;
     F32x4 s4 = F32x4::set1(s);
     for(u64 i = 0; i < 4; i++) ret.pack[i] = F32x4::add(pack[i], s4);
     return ret;
 }
 
-Mat4 Mat4::operator-(f32 s) const {
+Mat4 Mat4::operator-(f32 s) const noexcept {
     Mat4 ret;
     F32x4 s4 = F32x4::set1(s);
     for(u64 i = 0; i < 4; i++) ret.pack[i] = F32x4::sub(pack[i], s4);
     return ret;
 }
 
-Mat4 Mat4::operator*(f32 s) const {
+Mat4 Mat4::operator*(f32 s) const noexcept {
     Mat4 ret;
     F32x4 s4 = F32x4::set1(s);
     for(u64 i = 0; i < 4; i++) ret.pack[i] = F32x4::mul(pack[i], s4);
     return ret;
 }
 
-Mat4 Mat4::operator/(f32 s) const {
+Mat4 Mat4::operator/(f32 s) const noexcept {
     Mat4 ret;
     F32x4 s4 = F32x4::set1(s);
     for(u64 i = 0; i < 4; i++) ret.pack[i] = F32x4::div(pack[i], s4);
     return ret;
 }
 
-Vec4& Mat4::operator[](u64 idx) {
+Vec4& Mat4::operator[](u64 idx) noexcept {
     assert(idx < 4);
     return columns[idx];
 }
 
-Vec4 Mat4::operator[](u64 idx) const {
+Vec4 Mat4::operator[](u64 idx) const noexcept {
     assert(idx < 4);
     return columns[idx];
 }
 
-Vec4 Mat4::operator*(Vec4 v) const {
+Vec4 Mat4::operator*(Vec4 v) const noexcept {
     return Vec4{F32x4::add(
         F32x4::add(F32x4::mul(pack[0], F32x4::set1(v.x)), F32x4::mul(pack[1], F32x4::set1(v.y))),
         F32x4::add(F32x4::mul(pack[2], F32x4::set1(v.z)), F32x4::mul(pack[3], F32x4::set1(v.w))))};
 }
 
-Vec3 Mat4::operator*(Vec3 v) const {
+Vec3 Mat4::operator*(Vec3 v) const noexcept {
     return Vec4{F32x4::add(F32x4::add(F32x4::mul(pack[0], F32x4::set1(v.x)),
                                       F32x4::mul(pack[1], F32x4::set1(v.y))),
                            F32x4::add(F32x4::mul(pack[2], F32x4::set1(v.z)), pack[3]))}
         .xyz();
 }
 
-Vec3 Mat4::rotate(Vec3 v) const {
+Vec3 Mat4::rotate(Vec3 v) const noexcept {
     return Vec4{F32x4::add(F32x4::add(F32x4::mul(pack[0], F32x4::set1(v.x)),
                                       F32x4::mul(pack[1], F32x4::set1(v.y))),
                            F32x4::mul(pack[2], F32x4::set1(v.z)))}
         .xyz();
 }
 
-Mat4 Mat4::T() const {
+Mat4 Mat4::T() const noexcept {
     return transpose(*this);
 }
 
-Mat4 Mat4::inverse() const {
+Mat4 Mat4::inverse() const noexcept {
     return detail::inverse(*this);
 }
 
-Vec3 Mat4::to_euler() const {
+Vec3 Mat4::to_euler() const noexcept {
     bool single = true;
-    static constexpr f32 singularity[] = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
+    constexpr static f32 singularity[] = {1.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0f,
                                           0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0};
     for(u64 i = 0; i < 12 && single; i++) {
         single = single && Math::abs(data[i] - singularity[i]) < Math::EPS_F;
@@ -332,22 +332,6 @@ Vec3 Mat4::to_euler() const {
         return Math::degrees(eul2);
     else
         return Math::degrees(eul1);
-}
-
-const Vec4* Mat4::begin() const {
-    return columns;
-}
-
-const Vec4* Mat4::end() const {
-    return columns + 4;
-}
-
-Vec4* Mat4::begin() {
-    return columns;
-}
-
-Vec4* Mat4::end() {
-    return columns + 4;
 }
 
 } // namespace rpp::Math

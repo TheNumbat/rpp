@@ -21,22 +21,22 @@ struct Function<Words, R(Args...)> {
 
     template<typename F>
         requires Same<Invoke_Result<F, Args...>, R>
-    Function(F&& f) {
+    Function(F&& f) noexcept {
         construct(forward<F>(f));
     }
-    ~Function() {
+    ~Function() noexcept {
         destruct();
     }
 
-    Function(const Function& src) = delete;
-    Function& operator=(const Function& src) = delete;
+    Function(const Function& src) noexcept = delete;
+    Function& operator=(const Function& src) noexcept = delete;
 
-    Function(Function&& src) {
+    Function(Function&& src) noexcept {
         if(src.vtable) src.move(storage);
         vtable = src.vtable;
         src.vtable = null;
     }
-    Function& operator=(Function&& src) {
+    Function& operator=(Function&& src) noexcept {
         destruct();
         if(src.vtable) src.move(storage);
         vtable = src.vtable;
@@ -44,18 +44,18 @@ struct Function<Words, R(Args...)> {
         return *this;
     }
 
-    R operator()(Args... args) {
+    [[nodiscard]] R operator()(Args... args) noexcept {
         assert(vtable);
         return invoke(forward<Args>(args)...);
     }
 
 private:
     using VoidFn = void (*)();
-    static constexpr u64 MAX_ALIGN = 16;
+    constexpr static u64 MAX_ALIGN = 16;
 
     template<typename F>
         requires Same<Invoke_Result<F, Args...>, R>
-    void construct(F&& f) {
+    void construct(F&& f) noexcept {
         static_assert(alignof(F) <= MAX_ALIGN);
         static_assert(sizeof(F) <= Words * 8);
         static VoidFn f_vtable[] = {reinterpret_cast<VoidFn>(&f_destruct<F>),
@@ -64,30 +64,30 @@ private:
         new(storage) F{forward<F>(f)};
         vtable = static_cast<VoidFn*>(f_vtable);
     }
-    void destruct() {
+    void destruct() noexcept {
         if(vtable) {
             void (*destruct)(void*) = reinterpret_cast<void (*)(void*)>(vtable[0]);
             destruct(storage);
         }
         vtable = null;
     }
-    void move(void* dst) {
+    void move(void* dst) noexcept {
         void (*move)(void*, void*) = reinterpret_cast<void (*)(void*, void*)>(vtable[1]);
         move(dst, storage);
     }
-    R invoke(Args... args) {
+    [[nodiscard]] R invoke(Args... args) noexcept {
         R (*invoke)(void*, Args...) = reinterpret_cast<R (*)(void*, Args...)>(vtable[2]);
         return invoke(storage, forward<Args>(args)...);
     }
 
     template<typename F>
-    static void f_destruct(F* src) {
+    static void f_destruct(F* src) noexcept {
         if constexpr(Must_Destruct<F>) {
             src->~F();
         }
     }
     template<typename F>
-    static void f_move(F* dst, F* src) {
+    static void f_move(F* dst, F* src) noexcept {
         if constexpr(Trivially_Movable<F>) {
             Libc::memcpy(dst, src, sizeof(F));
         } else {
@@ -95,7 +95,7 @@ private:
         }
     }
     template<typename F>
-    static R f_invoke(F* src, Args... args) {
+    [[nodiscard]] static R f_invoke(F* src, Args... args) noexcept {
         return src->operator()(forward<Args>(args)...);
     }
 
@@ -119,7 +119,7 @@ template<Reflectable R, typename... Args>
     requires(Reflectable<Args> && ...)
 struct Measure<Function<R(Args...)>> {
     using Fn = R(Args...);
-    static u64 measure(const Function<Fn>&) {
+    [[nodiscard]] static u64 measure(const Function<Fn>&) noexcept {
         u64 length = 10;
         length += String_View{Reflect::Refl<R>::name}.length();
         length += 2;
@@ -135,7 +135,7 @@ struct Measure<Function<R(Args...)>> {
 template<Allocator O, u64 N>
 struct Write_Type {
     template<typename Arg>
-    void apply() {
+    void apply() noexcept {
         Region(R) {
             idx = output.write(idx, format_typename<Arg, Mregion<R>>());
         }
@@ -151,8 +151,8 @@ template<Allocator O, Reflectable R, typename... Args>
     requires(Reflectable<Args> && ...)
 struct Write<O, Function<R(Args...)>> {
     using Fn = R(Args...);
-    static constexpr u64 N = sizeof...(Args);
-    static u64 write(String<O>& output, u64 idx, const Function<Fn>&) {
+    constexpr static u64 N = sizeof...(Args);
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Function<Fn>&) noexcept {
         idx = output.write(idx, "Function{"_v);
         idx = output.write(idx, String_View{Reflect::Refl<R>::name});
         idx = output.write(idx, '(');
@@ -166,7 +166,7 @@ struct Write<O, Function<R(Args...)>> {
 template<Reflectable R, Reflectable... Args>
 struct Typename<Function<R(Args...)>> {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return format<A>("Function<%(%)>"_v, Typename<R>::template name<A>(),
                          concat<A>(", "_v, Typename<Args>::template name<A>()...));
     }

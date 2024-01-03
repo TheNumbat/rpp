@@ -10,7 +10,7 @@
 
 namespace rpp::Async {
 
-Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path_) {
+[[nodiscard]] Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path_) noexcept {
 
     // TODO(max): io_uring
 
@@ -42,7 +42,7 @@ Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path_) {
     co_return Opt{move(data)};
 }
 
-Task<bool> write(Pool<>& pool, String_View path_, Slice<u8> data) {
+[[nodiscard]] Task<bool> write(Pool<>& pool, String_View path_, Slice<u8> data) noexcept {
 
     // TODO(max): io_uring
 
@@ -66,7 +66,7 @@ Task<bool> write(Pool<>& pool, String_View path_, Slice<u8> data) {
     co_return true;
 }
 
-Task<void> wait(Pool<>& pool, u64 ms) {
+[[nodiscard]] Task<void> wait(Pool<>& pool, u64 ms) noexcept {
 
     int fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
     if(fd == -1) {

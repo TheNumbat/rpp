@@ -11,7 +11,7 @@ namespace rpp {
 
 namespace Hash {
 
-constexpr u64 squirrel5(u64 at) {
+[[nodiscard]] constexpr u64 squirrel5(u64 at) noexcept {
     constexpr u64 BIT_NOISE1 = 0xA278032FB08BA40Dul;
     constexpr u64 BIT_NOISE2 = 0x9D9FDC30FD876B1Dul;
     constexpr u64 BIT_NOISE3 = 0xEC705118C5FBDA13ul;
@@ -30,7 +30,7 @@ constexpr u64 squirrel5(u64 at) {
     return at;
 }
 
-constexpr u64 hash_combine(u64 h1, u64 h2) {
+[[nodiscard]] constexpr u64 hash_combine(u64 h1, u64 h2) noexcept {
     return squirrel5(h1 + h2);
 }
 
@@ -39,35 +39,35 @@ struct Hash;
 
 template<Int I>
 struct Hash<I> {
-    static constexpr u64 hash(I key) {
+    [[nodiscard]] constexpr static u64 hash(I key) noexcept {
         return squirrel5(static_cast<u64>(key));
     }
 };
 
 template<>
 struct Hash<char> {
-    static constexpr u64 hash(char key) {
+    [[nodiscard]] constexpr static u64 hash(char key) noexcept {
         return squirrel5(static_cast<u64>(key));
     }
 };
 
 template<>
 struct Hash<f32> {
-    static u64 hash(f32 key) {
+    [[nodiscard]] static u64 hash(f32 key) noexcept {
         return squirrel5(static_cast<u64>(*reinterpret_cast<u32*>(&key)));
     }
 };
 
 template<>
 struct Hash<f64> {
-    static u64 hash(f64 key) {
+    [[nodiscard]] static u64 hash(f64 key) noexcept {
         return squirrel5(*reinterpret_cast<u64*>(&key));
     }
 };
 
 template<typename T>
 struct Hash<T*> {
-    static constexpr u64 hash(T* key) {
+    [[nodiscard]] constexpr static u64 hash(T* key) noexcept {
         return squirrel5(static_cast<u64>(reinterpret_cast<uptr>(key)));
     }
 };
@@ -80,22 +80,22 @@ concept Hashable = requires(K k) {
 };
 
 template<Hashable T>
-constexpr u64 hash(T&& value) {
+[[nodiscard]] constexpr u64 hash(T&& value) noexcept {
     return Hash::Hash<Decay<T>>::hash(forward<T>(value));
 }
 
 template<Hashable T>
-constexpr u64 hash_nonzero(T&& value) {
+[[nodiscard]] constexpr u64 hash_nonzero(T&& value) noexcept {
     return Hash::Hash<Decay<T>>::hash(forward<T>(value)) | 1;
 }
 
 template<Hashable... Ts>
-constexpr u64 hash(Ts&&... values) {
+[[nodiscard]] constexpr u64 hash(Ts&&... values) noexcept {
     return Hash::squirrel5((hash(forward<Ts>(values)) + ...));
 }
 
 template<size_t N>
-consteval u64 hash_literal(const char (&literal)[N], u64 seed = 0) {
+[[nodiscard]] consteval u64 hash_literal(const char (&literal)[N], u64 seed = 0) noexcept {
     for(size_t i = 0; i < N - 1; i++) {
         seed = Hash::hash_combine(seed, hash(literal[i]));
     }

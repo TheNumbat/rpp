@@ -7,7 +7,7 @@
 
 namespace rpp::Files {
 
-Opt<Vec<u8, Alloc>> read(String_View path_) {
+[[nodiscard]] Opt<Vec<u8, Alloc>> read(String_View path_) noexcept {
 
     int fd = -1;
     Region(R) {
@@ -37,7 +37,7 @@ Opt<Vec<u8, Alloc>> read(String_View path_) {
     return Opt{move(data)};
 }
 
-bool write(String_View path_, Slice<u8> data) {
+[[nodiscard]] bool write(String_View path_, Slice<u8> data) noexcept {
 
     int fd = -1;
     Region(R) {
@@ -59,7 +59,7 @@ bool write(String_View path_, Slice<u8> data) {
     return true;
 }
 
-Opt<File_Time> last_write_time(String_View path_) {
+[[nodiscard]] Opt<File_Time> last_write_time(String_View path_) noexcept {
     Region(R) {
         auto path = path_.terminate<Mregion<R>>();
 
@@ -72,7 +72,7 @@ Opt<File_Time> last_write_time(String_View path_) {
     }
 }
 
-bool before(const File_Time& first, const File_Time& second) {
+[[nodiscard]] bool before(const File_Time& first, const File_Time& second) noexcept {
     return first < second;
 }
 

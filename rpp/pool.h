@@ -13,14 +13,14 @@ struct Pool;
 template<Allocator A = Alloc>
 struct Schedule {
 
-    explicit Schedule(Pool<A>& pool) : pool{pool} {
+    explicit Schedule(Pool<A>& pool) noexcept : pool{pool} {
     }
-    void await_suspend(std::coroutine_handle<> task) {
+    void await_suspend(std::coroutine_handle<> task) noexcept {
         pool.enqueue(Handle{task});
     }
-    void await_resume() {
+    void await_resume() noexcept {
     }
-    bool await_ready() {
+    [[nodiscard]] bool await_ready() noexcept {
         return false;
     }
 
@@ -31,14 +31,14 @@ private:
 template<Allocator A = Alloc>
 struct Schedule_Event {
 
-    explicit Schedule_Event(Event event, Pool<A>& pool) : event{move(event)}, pool{pool} {
+    explicit Schedule_Event(Event event, Pool<A>& pool) noexcept : event{move(event)}, pool{pool} {
     }
-    void await_suspend(std::coroutine_handle<> task) {
+    void await_suspend(std::coroutine_handle<> task) noexcept {
         pool.enqueue_event(move(event), Handle{task});
     }
-    void await_resume() {
+    void await_resume() noexcept {
     }
-    bool await_ready() {
+    [[nodiscard]] bool await_ready() noexcept {
         return event.try_wait();
     }
 
@@ -50,7 +50,8 @@ private:
 template<Allocator A = Alloc>
 struct Pool {
 
-    explicit Pool() : thread_states{Vec<Thread_State, A>::make(Thread::hardware_threads() - 1)} {
+    explicit Pool() noexcept
+        : thread_states{Vec<Thread_State, A>::make(Thread::hardware_threads() - 1)} {
 
         u64 h_threads = Thread::hardware_threads();
         u64 n_threads = thread_states.length();
@@ -66,7 +67,7 @@ struct Pool {
         pending_events.push(Event{});
         event_thread = Thread::Thread([this] { do_events(); });
     }
-    ~Pool() {
+    ~Pool() noexcept {
         shutdown.exchange(true);
 
         for(auto& state : thread_states) {
@@ -92,25 +93,25 @@ struct Pool {
         }
     }
 
-    Pool(const Pool&) = delete;
-    Pool& operator=(const Pool&) = delete;
+    Pool(const Pool&) noexcept = delete;
+    Pool& operator=(const Pool&) noexcept = delete;
 
-    Pool(Pool&&) = delete;
-    Pool& operator=(Pool&&) = delete;
+    Pool(Pool&&) noexcept = delete;
+    Pool& operator=(Pool&&) noexcept = delete;
 
-    Schedule<A> suspend() {
+    [[nodiscard]] Schedule<A> suspend() noexcept {
         return Schedule<A>{*this};
     }
-    Schedule_Event<A> event(Event event) {
+    [[nodiscard]] Schedule_Event<A> event(Event event) noexcept {
         return Schedule_Event<A>{move(event), *this};
     }
 
-    u64 n_threads() const {
+    [[nodiscard]] u64 n_threads() const noexcept {
         return thread_states.length();
     }
 
 private:
-    void enqueue(Handle<> job) {
+    void enqueue(Handle<> job) noexcept {
         for(u64 i = 0; i < thread_states.length(); i++) {
             Thread_State& state = thread_states[i];
             // Race on empty
@@ -131,13 +132,13 @@ private:
         state.cond.signal();
     }
 
-    void enqueue_event(Event event, Handle<> job) {
+    void enqueue_event(Event event, Handle<> job) noexcept {
         Thread::Lock lock(events_mut);
         events_to_enqueue.emplace(move(event), move(job));
         pending_events[0].signal();
     }
 
-    void do_work(u64 thread_idx) {
+    void do_work(u64 thread_idx) noexcept {
         Thread_State& state = thread_states[thread_idx];
         for(;;) {
             Handle<> job;
@@ -156,7 +157,7 @@ private:
         }
     }
 
-    void do_events() {
+    void do_events() noexcept {
         for(;;) {
             u64 idx = Event::wait_any(Slice<Event>{pending_events});
             Thread::Lock lock(events_mut);

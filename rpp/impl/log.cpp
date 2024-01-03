@@ -27,14 +27,14 @@ struct Static_Data {
     Thread::Mutex lock;
     FILE* file = null;
 
-    Static_Data() {
+    Static_Data() noexcept {
 #ifdef RPP_OS_WINDOWS
         if(fopen_s(&file, "debug.log", "w")) file = null;
 #else
         file = fopen("debug.log", "w");
 #endif
     }
-    ~Static_Data() {
+    ~Static_Data() noexcept {
         if(file) fclose(file);
         file = null;
     }
@@ -45,7 +45,7 @@ static thread_local u64 g_log_indent = 0;
 
 #ifdef RPP_OS_WINDOWS
 
-String_View sys_error() {
+[[nodiscard]] String_View sys_error() noexcept {
 
     constexpr int buffer_size = 256;
     static thread_local wchar_t wbuffer[buffer_size];
@@ -71,7 +71,7 @@ String_View sys_error() {
     return utf8_msg;
 }
 
-void debug_break() {
+void debug_break() noexcept {
     if(IsDebuggerPresent()) {
         __debugbreak();
     }
@@ -79,13 +79,13 @@ void debug_break() {
 
 #else
 
-String_View sys_error() {
+[[nodiscard]] String_View sys_error() noexcept {
     constexpr int buffer_size = 256;
     static thread_local char buffer[buffer_size];
     return String_View{strerror_r(errno, buffer, buffer_size)};
 }
 
-void debug_break() {
+void debug_break() noexcept {
     ::raise(SIGTRAP);
 }
 
@@ -94,11 +94,11 @@ void debug_break() {
 static_assert(sizeof(::time_t) == sizeof(Time));
 static_assert(alignof(::time_t) <= alignof(Time));
 
-Time sys_time() {
+[[nodiscard]] Time sys_time() noexcept {
     return ::time(null);
 }
 
-String_View sys_time_string(Time timestamp_) {
+[[nodiscard]] String_View sys_time_string(Time timestamp_) noexcept {
 
     ::time_t timestamp = static_cast<::time_t>(timestamp_);
 
@@ -118,7 +118,7 @@ String_View sys_time_string(Time timestamp_) {
     return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};
 }
 
-void output(Level level, const Location& loc, String_View msg) {
+void output(Level level, const Location& loc, String_View msg) noexcept {
 
     const char* level_str;
     const char* format_str;
@@ -162,23 +162,24 @@ void output(Level level, const Location& loc, String_View msg) {
     }
 }
 
-Scope::Scope() {
+Scope::Scope() noexcept {
     g_log_indent++;
 }
 
-Scope::~Scope() {
+Scope::~Scope() noexcept {
     assert(g_log_indent > 0);
     g_log_indent--;
 }
 
-Token subscribe(Function<void(Level, Thread::Id, Time, Location, String_View)> f) {
+[[nodiscard]] Token
+subscribe(Function<void(Level, Thread::Id, Time, Location, String_View)> f) noexcept {
     Thread::Lock lock(g_log_data.lock);
     Token t = g_log_data.next++;
     g_log_data.callbacks.insert(t, move(f));
     return t;
 }
 
-void unsubscribe(Token token) {
+void unsubscribe(Token token) noexcept {
     Thread::Lock lock(g_log_data.lock);
     g_log_data.callbacks.erase(token);
     if(g_log_data.callbacks.empty()) {

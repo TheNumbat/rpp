@@ -18,12 +18,13 @@ template<Allocator A, Reflectable T>
 struct Write;
 
 template<Allocator A, Reflectable T>
-u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) {
+[[nodiscard]] u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) noexcept {
     Region(R) {
-        u64 val_len = Libc::snprintf(null, 0, fmt, value);
+        i32 expect = Libc::snprintf(null, 0, fmt, value);
+        u64 val_len = static_cast<u64>(expect);
         String<Mregion<R>> buffer{val_len + 1};
         buffer.set_length(val_len + 1);
-        Libc::snprintf(buffer.data(), buffer.length(), fmt, value);
+        assert(Libc::snprintf(buffer.data(), buffer.length(), fmt, value) == expect);
         return output.write(idx, buffer.sub(0, val_len));
     }
 }
@@ -31,7 +32,7 @@ u64 snprintf(String<A>& output, u64 idx, const char* fmt, const T& value) {
 template<u64 N>
 struct Record_Length {
     template<Reflectable T>
-    void apply(const Literal& name, const T& value) {
+    constexpr void apply(const Literal& name, const T& value) noexcept {
         length += String_View{name}.length();
         length += 3;
         length += Measure<Decay<T>>::measure(value);
@@ -45,7 +46,7 @@ struct Record_Length {
 template<u64 N, Allocator A>
 struct Record_Write {
     template<Reflectable T>
-    void apply(const Literal& name, const T& value) {
+    void apply(const Literal& name, const T& value) noexcept {
         idx = output.write(idx, String_View{name});
         idx = output.write(idx, " : "_v);
         idx = Write<A, Decay<T>>::write(output, idx, value);
@@ -59,7 +60,7 @@ struct Record_Write {
 
 template<Reflectable T>
 struct Measure {
-    static u64 measure(const T& value) {
+    [[nodiscard]] constexpr static u64 measure(const T& value) noexcept {
         using R = Refl<T>;
 
         if constexpr(R::kind == Kind::void_) {
@@ -123,7 +124,7 @@ struct Measure {
 
 template<Allocator A, Reflectable T>
 struct Write {
-    static u64 write(String<A>& output, u64 idx, const T& value) {
+    [[nodiscard]] static u64 write(String<A>& output, u64 idx, const T& value) noexcept {
         using R = Refl<T>;
 
         if constexpr(R::kind == Kind::void_) {
@@ -191,10 +192,11 @@ struct Write {
 
 template<Allocator A, typename... Ts>
     requires(Reflectable<Ts> && ...)
-u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx, const Ts&... args);
+[[nodiscard]] u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx,
+                        const Ts&... args) noexcept;
 
 template<Allocator A>
-u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx) {
+[[nodiscard]] u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx) noexcept {
     for(; fmt_idx < fmt.length(); fmt_idx++) {
         if(fmt[fmt_idx] == '%') {
             assert(fmt_idx + 1 < fmt.length() && fmt[fmt_idx + 1] == '%');
@@ -209,8 +211,8 @@ u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx) {
 
 template<Allocator A, typename T, typename... Ts>
     requires(Reflectable<T> && (Reflectable<Ts> && ...))
-u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx, const T& arg,
-          const Ts&... args) {
+[[nodiscard]] u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx,
+                        const T& arg, const Ts&... args) noexcept {
     for(; fmt_idx < fmt.length(); fmt_idx++) {
         if(fmt[fmt_idx] == '%') {
             if(fmt_idx + 1 < fmt.length() && fmt[fmt_idx + 1] == '%') {
@@ -228,7 +230,7 @@ u64 write(String_View fmt, u64 fmt_idx, String<A>& output, u64 output_idx, const
     return output_idx;
 }
 
-inline u64 parse_fmt(String_View fmt, u64& args) {
+[[nodiscard]] constexpr u64 parse_fmt(String_View fmt, u64& args) noexcept {
     u64 length = 0;
     args = 0;
     for(u64 i = 0; i < fmt.length(); i++) {
@@ -251,7 +253,7 @@ inline u64 parse_fmt(String_View fmt, u64& args) {
 
 template<typename... Ts>
     requires(Reflectable<Ts> && ...)
-u64 format_length(String_View fmt, const Ts&... args) {
+[[nodiscard]] constexpr u64 format_length(String_View fmt, const Ts&... args) noexcept {
     u64 n_args = 0;
     u64 fmt_length = Format::parse_fmt(fmt, n_args);
     assert(n_args == sizeof...(args));
@@ -259,14 +261,14 @@ u64 format_length(String_View fmt, const Ts&... args) {
 }
 
 template<>
-inline u64 format_length(String_View fmt) {
+[[nodiscard]] constexpr u64 format_length(String_View fmt) noexcept {
     u64 n_args = 0;
     return Format::parse_fmt(fmt, n_args);
 }
 
 template<Allocator A, typename... Ts>
     requires(Reflectable<Ts> && ...)
-String<A> format(String_View fmt, const Ts&... args) {
+[[nodiscard]] String<A> format(String_View fmt, const Ts&... args) noexcept {
     u64 length = format_length(fmt, args...);
     String<A> output{length};
     output.set_length(length);
@@ -282,7 +284,7 @@ concept Writable = requires(String<> s) {
 
 template<Allocator A, typename... Ss>
     requires(Writable<Decay<Ss>> && ...)
-String<A> concat(String_View sep, const Ss&&... strings) {
+[[nodiscard]] String<A> concat(String_View sep, const Ss&&... strings) noexcept {
     if constexpr(sizeof...(strings) == 0) {
         return String<A>{};
     } else {
@@ -304,7 +306,7 @@ namespace Format {
 template<Reflectable T>
 struct Typename {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return String_View{Refl<T>::name}.string<A>();
     }
 };
@@ -312,7 +314,7 @@ struct Typename {
 template<Reflectable T>
 struct Typename<T*> {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return format<A>("%*"_v, Typename<T>::template name<A>());
     }
 };
@@ -320,7 +322,7 @@ struct Typename<T*> {
 template<Reflectable T, u64 N>
 struct Typename<T[N]> {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return format<A>("%[]"_v, Typename<T>::template name<A>());
     }
 };
@@ -329,7 +331,7 @@ template<template<typename> typename T, Reflectable T0>
     requires Reflectable<T<T0>>
 struct Typename<T<T0>> {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return format<A>("%<%>"_v, String_View{Refl<T<T0>>::name},
                          Typename<T0>::template name<A>());
     }
@@ -339,7 +341,7 @@ template<template<typename, typename> typename T, Reflectable T0, Scalar_Allocat
     requires Reflectable<T<T0, A0>>
 struct Typename<T<T0, A0>> {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return format<A>("%<%>"_v, String_View{Refl<T<T0, A0>>::name},
                          Typename<T0>::template name<A>());
     }
@@ -350,7 +352,7 @@ template<template<typename, typename, typename> typename T, Reflectable T0, Refl
     requires Reflectable<T<T0, T1, A0>>
 struct Typename<T<T0, T1, A0>> {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return format<A>("%<%, %>"_v, String_View{Refl<T<T0, T1, A0>>::name},
                          Typename<T0>::template name<A>(), Typename<T1>::template name<A>());
     }
@@ -360,7 +362,7 @@ template<template<typename...> typename T, Reflectable... Ts>
     requires Reflectable<T<Ts...>>
 struct Typename<T<Ts...>> {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return format<A>("%<%>"_v, String_View{Refl<T<Ts...>>::name},
                          concat<A>(", "_v, Typename<Ts>::template name<A>()...));
     }
@@ -370,7 +372,7 @@ template<template<typename, u64> typename T, Reflectable T0, u64 N>
     requires Reflectable<T<T0, N>>
 struct Typename<T<T0, N>> {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return format<A>("%<%, %>"_v, String_View{Refl<T<T0, N>>::name},
                          Typename<T0>::template name<A>(), N);
     }
@@ -380,7 +382,7 @@ template<template<typename, typename> typename T, Reflectable T0, typename T1>
     requires(Reflectable<T<T0, T1>> && !Allocator<T1>)
 struct Typename<T<T0, T1>> {
     template<Allocator A>
-    static String<A> name() {
+    [[nodiscard]] static String<A> name() noexcept {
         return format<A>("%<%, %>"_v, String_View{Refl<T<T0, T1>>::name},
                          Typename<T0>::template name<A>(), Typename<T1>::template name<A>());
     }
@@ -389,7 +391,7 @@ struct Typename<T<T0, T1>> {
 } // namespace Format
 
 template<Reflectable T, Allocator A = Mdefault>
-String<A> format_typename() {
+[[nodiscard]] String<A> format_typename() noexcept {
     return Format::Typename<Decay<T>>::template name<A>();
 }
 

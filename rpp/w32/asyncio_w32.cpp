@@ -8,7 +8,7 @@ namespace rpp::Async {
 
 constexpr u64 SECTOR_SIZE = 4096;
 
-Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path) {
+[[nodiscard]] Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path) noexcept {
 
     auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
     if(ucs2_path_len == 0) {
@@ -64,7 +64,7 @@ Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path) {
     co_return Opt{move(data)};
 }
 
-Task<bool> write(Pool<>& pool, String_View path, Slice<u8> data) {
+[[nodiscard]] Task<bool> write(Pool<>& pool, String_View path, Slice<u8> data) noexcept {
 
     auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
     if(ucs2_path_len == 0) {
@@ -127,7 +127,7 @@ Task<bool> write(Pool<>& pool, String_View path, Slice<u8> data) {
     co_return true;
 }
 
-Task<void> wait(Pool<>& pool, u64 ms) {
+[[nodiscard]] Task<void> wait(Pool<>& pool, u64 ms) noexcept {
 
     HANDLE timer = CreateWaitableTimer(NULL, TRUE, NULL);
     if(timer == INVALID_HANDLE_VALUE) {

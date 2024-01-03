@@ -10,35 +10,35 @@ namespace rpp {
 template<typename T, u64 N>
     requires(N > 0)
 struct Array {
-    static constexpr u64 capacity = N;
+    constexpr static u64 capacity = N;
 
-    Array()
+    constexpr Array() noexcept
         requires Default_Constructable<T>
     = default;
 
     template<typename... S>
         requires Length<N, S...> && All_Are<T, S...>
-    explicit Array(S&&... init) : data_{forward<S>(init)...} {
+    constexpr explicit Array(S&&... init) noexcept : data_{forward<S>(init)...} {
     }
 
     template<typename... S>
         requires Length<N, S...> && All_Are<T, S...> && Copy_Constructable<T>
-    explicit Array(const S&... init) : data_{T{init}...} {
+    constexpr explicit Array(const S&... init) noexcept : data_{T{init}...} {
     }
 
-    ~Array() = default;
+    constexpr ~Array() noexcept = default;
 
-    Array(const Array& src)
+    constexpr Array(const Array& src) noexcept
         requires Copy_Constructable<T>
     = default;
-    Array& operator=(const Array& src)
+    constexpr Array& operator=(const Array& src) noexcept
         requires Copy_Constructable<T>
     = default;
 
-    Array(Array&& src) = default;
-    Array& operator=(Array&& src) = default;
+    constexpr Array(Array&& src) noexcept = default;
+    constexpr Array& operator=(Array&& src) noexcept = default;
 
-    Array clone() const
+    [[nodiscard]] constexpr Array clone() const noexcept
         requires(Clone<T> || Copy_Constructable<T>) && Default_Constructable<T>
     {
         Array result;
@@ -57,36 +57,36 @@ struct Array {
         return result;
     }
 
-    T& operator[](u64 idx) {
+    [[nodiscard]] constexpr T& operator[](u64 idx) noexcept {
         assert(idx < N);
         return data_[idx];
     }
-    const T& operator[](u64 idx) const {
+    [[nodiscard]] constexpr const T& operator[](u64 idx) const noexcept {
         assert(idx < N);
         return data_[idx];
     }
 
-    T* data() {
+    [[nodiscard]] constexpr T* data() {
         return data_;
     }
-    const T* data() const {
+    [[nodiscard]] constexpr const T* data() const noexcept {
         return data_;
     }
 
-    constexpr u64 length() const {
+    [[nodiscard]] constexpr u64 length() const noexcept {
         return capacity;
     }
 
-    const T* begin() const {
+    [[nodiscard]] constexpr const T* begin() const noexcept {
         return data_;
     }
-    const T* end() const {
+    [[nodiscard]] constexpr const T* end() const noexcept {
         return data_ + N;
     }
-    T* begin() {
+    [[nodiscard]] constexpr T* begin() noexcept {
         return data_;
     }
-    T* end() {
+    [[nodiscard]] constexpr T* end() noexcept {
         return data_ + N;
     }
 
@@ -99,7 +99,7 @@ namespace Format {
 
 template<Reflectable T, u64 N>
 struct Measure<Array<T, N>> {
-    static u64 measure(const Array<T, N>& array) {
+    [[nodiscard]] constexpr static u64 measure(const Array<T, N>& array) noexcept {
         u64 length = 2;
         for(u64 i = 0; i < N; i++) {
             length += Measure<T>::measure(array[i]);
@@ -110,7 +110,7 @@ struct Measure<Array<T, N>> {
 };
 template<Allocator O, Reflectable T, u64 N>
 struct Write<O, Array<T, N>> {
-    static u64 write(String<O>& output, u64 idx, const Array<T, N>& array) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Array<T, N>& array) noexcept {
         idx = output.write(idx, '[');
         for(u64 i = 0; i < N; i++) {
             idx = Write<O, T>::write(output, idx, array[i]);
@@ -125,9 +125,9 @@ struct Write<O, Array<T, N>> {
 template<typename T, u64 N>
 struct Reflect::Refl<Array<T, N>> {
     using underlying = T;
-    static constexpr Literal name = "Array";
-    static constexpr Kind kind = Kind::array_;
-    static constexpr u64 length = N;
+    constexpr static Literal name = "Array";
+    constexpr static Kind kind = Kind::array_;
+    constexpr static u64 length = N;
 };
 
 } // namespace rpp

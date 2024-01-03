@@ -7,7 +7,7 @@
 
 namespace rpp::Net {
 
-Address::Address(String_View address, u16 port) {
+Address::Address(String_View address, u16 port) noexcept {
     sockaddr_ = {};
     sockaddr_.sin_family = AF_INET;
     sockaddr_.sin_port = htons(port);
@@ -18,44 +18,44 @@ Address::Address(String_View address, u16 port) {
     }
 }
 
-Address::Address(u16 port) {
+Address::Address(u16 port) noexcept {
     sockaddr_ = {};
     sockaddr_.sin_family = AF_INET;
     sockaddr_.sin_port = htons(port);
     sockaddr_.sin_addr.s_addr = INADDR_ANY;
 }
 
-Udp::Udp() {
+Udp::Udp() noexcept {
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if(fd < 0) {
         die("Failed to open socket: %", Log::sys_error());
     }
 }
 
-Udp::~Udp() {
+Udp::~Udp() noexcept {
     if(fd != -1) {
         close(fd);
     }
 }
 
-Udp::Udp(Udp&& src) {
+Udp::Udp(Udp&& src) noexcept {
     fd = src.fd;
     src.fd = -1;
 }
 
-Udp& Udp::operator=(Udp&& src) {
+Udp& Udp::operator=(Udp&& src) noexcept {
     fd = src.fd;
     src.fd = -1;
     return *this;
 }
 
-void Udp::bind(Address address) {
+void Udp::bind(Address address) noexcept {
     if(::bind(fd, reinterpret_cast<const sockaddr*>(&address.sockaddr_), sizeof(sockaddr_in)) < 0) {
         die("Failed to bind socket: %", Log::sys_error());
     }
 }
 
-Opt<Udp::Data> Udp::recv(Packet& in) {
+[[nodiscard]] Opt<Udp::Data> Udp::recv(Packet& in) noexcept {
 
     Address src;
     socklen_t src_len = sizeof(src.sockaddr_);
@@ -70,7 +70,7 @@ Opt<Udp::Data> Udp::recv(Packet& in) {
     return Opt{Data{static_cast<u64>(ret), move(src)}};
 }
 
-u64 Udp::send(Address address, const Packet& out, u64 length) {
+[[nodiscard]] u64 Udp::send(Address address, const Packet& out, u64 length) noexcept {
 
     i64 ret = sendto(fd, out.data(), length, MSG_CONFIRM,
                      reinterpret_cast<const sockaddr*>(&address.sockaddr_), sizeof(sockaddr_in));

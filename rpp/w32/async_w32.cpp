@@ -7,7 +7,7 @@ namespace rpp::Async {
 
 static_assert(sizeof(HANDLE) == sizeof(void*));
 
-Event::Event() {
+Event::Event() noexcept {
     HANDLE event = CreateEventEx(null, null, CREATE_EVENT_MANUAL_RESET, EVENT_ALL_ACCESS);
     if(!event) {
         die("Failed to create event: %", Log::sys_error());
@@ -15,19 +15,19 @@ Event::Event() {
     event_ = reinterpret_cast<void*>(event);
 }
 
-Event::Event(Event&& other) {
+Event::Event(Event&& other) noexcept {
     event_ = other.event_;
     other.event_ = null;
 }
 
-Event& Event::operator=(Event&& other) {
+Event& Event::operator=(Event&& other) noexcept {
     this->~Event();
     event_ = other.event_;
     other.event_ = null;
     return *this;
 }
 
-Event::~Event() {
+Event::~Event() noexcept {
     HANDLE event = reinterpret_cast<HANDLE>(event_);
     if(event) {
         BOOL ret = CloseHandle(event);
@@ -36,12 +36,12 @@ Event::~Event() {
     event_ = null;
 }
 
-Event Event::of_sys(void* handle) {
+[[nodiscard]] Event Event::of_sys(void* handle) noexcept {
     assert(handle);
     return Event{handle};
 }
 
-void Event::reset() const {
+void Event::reset() const noexcept {
     HANDLE event = reinterpret_cast<HANDLE>(event_);
     BOOL ret = ResetEvent(event);
     if(!ret) {
@@ -49,7 +49,7 @@ void Event::reset() const {
     }
 }
 
-void Event::signal() const {
+void Event::signal() const noexcept {
     HANDLE event = reinterpret_cast<HANDLE>(event_);
     BOOL ret = SetEvent(event);
     if(!ret) {
@@ -57,7 +57,7 @@ void Event::signal() const {
     }
 }
 
-bool Event::try_wait() const {
+[[nodiscard]] bool Event::try_wait() const noexcept {
     HANDLE event = reinterpret_cast<HANDLE>(event_);
     DWORD ret = WaitForSingleObjectEx(event, 0, false);
     if(ret == WAIT_OBJECT_0) {
@@ -69,7 +69,7 @@ bool Event::try_wait() const {
     }
 }
 
-u64 Event::wait_any(Slice<Event> events) {
+[[nodiscard]] u64 Event::wait_any(Slice<Event> events) noexcept {
     assert(!events.empty());
     const HANDLE* handles = reinterpret_cast<const HANDLE*>(events.data());
     DWORD ret = WaitForMultipleObjectsEx(static_cast<DWORD>(events.length()), handles, false,

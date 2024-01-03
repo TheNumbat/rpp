@@ -35,27 +35,27 @@ struct Vect : Vect_Base<T, N> {
     static_assert(N > 1);
     using Base = Vect_Base<T, N>;
 
-    static constexpr bool is_float = Float<T>;
-    static constexpr bool is_simd = Same<T, f32> && N == 4;
+    constexpr static bool is_float = Float<T>;
+    constexpr static bool is_simd = Same<T, f32> && N == 4;
 
-    constexpr Vect() : Base{} {
+    constexpr Vect() noexcept : Base{} {
         if constexpr(is_simd)
             this->pack = F32x4::zero();
         else
             for(u64 i = 0; i < N; i++) this->data[i] = T{};
     };
 
-    constexpr explicit Vect(F32x4 p)
+    constexpr explicit Vect(F32x4 p) noexcept
         requires is_simd
         : Base{} {
         this->pack = p;
     }
 
-    constexpr explicit Vect(T x) : Base{} {
+    constexpr explicit Vect(T x) noexcept : Base{} {
         for(u64 i = 0; i < N; i++) this->data[i] = x;
     }
 
-    constexpr explicit Vect(Vect<T, N - 1> f, T s)
+    constexpr explicit Vect(Vect<T, N - 1> f, T s) noexcept
         requires(N > 2)
         : Base{} {
         for(u64 i = 0; i < N - 1; i++) this->data[i] = f[i];
@@ -64,44 +64,45 @@ struct Vect : Vect_Base<T, N> {
 
     template<typename... S>
         requires All_Are<T, S...> && Length<N, S...>
-    constexpr explicit Vect(S... args) : Base{args...} {
+    constexpr explicit Vect(S... args) noexcept : Base{args...} {
     }
 
-    ~Vect() = default;
-    Vect(const Vect&) = default;
-    Vect& operator=(const Vect&) = default;
-    Vect(Vect&&) = default;
-    Vect& operator=(Vect&&) = default;
+    constexpr ~Vect() noexcept = default;
 
-    T& operator[](u64 idx) {
+    constexpr Vect(const Vect&) noexcept = default;
+    constexpr Vect& operator=(const Vect&) noexcept = default;
+    constexpr Vect(Vect&&) noexcept = default;
+    constexpr Vect& operator=(Vect&&) noexcept = default;
+
+    constexpr T& operator[](u64 idx) noexcept {
         return this->data[idx];
     }
-    const T& operator[](u64 idx) const {
+    constexpr const T& operator[](u64 idx) const noexcept {
         return this->data[idx];
     }
 
-    Vect operator+=(Vect v) {
+    constexpr Vect operator+=(Vect v) noexcept {
         if constexpr(is_simd)
             this->pack = F32x4::add(this->pack, v.pack);
         else
             for(u64 i = 0; i < N; i++) this->data[i] += v.data[i];
         return *this;
     }
-    Vect operator-=(Vect v) {
+    constexpr Vect operator-=(Vect v) noexcept {
         if constexpr(is_simd)
             this->pack = F32x4::sub(this->pack, v.pack);
         else
             for(u64 i = 0; i < N; i++) this->data[i] -= v.data[i];
         return *this;
     }
-    Vect operator*=(Vect v) {
+    constexpr Vect operator*=(Vect v) noexcept {
         if constexpr(is_simd)
             this->pack = F32x4::mul(this->pack, v.pack);
         else
             for(u64 i = 0; i < N; i++) this->data[i] *= v.data[i];
         return *this;
     }
-    Vect operator/=(Vect v) {
+    constexpr Vect operator/=(Vect v) noexcept {
         if constexpr(is_simd)
             this->pack = F32x4::div(this->pack, v.pack);
         else
@@ -109,28 +110,28 @@ struct Vect : Vect_Base<T, N> {
         return *this;
     }
 
-    Vect operator+=(T s) {
+    constexpr Vect operator+=(T s) noexcept {
         if constexpr(is_simd)
             this->pack = F32x4::add(this->pack, F32x4::set1(s));
         else
             for(u64 i = 0; i < N; i++) this->data[i] += s;
         return *this;
     }
-    Vect operator-=(T s) {
+    constexpr Vect operator-=(T s) noexcept {
         if constexpr(is_simd)
             this->pack = F32x4::sub(this->pack, F32x4::set1(s));
         else
             for(u64 i = 0; i < N; i++) this->data[i] -= s;
         return *this;
     }
-    Vect operator*=(T s) {
+    constexpr Vect operator*=(T s) noexcept {
         if constexpr(is_simd)
             this->pack = F32x4::mul(this->pack, F32x4::set1(s));
         else
             for(u64 i = 0; i < N; i++) this->data[i] *= s;
         return *this;
     }
-    Vect operator/=(T s) {
+    constexpr Vect operator/=(T s) noexcept {
         if constexpr(is_simd)
             this->pack = F32x4::div(this->pack, F32x4::set1(s));
         else
@@ -138,7 +139,7 @@ struct Vect : Vect_Base<T, N> {
         return *this;
     }
 
-    Vect operator+(Vect o) const {
+    constexpr Vect operator+(Vect o) const noexcept {
         if constexpr(is_simd)
             return Vect{F32x4::add(this->pack, o.pack)};
         else {
@@ -147,7 +148,7 @@ struct Vect : Vect_Base<T, N> {
             return r;
         }
     }
-    Vect operator-(Vect o) const {
+    constexpr Vect operator-(Vect o) const noexcept {
         if constexpr(is_simd)
             return Vect{F32x4::sub(this->pack, o.pack)};
         else {
@@ -156,7 +157,7 @@ struct Vect : Vect_Base<T, N> {
             return r;
         }
     }
-    Vect operator*(Vect o) const {
+    constexpr Vect operator*(Vect o) const noexcept {
         if constexpr(is_simd)
             return Vect{F32x4::mul(this->pack, o.pack)};
         else {
@@ -165,7 +166,7 @@ struct Vect : Vect_Base<T, N> {
             return r;
         }
     }
-    Vect operator/(Vect o) const {
+    constexpr Vect operator/(Vect o) const noexcept {
         if constexpr(is_simd)
             return Vect{F32x4::div(this->pack, o.pack)};
         else {
@@ -175,7 +176,7 @@ struct Vect : Vect_Base<T, N> {
         }
     }
 
-    Vect operator+(T s) const {
+    constexpr Vect operator+(T s) const noexcept {
         if constexpr(is_simd)
             return Vect{F32x4::add(this->pack, F32x4::set1(s))};
         else {
@@ -184,7 +185,7 @@ struct Vect : Vect_Base<T, N> {
             return r;
         }
     }
-    Vect operator-(T s) const {
+    constexpr Vect operator-(T s) const noexcept {
         if constexpr(is_simd)
             return Vect{F32x4::sub(this->pack, F32x4::set1(s))};
         else {
@@ -193,7 +194,7 @@ struct Vect : Vect_Base<T, N> {
             return r;
         }
     }
-    Vect operator*(T s) const {
+    constexpr Vect operator*(T s) const noexcept {
         if constexpr(is_simd)
             return Vect{F32x4::mul(this->pack, F32x4::set1(s))};
         else {
@@ -202,7 +203,7 @@ struct Vect : Vect_Base<T, N> {
             return r;
         }
     }
-    Vect operator/(T s) const {
+    constexpr Vect operator/(T s) const noexcept {
         if constexpr(is_simd)
             return Vect{F32x4::div(this->pack, F32x4::set1(s))};
         else {
@@ -212,7 +213,7 @@ struct Vect : Vect_Base<T, N> {
         }
     }
 
-    bool operator==(Vect o) const {
+    constexpr bool operator==(Vect o) const noexcept {
         if constexpr(is_simd)
             return F32x4::movemask(F32x4::cmpeq(this->pack, o.pack)) == 0xf;
         else {
@@ -221,7 +222,7 @@ struct Vect : Vect_Base<T, N> {
             return true;
         }
     }
-    bool operator!=(Vect o) const {
+    constexpr bool operator!=(Vect o) const noexcept {
         if constexpr(is_simd)
             return F32x4::movemask(F32x4::cmpeq(this->pack, o.pack)) != 0xf;
         else {
@@ -231,7 +232,7 @@ struct Vect : Vect_Base<T, N> {
         }
     }
 
-    Vect abs() const
+    constexpr Vect abs() const noexcept
         requires is_float || Signed_Int<T>
     {
         Vect r;
@@ -241,7 +242,7 @@ struct Vect : Vect_Base<T, N> {
             for(u64 i = 0; i < N; i++) r.data[i] = Math::abs(this->data[i]);
         return r;
     }
-    Vect operator-()
+    constexpr Vect operator-() noexcept
         requires is_float || Signed_Int<T>
     {
         if constexpr(is_simd)
@@ -251,7 +252,7 @@ struct Vect : Vect_Base<T, N> {
         return *this;
     }
 
-    Vect normalize()
+    constexpr Vect normalize() noexcept
         requires is_float
     {
         T l = norm();
@@ -262,7 +263,7 @@ struct Vect : Vect_Base<T, N> {
         return *this;
     }
 
-    Vect unit() const
+    constexpr Vect unit() const noexcept
         requires is_float
     {
         Vect r;
@@ -274,7 +275,7 @@ struct Vect : Vect_Base<T, N> {
         return r;
     }
 
-    Vect<T, N - 1> proj() const
+    constexpr Vect<T, N - 1> proj() const noexcept
         requires(N > 2)
     {
         Vect<T, N - 1> r;
@@ -283,13 +284,13 @@ struct Vect : Vect_Base<T, N> {
     }
 
     template<typename U>
-    Vect<U, N> as() const {
+    constexpr Vect<U, N> as() const noexcept {
         Vect<U, N> r;
         for(u64 i = 0; i < N; i++) r.data[i] = static_cast<U>(this->data[i]);
         return r;
     }
 
-    T norm2() const {
+    constexpr T norm2() const noexcept {
         if constexpr(is_simd)
             return F32x4::dp(this->pack, this->pack);
         else {
@@ -299,19 +300,19 @@ struct Vect : Vect_Base<T, N> {
         }
     }
 
-    T min() const {
+    constexpr T min() const noexcept {
         T r = this->data[0];
         for(u64 i = 1; i < N; i++) r = Math::min(r, this->data[i]);
         return r;
     }
 
-    T max() const {
+    constexpr T max() const noexcept {
         T r = this->data[0];
         for(u64 i = 1; i < N; i++) r = Math::max(r, this->data[i]);
         return r;
     }
 
-    Vect<T, N> floor()
+    constexpr Vect<T, N> floor() noexcept
         requires is_float
     {
         Vect<T, N> r;
@@ -322,7 +323,7 @@ struct Vect : Vect_Base<T, N> {
         return r;
     }
 
-    Vect<T, N> ceil()
+    constexpr Vect<T, N> ceil() noexcept
         requires is_float
     {
         Vect<T, N> r;
@@ -333,22 +334,22 @@ struct Vect : Vect_Base<T, N> {
         return r;
     }
 
-    T norm() const
+    constexpr T norm() const noexcept
         requires is_float
     {
         return Math::sqrt(norm2());
     }
 
-    const T* begin() const {
+    constexpr const T* begin() const noexcept {
         return this->data;
     }
-    const T* end() const {
+    constexpr const T* end() const noexcept {
         return this->data + N;
     }
-    T* begin() {
+    constexpr T* begin() noexcept {
         return this->data;
     }
-    T* end() {
+    constexpr T* end() noexcept {
         return this->data + N;
     }
 };
@@ -371,16 +372,16 @@ struct Vec3_base {
         T data[3];
     };
 
-    Vect<T, 2>& xy() {
+    Vect<T, 2>& xy() noexcept {
         return *reinterpret_cast<Vect<T, 2>*>(&x);
     }
-    Vect<T, 2>& yz() {
+    Vect<T, 2>& yz() noexcept {
         return *reinterpret_cast<Vect<T, 2>*>(&y);
     }
-    const Vect<T, 2>& xy() const {
+    const Vect<T, 2>& xy() const noexcept {
         return *reinterpret_cast<const Vect<T, 2>*>(&x);
     }
-    const Vect<T, 2>& yz() const {
+    const Vect<T, 2>& yz() const noexcept {
         return *reinterpret_cast<const Vect<T, 2>*>(&y);
     }
 };
@@ -393,35 +394,35 @@ struct Vec4_base {
         T data[4];
     };
 
-    Vect<T, 2>& xy() {
+    Vect<T, 2>& xy() noexcept {
         return *reinterpret_cast<Vect<T, 2>*>(&x);
     }
-    Vect<T, 2>& yz() {
+    Vect<T, 2>& yz() noexcept {
         return *reinterpret_cast<Vect<T, 2>*>(&y);
     }
-    Vect<T, 2>& zw() {
+    Vect<T, 2>& zw() noexcept {
         return *reinterpret_cast<Vect<T, 2>*>(&z);
     }
-    const Vect<T, 2>& xy() const {
+    const Vect<T, 2>& xy() const noexcept {
         return *reinterpret_cast<const Vect<T, 2>*>(&x);
     }
-    const Vect<T, 2>& yz() const {
+    const Vect<T, 2>& yz() const noexcept {
         return *reinterpret_cast<const Vect<T, 2>*>(&y);
     }
-    const Vect<T, 2>& zw() const {
+    const Vect<T, 2>& zw() const noexcept {
         return *reinterpret_cast<const Vect<T, 2>*>(&z);
     }
 
-    Vect<T, 3>& xyz() {
+    Vect<T, 3>& xyz() noexcept {
         return *reinterpret_cast<Vect<T, 3>*>(&x);
     }
-    Vect<T, 3>& yzw() {
+    Vect<T, 3>& yzw() noexcept {
         return *reinterpret_cast<Vect<T, 3>*>(&y);
     }
-    const Vect<T, 3>& xyz() const {
+    const Vect<T, 3>& xyz() const noexcept {
         return *reinterpret_cast<const Vect<T, 3>*>(&x);
     }
-    const Vect<T, 3>& yzw() const {
+    const Vect<T, 3>& yzw() const noexcept {
         return *reinterpret_cast<const Vect<T, 3>*>(&y);
     }
 };
@@ -435,35 +436,35 @@ struct Vec4_base<f32> {
         SIMD::F32x4 pack;
     };
 
-    Vect<f32, 2>& xy() {
+    Vect<f32, 2>& xy() noexcept {
         return *reinterpret_cast<Vect<f32, 2>*>(&x);
     }
-    Vect<f32, 2>& yz() {
+    Vect<f32, 2>& yz() noexcept {
         return *reinterpret_cast<Vect<f32, 2>*>(&y);
     }
-    Vect<f32, 2>& zw() {
+    Vect<f32, 2>& zw() noexcept {
         return *reinterpret_cast<Vect<f32, 2>*>(&z);
     }
-    const Vect<f32, 2>& xy() const {
+    const Vect<f32, 2>& xy() const noexcept {
         return *reinterpret_cast<const Vect<f32, 2>*>(&x);
     }
-    const Vect<f32, 2>& yz() const {
+    const Vect<f32, 2>& yz() const noexcept {
         return *reinterpret_cast<const Vect<f32, 2>*>(&y);
     }
-    const Vect<f32, 2>& zw() const {
+    const Vect<f32, 2>& zw() const noexcept {
         return *reinterpret_cast<const Vect<f32, 2>*>(&z);
     }
 
-    Vect<f32, 3>& xyz() {
+    Vect<f32, 3>& xyz() noexcept {
         return *reinterpret_cast<Vect<f32, 3>*>(&x);
     }
-    Vect<f32, 3>& yzw() {
+    Vect<f32, 3>& yzw() noexcept {
         return *reinterpret_cast<Vect<f32, 3>*>(&y);
     }
-    const Vect<f32, 3>& xyz() const {
+    const Vect<f32, 3>& xyz() const noexcept {
         return *reinterpret_cast<const Vect<f32, 3>*>(&x);
     }
-    const Vect<f32, 3>& yzw() const {
+    const Vect<f32, 3>& yzw() const noexcept {
         return *reinterpret_cast<const Vect<f32, 3>*>(&y);
     }
 };
@@ -494,12 +495,12 @@ using Vec4u = Vect<u32, 4>;
 template<u64 N>
 using VecNu = Vect<u32, N>;
 
-inline Vec3 cross(Vec3 l, Vec3 r) {
+constexpr Vec3 cross(Vec3 l, Vec3 r) noexcept {
     return Vec3{l.y * r.z - l.z * r.y, l.z * r.x - l.x * r.z, l.x * r.y - l.y * r.x};
 }
 
 template<typename T, u64 N>
-Vect<T, N> min(Vect<T, N> x, Vect<T, N> y) {
+constexpr Vect<T, N> min(Vect<T, N> x, Vect<T, N> y) noexcept {
     if constexpr(Vect<T, N>::is_simd)
         return Vect<T, N>{F32x4::min(x.pack, y.pack)};
     else {
@@ -510,7 +511,7 @@ Vect<T, N> min(Vect<T, N> x, Vect<T, N> y) {
 }
 
 template<typename T, u64 N>
-Vect<T, N> max(Vect<T, N> x, Vect<T, N> y) {
+constexpr Vect<T, N> max(Vect<T, N> x, Vect<T, N> y) noexcept {
     if constexpr(Vect<T, N>::is_simd)
         return Vect<T, N>{F32x4::max(x.pack, y.pack)};
     else {
@@ -521,7 +522,7 @@ Vect<T, N> max(Vect<T, N> x, Vect<T, N> y) {
 }
 
 template<typename T, u64 N>
-Vect<T, N> abs(Vect<T, N> x)
+constexpr Vect<T, N> abs(Vect<T, N> x) noexcept
     requires Float<T> || Signed_Int<T>
 {
     if constexpr(Vect<T, N>::is_simd)
@@ -534,7 +535,7 @@ Vect<T, N> abs(Vect<T, N> x)
 }
 
 template<typename T, u64 N>
-T dot(Vect<T, N> x, Vect<T, N> y) {
+constexpr T dot(Vect<T, N> x, Vect<T, N> y) noexcept {
     if constexpr(Vect<T, N>::is_simd)
         return F32x4::dp(x.pack, y.pack);
     else {
@@ -545,17 +546,17 @@ T dot(Vect<T, N> x, Vect<T, N> y) {
 }
 
 template<Float T, u64 N>
-Vect<T, N> lerp(Vect<T, N> min, Vect<T, N> max, T dist) {
+constexpr Vect<T, N> lerp(Vect<T, N> min, Vect<T, N> max, T dist) noexcept {
     return min + (max - min) * dist;
 }
 
 template<typename T, u64 N>
-Vect<T, N> clamp(Vect<T, N> x, Vect<T, N> min, Vect<T, N> max) {
+constexpr Vect<T, N> clamp(Vect<T, N> x, Vect<T, N> min, Vect<T, N> max) noexcept {
     return Math::max(Math::min(x, max), min);
 }
 
 template<Float T, u64 N>
-Vect<T, N> normalize(Vect<T, N> x) {
+constexpr Vect<T, N> normalize(Vect<T, N> x) noexcept {
     return x.unit();
 }
 
@@ -567,62 +568,71 @@ struct Mat4 {
         Vec4 columns[4];
     };
 
-    Mat4()
+    constexpr Mat4() noexcept
         : columns{Vec4{1.0f, 0.0f, 0.0f, 0.0f}, Vec4{0.0f, 1.0f, 0.0f, 0.0f},
                   Vec4{0.0f, 0.0f, 1.0f, 0.0f}, Vec4{0.0f, 0.0f, 0.0f, 1.0f}} {
     }
-    explicit Mat4(Vec4 x, Vec4 y, Vec4 z, Vec4 w) : columns{x, y, z, w} {
+    constexpr explicit Mat4(Vec4 x, Vec4 y, Vec4 z, Vec4 w) noexcept : columns{x, y, z, w} {
     }
 
     template<typename... Ts>
         requires Length<16, Ts...> && All_Are<f32, Ts...>
-    explicit Mat4(Ts... args) : data{args...} {
+    constexpr explicit Mat4(Ts... args) noexcept : data{args...} {
     }
 
-    ~Mat4() = default;
-    Mat4(const Mat4&) = default;
-    Mat4& operator=(const Mat4&) = default;
-    Mat4(Mat4&&) = default;
-    Mat4& operator=(Mat4&&) = default;
+    constexpr ~Mat4() noexcept = default;
 
-    static Mat4 look_at(Vec3 pos, Vec3 at, Vec3 up);
-    static Mat4 scale(Vec3 s);
-    static Mat4 rotate(f32 a, Vec3 axis);
-    static Mat4 translate(Vec3 v);
-    static Mat4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f);
-    static Mat4 proj(f32 fov, f32 ar, f32 n);
-    static Mat4 rotate_y_to(Vec3 dir);
-    static Mat4 rotate_z_to(Vec3 dir);
-    static Mat4 inverse(Mat4 m);
-    static Mat4 transpose(Mat4 m);
+    constexpr Mat4(const Mat4&) noexcept = default;
+    constexpr Mat4& operator=(const Mat4&) noexcept = default;
+    constexpr Mat4(Mat4&&) noexcept = default;
+    constexpr Mat4& operator=(Mat4&&) noexcept = default;
 
-    bool operator==(Mat4 m) const;
-    bool operator!=(Mat4 m) const;
+    static Mat4 look_at(Vec3 pos, Vec3 at, Vec3 up) noexcept;
+    static Mat4 scale(Vec3 s) noexcept;
+    static Mat4 rotate(f32 a, Vec3 axis) noexcept;
+    static Mat4 translate(Vec3 v) noexcept;
+    static Mat4 ortho(f32 l, f32 r, f32 b, f32 t, f32 n, f32 f) noexcept;
+    static Mat4 proj(f32 fov, f32 ar, f32 n) noexcept;
+    static Mat4 rotate_y_to(Vec3 dir) noexcept;
+    static Mat4 rotate_z_to(Vec3 dir) noexcept;
+    static Mat4 inverse(Mat4 m) noexcept;
+    static Mat4 transpose(Mat4 m) noexcept;
 
-    Mat4 operator+(Mat4 m) const;
-    Mat4 operator-(Mat4 m) const;
-    Mat4 operator*(Mat4 m) const;
+    bool operator==(Mat4 m) const noexcept;
+    bool operator!=(Mat4 m) const noexcept;
 
-    Mat4 operator+(f32 s) const;
-    Mat4 operator-(f32 s) const;
-    Mat4 operator*(f32 s) const;
-    Mat4 operator/(f32 s) const;
+    Mat4 operator+(Mat4 m) const noexcept;
+    Mat4 operator-(Mat4 m) const noexcept;
+    Mat4 operator*(Mat4 m) const noexcept;
 
-    Vec4& operator[](u64 idx);
-    Vec4 operator[](u64 idx) const;
+    Mat4 operator+(f32 s) const noexcept;
+    Mat4 operator-(f32 s) const noexcept;
+    Mat4 operator*(f32 s) const noexcept;
+    Mat4 operator/(f32 s) const noexcept;
 
-    Vec4 operator*(Vec4 v) const;
-    Vec3 operator*(Vec3 v) const;
-    Vec3 rotate(Vec3 v) const;
+    Vec4& operator[](u64 idx) noexcept;
+    Vec4 operator[](u64 idx) const noexcept;
 
-    Mat4 T() const;
-    Mat4 inverse() const;
-    Vec3 to_euler() const;
+    Vec4 operator*(Vec4 v) const noexcept;
+    Vec3 operator*(Vec3 v) const noexcept;
+    Vec3 rotate(Vec3 v) const noexcept;
 
-    const Vec4* begin() const;
-    const Vec4* end() const;
-    Vec4* begin();
-    Vec4* end();
+    Mat4 T() const noexcept;
+    Mat4 inverse() const noexcept;
+    Vec3 to_euler() const noexcept;
+
+    constexpr const Vec4* begin() const noexcept {
+        return columns;
+    }
+    constexpr const Vec4* end() const noexcept {
+        return columns + 4;
+    }
+    constexpr Vec4* begin() noexcept {
+        return columns;
+    }
+    constexpr Vec4* end() noexcept {
+        return columns + 4;
+    }
 
     static Mat4 I;
     static Mat4 zero;
@@ -633,22 +643,24 @@ struct Quat : detail::Vect_Base<f32, 4> {
 
     using Base = detail::Vect_Base<f32, 4>;
 
-    Quat() : Base{0.0f, 0.0f, 0.0f, 1.0f} {
+    constexpr Quat() noexcept : Base{0.0f, 0.0f, 0.0f, 1.0f} {
     }
-    explicit Quat(f32 x, f32 y, f32 z, f32 w) : Base{x, y, z, w} {
+    constexpr explicit Quat(f32 x, f32 y, f32 z, f32 w) noexcept : Base{x, y, z, w} {
     }
-    explicit Quat(Vec3 complex, f32 real) : Base{complex.x, complex.y, complex.z, real} {
+    constexpr explicit Quat(Vec3 complex, f32 real) noexcept
+        : Base{complex.x, complex.y, complex.z, real} {
     }
-    explicit Quat(Vec4 src) : Base{src} {
+    constexpr explicit Quat(Vec4 src) noexcept : Base{src} {
     }
 
-    ~Quat() = default;
-    Quat(const Quat&) = default;
-    Quat& operator=(const Quat&) = default;
-    Quat(Quat&&) = default;
-    Quat& operator=(Quat&&) = default;
+    constexpr ~Quat() noexcept = default;
 
-    static Quat axis_angle(Vec3 axis, f32 angle) {
+    constexpr Quat(const Quat&) noexcept = default;
+    constexpr Quat& operator=(const Quat&) noexcept = default;
+    constexpr Quat(Quat&&) noexcept = default;
+    constexpr Quat& operator=(Quat&&) noexcept = default;
+
+    static Quat axis_angle(Vec3 axis, f32 angle) noexcept {
         axis.normalize();
         angle = Math::radians(angle) / 2.0f;
         f32 sin = Math::sin(angle);
@@ -658,7 +670,7 @@ struct Quat : detail::Vect_Base<f32, 4> {
         f32 w = Math::cos(angle);
         return Quat(x, y, z, w).unit();
     }
-    static Quat euler(Vec3 angles) {
+    static Quat euler(Vec3 angles) noexcept {
         if(angles == Vec3{0.0f, 0.0f, 180.0f} || angles == Vec3{180.0f, 0.0f, 0.0f})
             return Quat{0.0f, 0.0f, -1.0f, 0.0f};
         f32 c1 = Math::cos(Math::radians(angles[2] * 0.5f));
@@ -674,60 +686,60 @@ struct Quat : detail::Vect_Base<f32, 4> {
         return Quat(x, y, z, w);
     }
 
-    f32& operator[](int idx) {
+    constexpr f32& operator[](int idx) noexcept {
         return data[idx];
     }
-    f32 operator[](int idx) const {
+    constexpr f32 operator[](int idx) const noexcept {
         return data[idx];
     }
 
-    Quat conjugate() const {
+    constexpr Quat conjugate() const noexcept {
         return Quat(-x, -y, -z, w);
     }
-    Quat inverse() const {
+    Quat inverse() const noexcept {
         return conjugate().unit();
     }
-    Vec3 complex() const {
+    constexpr Vec3 complex() const noexcept {
         return Vec3(x, y, z);
     }
-    f32 real() const {
+    constexpr f32 real() const noexcept {
         return w;
     }
 
-    f32 norm2() const {
+    constexpr f32 norm2() const noexcept {
         return x * x + y * y + z * z + w * w;
     }
-    f32 norm() const {
+    f32 norm() const noexcept {
         return Math::sqrt(norm2());
     }
-    Quat unit() const {
+    Quat unit() const noexcept {
         f32 n = norm();
         return Quat(x / n, y / n, z / n, w / n);
     }
 
-    Quat operator*(const Quat& r) const {
+    constexpr Quat operator*(const Quat& r) const noexcept {
         return Quat(y * r.z - z * r.y + x * r.w + w * r.x, z * r.x - x * r.z + y * r.w + w * r.y,
                     x * r.y - y * r.x + z * r.w + w * r.z, w * r.w - x * r.x - y * r.y - z * r.z);
     }
-    Quat operator*(f32 s) const {
+    constexpr Quat operator*(f32 s) const noexcept {
         return Quat(s * x, s * y, s * z, s * w);
     }
 
-    Quat operator+(const Quat& r) const {
+    constexpr Quat operator+(const Quat& r) const noexcept {
         return Quat(x + r.x, y + r.y, z + r.z, w + r.w);
     }
-    Quat operator-(const Quat& r) const {
+    constexpr Quat operator-(const Quat& r) const noexcept {
         return Quat(x - r.x, y - r.y, z - r.z, w - r.w);
     }
-    Quat operator-() const {
+    constexpr Quat operator-() const noexcept {
         return Quat(-x, -y, -z, -w);
     }
 
-    Vec3 to_euler() const {
+    Vec3 to_euler() const noexcept {
         return unit().to_mat().to_euler();
     }
 
-    Mat4 to_mat() const {
+    constexpr Mat4 to_mat() const noexcept {
         return Mat4{
             Vec4{1 - 2 * y * y - 2 * z * z, 2 * x * y + 2 * z * w, 2 * x * z - 2 * y * w, 0.0f},
             Vec4{2 * x * y - 2 * z * w, 1 - 2 * x * x - 2 * z * z, 2 * y * z + 2 * x * w, 0.0f},
@@ -735,74 +747,74 @@ struct Quat : detail::Vect_Base<f32, 4> {
             Vec4{0.0f, 0.0f, 0.0f, 1.0f}};
     }
 
-    Vec3 rotate(Vec3 v) const {
+    constexpr Vec3 rotate(Vec3 v) const noexcept {
         return (((*this) * Quat(v, 0)) * conjugate()).complex();
     }
 
-    bool operator==(const Quat& v) const {
+    constexpr bool operator==(const Quat& v) const noexcept {
         return x == v.x && y == v.y && z == v.z && w == v.w;
     }
-    bool operator!=(const Quat& v) const {
+    constexpr bool operator!=(const Quat& v) const noexcept {
         return x != v.x || y != v.y || z != v.z || w != v.w;
     }
 
-    const f32* begin() const {
+    constexpr const f32* begin() const noexcept {
         return this->data;
     }
-    const f32* end() const {
+    constexpr const f32* end() const noexcept {
         return this->data + 4;
     }
-    f32* begin() {
+    constexpr f32* begin() noexcept {
         return this->data;
     }
-    f32* end() {
+    constexpr f32* end() noexcept {
         return this->data + 4;
     }
 };
 
 struct BBox {
 
-    BBox() : min(Limits<f32>::max()), max(Limits<f32>::min()) {
+    constexpr BBox() noexcept : min(Limits<f32>::max()), max(Limits<f32>::min()) {
     }
-    explicit BBox(Vec3 min, Vec3 max) : min(min), max(max) {
+    constexpr explicit BBox(Vec3 min, Vec3 max) noexcept : min(min), max(max) {
     }
-    ~BBox() = default;
 
-    explicit BBox(const BBox&) = default;
-    BBox& operator=(const BBox&) = default;
+    constexpr ~BBox() noexcept = default;
 
-    BBox(BBox&&) = default;
-    BBox& operator=(BBox&&) = default;
+    constexpr BBox(const BBox&) noexcept = default;
+    constexpr BBox& operator=(const BBox&) noexcept = default;
+    constexpr BBox(BBox&&) noexcept = default;
+    constexpr BBox& operator=(BBox&&) noexcept = default;
 
-    void reset() {
+    constexpr void reset() noexcept {
         min = Vec3(Limits<f32>::max());
         max = Vec3(Limits<f32>::min());
     }
 
-    void enclose(Vec3 point) {
+    constexpr void enclose(Vec3 point) noexcept {
         min = Math::min(min, point);
         max = Math::max(max, point);
     }
-    void enclose(BBox box) {
+    constexpr void enclose(BBox box) noexcept {
         min = Math::min(min, box.min);
         max = Math::max(max, box.max);
     }
 
-    Vec3 center() const {
+    constexpr Vec3 center() const noexcept {
         return (min + max) * 0.5f;
     }
 
-    bool empty() const {
+    constexpr bool empty() const noexcept {
         return min.x > max.x || min.y > max.y || min.z > max.z;
     }
 
-    f32 surface_area() const {
+    constexpr f32 surface_area() const noexcept {
         if(empty()) return 0.0f;
         Vec3 extent = max - min;
         return 2.0f * (extent.x * extent.z + extent.x * extent.y + extent.y * extent.z);
     }
 
-    void transform(const Mat4& T) {
+    constexpr void transform(const Mat4& T) noexcept {
         Vec3 amin = min, amax = max;
         min = max = Vec3{T[3].x, T[3].y, T[3].z};
         for(u64 i = 0; i < 3; i++) {
@@ -820,7 +832,7 @@ struct BBox {
         }
     }
 
-    void project(const Mat4& proj, Vec2& min_out, Vec2& max_out) const {
+    constexpr void project(const Mat4& proj, Vec2& min_out, Vec2& max_out) const noexcept {
 
         min_out = Vec2(Limits<f32>::max());
         max_out = Vec2(Limits<f32>::min());
@@ -875,7 +887,7 @@ using Math::Mat4;
 using Math::Quat;
 
 template<typename T, u64 N>
-Math::Vect<T, N> operator+(T s, Math::Vect<T, N> v) {
+constexpr Math::Vect<T, N> operator+(T s, Math::Vect<T, N> v) noexcept {
     if constexpr(Math::Vect<T, N>::is_simd)
         return Math::Vect<T, N>{SIMD::F32x4::add(v.pack, SIMD::F32x4::set1(s))};
     else {
@@ -886,7 +898,7 @@ Math::Vect<T, N> operator+(T s, Math::Vect<T, N> v) {
 }
 
 template<typename T, u64 N>
-Math::Vect<T, N> operator-(T s, Math::Vect<T, N> v) {
+constexpr Math::Vect<T, N> operator-(T s, Math::Vect<T, N> v) noexcept {
     if constexpr(Math::Vect<T, N>::is_simd)
         return Math::Vect<T, N>{SIMD::F32x4::sub(v.pack, SIMD::F32x4::set1(s))};
     else {
@@ -897,7 +909,7 @@ Math::Vect<T, N> operator-(T s, Math::Vect<T, N> v) {
 }
 
 template<typename T, u64 N>
-Math::Vect<T, N> operator*(T s, Math::Vect<T, N> v) {
+constexpr Math::Vect<T, N> operator*(T s, Math::Vect<T, N> v) noexcept {
     if constexpr(Math::Vect<T, N>::is_simd)
         return Math::Vect<T, N>{SIMD::F32x4::mul(v.pack, SIMD::F32x4::set1(s))};
     else {
@@ -908,7 +920,7 @@ Math::Vect<T, N> operator*(T s, Math::Vect<T, N> v) {
 }
 
 template<typename T, u64 N>
-Math::Vect<T, N> operator/(T s, Math::Vect<T, N> v) {
+constexpr Math::Vect<T, N> operator/(T s, Math::Vect<T, N> v) noexcept {
     if constexpr(Math::Vect<T, N>::is_simd)
         return Math::Vect<T, N>{SIMD::F32x4::div(v.pack, SIMD::F32x4::set1(s))};
     else {
@@ -944,7 +956,7 @@ namespace Hash {
 
 template<typename T, u64 N>
 struct Hash<Math::Vect<T, N>> {
-    static u64 hash(const Math::Vect<T, N>& v) {
+    constexpr static u64 hash(const Math::Vect<T, N>& v) noexcept {
         u64 h = 0;
         for(u64 i = 0; i < N; i++) h = hash_combine(h, rpp::hash(v[i]));
         return h;
@@ -957,7 +969,7 @@ namespace Format {
 
 template<Float F, u64 N>
 struct Measure<Math::Vect<F, N>> {
-    static u64 measure(const Math::Vect<F, N>& vect) {
+    constexpr static u64 measure(const Math::Vect<F, N>& vect) noexcept {
         u64 length = 5;
         length += Measure<u64>::measure(N);
         for(u64 i = 0; i < N; i++) {
@@ -969,7 +981,7 @@ struct Measure<Math::Vect<F, N>> {
 };
 template<Int I, u64 N>
 struct Measure<Math::Vect<I, N>> {
-    static u64 measure(const Math::Vect<I, N>& vect) {
+    constexpr static u64 measure(const Math::Vect<I, N>& vect) noexcept {
         u64 length = 6;
         length += Measure<u64>::measure(N);
         for(u64 i = 0; i < N; i++) {
@@ -981,7 +993,7 @@ struct Measure<Math::Vect<I, N>> {
 };
 template<>
 struct Measure<Math::Mat4> {
-    static u64 measure(const Math::Mat4& mat) {
+    constexpr static u64 measure(const Math::Mat4& mat) noexcept {
         u64 length = 6;
         for(u64 i = 0; i < 4; i++) {
             length += 1;
@@ -997,7 +1009,7 @@ struct Measure<Math::Mat4> {
 };
 template<>
 struct Measure<Math::Quat> {
-    static u64 measure(const Math::Quat& quat) {
+    constexpr static u64 measure(const Math::Quat& quat) noexcept {
         u64 length = 12;
         length += Measure<f32>::measure(quat.x);
         length += Measure<f32>::measure(quat.y);
@@ -1008,7 +1020,7 @@ struct Measure<Math::Quat> {
 };
 template<>
 struct Measure<Math::BBox> {
-    static u64 measure(const Math::BBox& bbox) {
+    constexpr static u64 measure(const Math::BBox& bbox) noexcept {
         u64 length = 20;
         length += Measure<f32>::measure(bbox.min.x);
         length += Measure<f32>::measure(bbox.min.y);
@@ -1022,7 +1034,7 @@ struct Measure<Math::BBox> {
 
 template<Allocator O, Float F, u64 N>
 struct Write<O, Math::Vect<F, N>> {
-    static u64 write(String<O>& output, u64 idx, const Math::Vect<F, N>& vect) {
+    static u64 write(String<O>& output, u64 idx, const Math::Vect<F, N>& vect) noexcept {
         idx = output.write(idx, "Vec"_v);
         idx = Write<O, u64>::write(output, idx, N);
         idx = output.write(idx, '{');
@@ -1035,7 +1047,7 @@ struct Write<O, Math::Vect<F, N>> {
 };
 template<Allocator O, Signed_Int I, u64 N>
 struct Write<O, Math::Vect<I, N>> {
-    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) {
+    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) noexcept {
         idx = output.write(idx, "Vec"_v);
         idx = Write<O, u64>::write(output, idx, N);
         idx = output.write(idx, "i{"_v);
@@ -1048,7 +1060,7 @@ struct Write<O, Math::Vect<I, N>> {
 };
 template<Allocator O, Unsigned_Int I, u64 N>
 struct Write<O, Math::Vect<I, N>> {
-    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) {
+    static u64 write(String<O>& output, u64 idx, const Math::Vect<I, N>& vect) noexcept {
         idx = output.write(idx, "Vec"_v);
         idx = Write<O, u64>::write(output, idx, N);
         idx = output.write(idx, "u{"_v);
@@ -1061,7 +1073,7 @@ struct Write<O, Math::Vect<I, N>> {
 };
 template<Allocator O>
 struct Write<O, Math::Mat4> {
-    static u64 write(String<O>& output, u64 idx, const Math::Mat4& mat) {
+    static u64 write(String<O>& output, u64 idx, const Math::Mat4& mat) noexcept {
         idx = output.write(idx, "Mat4{"_v);
         for(u64 i = 0; i < 4; i++) {
             idx = output.write(idx, '{');
@@ -1077,7 +1089,7 @@ struct Write<O, Math::Mat4> {
 };
 template<Allocator O>
 struct Write<O, Math::Quat> {
-    static u64 write(String<O>& output, u64 idx, const Math::Quat& quat) {
+    static u64 write(String<O>& output, u64 idx, const Math::Quat& quat) noexcept {
         idx = output.write(idx, "Quat{"_v);
         idx = Write<O, f32>::write(output, idx, quat.x);
         idx = output.write(idx, ", "_v);
@@ -1091,7 +1103,7 @@ struct Write<O, Math::Quat> {
 };
 template<Allocator O>
 struct Write<O, Math::BBox> {
-    static u64 write(String<O>& output, u64 idx, const Math::BBox& bbox) {
+    static u64 write(String<O>& output, u64 idx, const Math::BBox& bbox) noexcept {
         idx = output.write(idx, "BBox{{"_v);
         idx = Write<O, f32>::write(output, idx, bbox.min.x);
         idx = output.write(idx, ", "_v);

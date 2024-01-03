@@ -15,12 +15,12 @@ Overload(Ts...) -> Overload<Ts...>;
 
 template<Literal N, typename T>
 struct Named {
-    static constexpr Literal name = N;
+    constexpr static Literal name = N;
 
-    operator T&() {
+    [[nodiscard]] constexpr operator T&() noexcept {
         return value;
     }
-    operator const T&() const {
+    [[nodiscard]] constexpr operator const T&() const noexcept {
         return value;
     }
 
@@ -33,21 +33,21 @@ struct Variant {
 
     template<typename V>
         requires One_Is<V, Ts...>
-    explicit Variant(V&& value) {
+    explicit Variant(V&& value) noexcept {
         construct(forward<V>(value));
     }
-    ~Variant() {
+    ~Variant() noexcept {
         destruct();
     }
 
-    Variant(const Variant& src)
+    Variant(const Variant& src) noexcept
         requires(Copy_Constructable<Ts> && ...)
     = default;
-    Variant& operator=(const Variant& src)
+    Variant& operator=(const Variant& src) noexcept
         requires(Copy_Constructable<Ts> && ...)
     = default;
 
-    Variant(Variant&& src)
+    Variant(Variant&& src) noexcept
         requires(Move_Constructable<Ts> && ...)
     {
         if constexpr((Trivially_Movable<Ts> && ...)) {
@@ -59,7 +59,7 @@ struct Variant {
         src.index_ = INVALID;
     }
 
-    Variant& operator=(Variant&& src)
+    Variant& operator=(Variant&& src) noexcept
         requires(Move_Constructable<Ts> && ...)
     {
         destruct();
@@ -73,7 +73,7 @@ struct Variant {
         return *this;
     }
 
-    Variant clone() const
+    [[nodiscard]] Variant clone() const noexcept
         requires((Clone<Ts> || Trivial<Ts>) && ...)
     {
         return match([](const auto& v) {
@@ -89,33 +89,33 @@ struct Variant {
 
     template<typename F>
         requires(Invocable<F, Ts&> && ...) && All_Same<Invoke_Result<F, Ts&>...>
-    auto match(F&& f) {
+    [[nodiscard]] auto match(F&& f) noexcept {
         return Accessors<false>::apply(forward<F>(f), data_, index_);
     }
     template<typename F>
         requires(Invocable<F, const Ts&> && ...) && All_Same<Invoke_Result<F, const Ts&>...>
-    auto match(F&& f) const {
+    [[nodiscard]] auto match(F&& f) const noexcept {
         return Accessors<true>::apply(forward<F>(f), data_, index_);
     }
 
-    u8 index() const {
+    [[nodiscard]] u8 index() const noexcept {
         assert(index_ != INVALID);
         return index_;
     }
 
 private:
-    static constexpr u8 INVALID = 255;
+    constexpr static u8 INVALID = 255;
 
     template<typename V>
         requires One_Is<V, Ts...>
-    void construct(V&& value) {
+    void construct(V&& value) noexcept {
         static_assert(alignof(Variant<Ts...>) == align);
         static_assert(sizeof(Variant<Ts...>) == Math::align(size + 1, align));
         new(data_) V{forward<V>(value)};
         index_ = Index_Of<V, Ts...>;
     }
 
-    void destruct() {
+    void destruct() noexcept {
         if(index_ == INVALID) return;
         if constexpr((Must_Destruct<Ts> || ...)) {
             Accessors<false>::apply(Overload{[](Ts& v) {
@@ -128,8 +128,8 @@ private:
         index_ = INVALID;
     }
 
-    static constexpr u64 size = Math::max({sizeof(Ts)...});
-    static constexpr u64 align = Math::max({alignof(Ts)...});
+    constexpr static u64 size = Math::max({sizeof(Ts)...});
+    constexpr static u64 align = Math::max({alignof(Ts)...});
 
     alignas(align) u8 data_[size] = {};
     u8 index_ = 0;
@@ -139,7 +139,7 @@ private:
         template<typename T>
         using Ref = If<is_const, const T&, T&>;
         using Data = If<is_const, const u8, u8>;
-        static constexpr u64 N = sizeof...(Ts);
+        constexpr static u64 N = sizeof...(Ts);
 
         // For variants with up to 8 cases, we branch on the index.
         // Larger variants will use a table of function pointers.
@@ -150,7 +150,7 @@ private:
 
         template<typename F>
             requires(N <= 8)
-        static auto apply(F&& f, Data* data, u8 index) {
+        [[nodiscard]] static auto apply(F&& f, Data* data, u8 index) noexcept {
             INDEX(7);
             INDEX(6);
             INDEX(5);
@@ -164,21 +164,22 @@ private:
 #undef INDEX
 
         template<typename F>
-        static auto apply(F&& f, Data* data, u8 index) {
+        [[nodiscard]] static auto apply(F&& f, Data* data, u8 index) noexcept {
             return apply_n(forward<F>(f), data, index, Index_Sequence_For<Ts...>{});
         }
 
     private:
         template<typename F, typename T>
-        static auto apply_one(F&& f, Data* data) {
+        [[nodiscard]] static auto apply_one(F&& f, Data* data) noexcept {
             return forward<F>(f)(reinterpret_cast<Ref<T>>(*data));
         }
         template<typename F, u64... Is>
-        static auto apply_n(F&& f, Data* data, u8 index, Index_Sequence<Is...>) {
+        [[nodiscard]] static auto apply_n(F&& f, Data* data, u8 index,
+                                          Index_Sequence<Is...>) noexcept {
             using T = Choose<0, Ts...>;
             using R = Invoke_Result<F, Ref<T>>;
             using Apply = R (*)(F&&, Data*);
-            static constexpr Apply table[] = {&apply_one<F, Choose<Is, Ts...>>...};
+            constexpr static Apply table[] = {&apply_one<F, Choose<Is, Ts...>>...};
             return table[index](forward<F>(f), data);
         }
     };
@@ -197,7 +198,7 @@ namespace Format {
 template<typename... Ts>
     requires(Reflectable<Ts> && ...)
 struct Measure<Variant<Ts...>> {
-    static u64 measure(const Variant<Ts...>& variant) {
+    [[nodiscard]] static u64 measure(const Variant<Ts...>& variant) noexcept {
         u64 length = 9;
         length +=
             variant.match(Overload{[](const Ts& value) { return Measure<Ts>::measure(value); }...});
@@ -206,7 +207,7 @@ struct Measure<Variant<Ts...>> {
 };
 template<Literal N, Reflectable T>
 struct Measure<Named<N, T>> {
-    static u64 measure(const Named<N, T>& named) {
+    [[nodiscard]] static u64 measure(const Named<N, T>& named) noexcept {
         u64 length = String_View{N}.length() + 2;
         return length + Measure<T>::measure(named.value);
     }
@@ -215,7 +216,8 @@ struct Measure<Named<N, T>> {
 template<Allocator O, typename... Ts>
     requires(Reflectable<Ts> && ...)
 struct Write<O, Variant<Ts...>> {
-    static u64 write(String<O>& output, u64 idx, const Variant<Ts...>& variant) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx,
+                                   const Variant<Ts...>& variant) noexcept {
         idx = output.write(idx, "Variant{"_v);
         idx = variant.match(Overload{[&output, idx](const Ts& value) {
             return Write<O, Ts>::write(output, idx, value);
@@ -225,7 +227,7 @@ struct Write<O, Variant<Ts...>> {
 };
 template<Allocator O, Literal N, Reflectable T>
 struct Write<O, Named<N, T>> {
-    static u64 write(String<O>& output, u64 idx, const Named<N, T>& named) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Named<N, T>& named) noexcept {
         idx = output.write(idx, String_View{N});
         idx = output.write(idx, '{');
         idx = Write<O, T>::write(output, idx, named.value);

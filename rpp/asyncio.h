@@ -7,9 +7,9 @@
 
 namespace rpp::Async {
 
-Task<void> wait(Pool<>& pool, u64 ms);
+[[nodiscard]] Task<void> wait(Pool<>& pool, u64 ms) noexcept;
 
-Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path);
-Task<bool> write(Pool<>& pool, String_View path, Slice<u8> data);
+[[nodiscard]] Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path) noexcept;
+[[nodiscard]] Task<bool> write(Pool<>& pool, String_View path, Slice<u8> data) noexcept;
 
 } // namespace rpp::Async

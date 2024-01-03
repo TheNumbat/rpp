@@ -14,30 +14,30 @@ using Id = u64;
 
 enum class Priority : u8 { low, normal, high, critical };
 
-Id this_id();
-u64 id_len();
-void set_priority(Priority p);
-void set_affinity(u64 core);
-void sleep(u64 ms);
-void pause();
+[[nodiscard]] Id this_id() noexcept;
+[[nodiscard]] u64 id_len() noexcept;
+void set_priority(Priority p) noexcept;
+void set_affinity(u64 core) noexcept;
+void sleep(u64 ms) noexcept;
+void pause() noexcept;
 
-u64 perf_counter();
-u64 perf_frequency();
-u64 hardware_threads();
+[[nodiscard]] u64 perf_counter() noexcept;
+[[nodiscard]] u64 perf_frequency() noexcept;
+[[nodiscard]] u64 hardware_threads() noexcept;
 
 struct Flag {
-    Flag() = default;
-    ~Flag() = default;
+    Flag() noexcept = default;
+    ~Flag() noexcept = default;
 
-    Flag(const Flag&) = delete;
-    Flag(Flag&&) = delete;
+    Flag(const Flag&) noexcept = delete;
+    Flag(Flag&&) noexcept = delete;
 
-    Flag& operator=(const Flag&) = delete;
-    Flag& operator=(Flag&&) = delete;
+    Flag& operator=(const Flag&) noexcept = delete;
+    Flag& operator=(Flag&&) noexcept = delete;
 
-    void block();
-    void signal();
-    bool ready();
+    void block() noexcept;
+    void signal() noexcept;
+    [[nodiscard]] bool ready() noexcept;
 
 private:
 #ifdef RPP_OS_WINDOWS
@@ -49,18 +49,18 @@ private:
 
 struct Mutex {
 
-    Mutex();
-    ~Mutex();
+    Mutex() noexcept;
+    ~Mutex() noexcept;
 
-    Mutex(const Mutex&) = delete;
-    Mutex(Mutex&&) = delete;
+    Mutex(const Mutex&) noexcept = delete;
+    Mutex(Mutex&&) noexcept = delete;
 
-    Mutex& operator=(Mutex&&) = delete;
-    Mutex& operator=(const Mutex&) = delete;
+    Mutex& operator=(Mutex&&) noexcept = delete;
+    Mutex& operator=(const Mutex&) noexcept = delete;
 
-    void lock();
-    void unlock();
-    bool try_lock();
+    void lock() noexcept;
+    void unlock() noexcept;
+    [[nodiscard]] bool try_lock() noexcept;
 
 private:
 #ifdef RPP_OS_WINDOWS
@@ -75,18 +75,18 @@ private:
 
 struct Lock {
 
-    Lock(Mutex& mutex) : mutex_(mutex) {
+    Lock(Mutex& mutex) noexcept : mutex_(mutex) {
         mutex_->lock();
     }
-    ~Lock() {
+    ~Lock() noexcept {
         if(mutex_) mutex_->unlock();
     }
 
-    Lock(const Lock&) = delete;
-    Lock& operator=(const Lock&) = delete;
+    Lock(const Lock&) noexcept = delete;
+    Lock& operator=(const Lock&) noexcept = delete;
 
-    Lock(Lock&& src) = default;
-    Lock& operator=(Lock&& src) = default;
+    Lock(Lock&& src) noexcept = default;
+    Lock& operator=(Lock&& src) noexcept = default;
 
 private:
     Ref<Mutex> mutex_;
@@ -96,25 +96,25 @@ private:
 
 struct Atomic {
 
-    Atomic() = default;
-    ~Atomic() = default;
+    Atomic() noexcept = default;
+    ~Atomic() noexcept = default;
 
-    explicit Atomic(i64 value) : value_(value) {
+    explicit Atomic(i64 value) noexcept : value_(value) {
     }
 
-    Atomic(const Atomic&) = default;
-    Atomic(Atomic&&) = default;
-    Atomic& operator=(const Atomic&) = default;
-    Atomic& operator=(Atomic&&) = default;
+    Atomic(const Atomic&) noexcept = default;
+    Atomic(Atomic&&) noexcept = default;
+    Atomic& operator=(const Atomic&) noexcept = default;
+    Atomic& operator=(Atomic&&) noexcept = default;
 
-    i64 load() const;
-    i64 incr();
-    i64 decr();
-    i64 exchange(i64 value);
-    i64 compare_and_swap(i64 compare_with, i64 set_to);
+    [[nodiscard]] i64 load() const noexcept;
+    i64 incr() noexcept;
+    i64 decr() noexcept;
+    i64 exchange(i64 value) noexcept;
+    [[nodiscard]] i64 compare_and_swap(i64 compare_with, i64 set_to) noexcept;
 
     template<Int I>
-    I load() const {
+    [[nodiscard]] I load() const noexcept {
         return static_cast<I>(load());
     }
 
@@ -126,18 +126,18 @@ private:
 
 struct Cond {
 
-    Cond();
-    ~Cond();
+    Cond() noexcept;
+    ~Cond() noexcept;
 
-    Cond(Cond&&) = delete;
-    Cond(const Cond&) = delete;
+    Cond(Cond&&) noexcept = delete;
+    Cond(const Cond&) noexcept = delete;
 
-    Cond& operator=(Cond&&) = delete;
-    Cond& operator=(const Cond&) = delete;
+    Cond& operator=(Cond&&) noexcept = delete;
+    Cond& operator=(const Cond&) noexcept = delete;
 
-    void signal();
-    void broadcast();
-    void wait(Mutex& mut);
+    void signal() noexcept;
+    void broadcast() noexcept;
+    void wait(Mutex& mut) noexcept;
 
 private:
 #ifdef RPP_OS_WINDOWS

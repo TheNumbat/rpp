@@ -5,7 +5,7 @@
 
 namespace rpp {
 
-Pair<wchar_t*, int> utf8_to_ucs2(String_View utf8_) {
+[[nodiscard]] Pair<wchar_t*, int> utf8_to_ucs2(String_View utf8_) noexcept {
     Region(R) {
         auto utf8 = utf8_.terminate<Mregion<R>>();
 
@@ -25,7 +25,7 @@ Pair<wchar_t*, int> utf8_to_ucs2(String_View utf8_) {
     }
 }
 
-String_View ucs2_to_utf8(const wchar_t* ucs2, int ucs2_len) {
+[[nodiscard]] String_View ucs2_to_utf8(const wchar_t* ucs2, int ucs2_len) noexcept {
 
     constexpr int buffer_size = 256;
     static thread_local char buffer[buffer_size];
@@ -40,7 +40,7 @@ String_View ucs2_to_utf8(const wchar_t* ucs2, int ucs2_len) {
     return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written)};
 }
 
-String_View basic_win32_error(u32 err) {
+[[nodiscard]] String_View basic_win32_error(u32 err) noexcept {
 
     constexpr int buffer_size = 64;
     static thread_local u8 buffer[buffer_size];

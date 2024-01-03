@@ -10,34 +10,34 @@ namespace rpp {
 template<typename T>
 struct Opt {
 
-    Opt() = default;
+    Opt() noexcept = default;
 
-    explicit Opt(T&& value)
+    explicit Opt(T&& value) noexcept
         requires Move_Constructable<T>
         : ok_(true), value_(move(value)) {
     }
 
     template<typename... Args>
-    explicit Opt(Args&&... args)
+    explicit Opt(Args&&... args) noexcept
         requires Constructable<T, Args...>
         : ok_(true), value_(forward<Args>(args)...) {
     }
 
-    ~Opt() {
+    ~Opt() noexcept {
         if constexpr(Must_Destruct<T>) {
             if(ok_) value_.destruct();
         }
         ok_ = false;
     }
 
-    Opt(const Opt& src)
+    Opt(const Opt& src) noexcept
         requires Copy_Constructable<T>
     = default;
-    Opt& operator=(const Opt& src)
+    Opt& operator=(const Opt& src) noexcept
         requires Copy_Constructable<T>
     = default;
 
-    Opt(Opt&& src)
+    Opt(Opt&& src) noexcept
         requires Move_Constructable<T>
     {
         ok_ = src.ok_;
@@ -47,7 +47,7 @@ struct Opt {
         }
     }
 
-    Opt& operator=(Opt&& src)
+    Opt& operator=(Opt&& src) noexcept
         requires Move_Constructable<T>
     {
         this->~Opt();
@@ -59,7 +59,7 @@ struct Opt {
         return *this;
     }
 
-    Opt& operator=(T&& value)
+    Opt& operator=(T&& value) noexcept
         requires Move_Constructable<T>
     {
         this->~Opt();
@@ -68,7 +68,7 @@ struct Opt {
         return *this;
     }
 
-    Opt clone() const
+    Opt clone() const noexcept
         requires Clone<T> || Copy_Constructable<T>
     {
         if(!ok_) return Opt{};
@@ -80,30 +80,30 @@ struct Opt {
         }
     }
 
-    T& value_or(T& other) {
+    [[nodiscard]] T& value_or(T& other) noexcept {
         if(ok_) return *value_;
         return other;
     }
 
-    T& operator*() {
+    [[nodiscard]] T& operator*() noexcept {
         assert(ok_);
         return *value_;
     }
-    const T& operator*() const {
+    [[nodiscard]] const T& operator*() const noexcept {
         assert(ok_);
         return *value_;
     }
 
-    T* operator->() {
+    [[nodiscard]] T* operator->() noexcept {
         assert(ok_);
         return &*value_;
     }
-    const T* operator->() const {
+    [[nodiscard]] const T* operator->() const noexcept {
         assert(ok_);
         return &*value_;
     }
 
-    operator bool() const {
+    [[nodiscard]] operator bool() const noexcept {
         return ok_;
     }
 
@@ -121,14 +121,14 @@ namespace Format {
 
 template<Reflectable T>
 struct Measure<Opt<T>> {
-    static u64 measure(const Opt<T>& opt) {
+    [[nodiscard]] static u64 measure(const Opt<T>& opt) noexcept {
         if(opt) return 5 + Measure<T>::measure(*opt);
         return 9;
     }
 };
 template<Allocator O, Reflectable T>
 struct Write<O, Opt<T>> {
-    static u64 write(String<O>& output, u64 idx, const Opt<T>& opt) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Opt<T>& opt) noexcept {
         if(!opt) return output.write(idx, "Opt{None}"_v);
         idx = output.write(idx, "Opt{"_v);
         idx = Write<O, T>::write(output, idx, *opt);

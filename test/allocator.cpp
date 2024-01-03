@@ -26,9 +26,7 @@ i32 main() {
                 }
             }
         }
-        {
-            Prof_Scope("Alloc0");
-
+        Trace("Alloc0") {
             using A = Mallocator<"Test">;
             void* ptr = A::alloc(100);
             A::free(ptr);

@@ -11,25 +11,25 @@ struct Tuple;
 template<>
 struct Tuple<> {
 
-    Tuple() = default;
-    ~Tuple() = default;
+    constexpr Tuple() noexcept = default;
+    constexpr ~Tuple() noexcept = default;
 
-    Tuple(const Tuple&) = default;
-    Tuple& operator=(const Tuple&) = default;
+    constexpr Tuple(const Tuple&) noexcept = default;
+    constexpr Tuple& operator=(const Tuple&) noexcept = default;
 
-    Tuple(Tuple&&) = default;
-    Tuple& operator=(Tuple&&) = default;
+    constexpr Tuple(Tuple&&) noexcept = default;
+    constexpr Tuple& operator=(Tuple&&) noexcept = default;
 
-    Tuple<> clone() const {
+    [[nodiscard]] constexpr Tuple<> clone() const noexcept {
         return Tuple<>{};
     }
 
-    constexpr u64 length() const {
+    [[nodiscard]] constexpr u64 length() const noexcept {
         return 0;
     }
 
     template<Invocable F>
-    auto invoke(F&& f) -> Invoke_Result<F> {
+    [[nodiscard]] constexpr auto invoke(F&& f) noexcept -> Invoke_Result<F> {
         return forward<F>(f)();
     }
 };
@@ -37,49 +37,51 @@ struct Tuple<> {
 template<typename T, typename... Ts>
 struct Tuple<T, Ts...> {
 
-    Tuple()
+    constexpr Tuple() noexcept
         requires Default_Constructable<T>
     = default;
 
     template<typename... Args>
-    explicit Tuple(const T& first, Args&&... rest)
+    constexpr explicit Tuple(const T& first, Args&&... rest) noexcept
         requires Copy_Constructable<T> && Constructable<Tuple<Ts...>, Args...>
         : first(T{first}), rest(forward<Args>(rest)...) {
     }
 
     template<typename... Args>
         requires Move_Constructable<T> && Move_Constructable<Tuple<Args...>>
-    explicit Tuple(T&& first, Tuple<Args...>&& rest) : first(move(first)), rest(move(rest)) {
+    constexpr explicit Tuple(T&& first, Tuple<Args...>&& rest) noexcept
+        : first(move(first)), rest(move(rest)) {
     }
 
     template<typename... Args>
         requires Copy_Constructable<T> && Move_Constructable<Tuple<Args...>>
-    explicit Tuple(const T& first, Tuple<Args...>&& rest) : first(T{first}), rest(move(rest)) {
+    constexpr explicit Tuple(const T& first, Tuple<Args...>&& rest) noexcept
+        : first(T{first}), rest(move(rest)) {
     }
 
     template<typename... Args>
-    explicit Tuple(T&& first, Args&&... rest)
+    constexpr explicit Tuple(T&& first, Args&&... rest) noexcept
         requires Move_Constructable<T> && Constructable<Tuple<Ts...>, Args...>
         : first(move(first)), rest(forward<Args>(rest)...) {
     }
 
-    ~Tuple() = default;
+    constexpr ~Tuple() noexcept = default;
 
-    Tuple(const Tuple&)
+    constexpr Tuple(const Tuple&) noexcept
         requires Trivial<T> && Trivial<Tuple<Ts...>>
     = default;
-    Tuple& operator=(const Tuple&)
+    constexpr Tuple& operator=(const Tuple&) noexcept
         requires Trivial<T> && Trivial<Tuple<Ts...>>
     = default;
 
-    Tuple(Tuple&&) = default;
-    Tuple& operator=(Tuple&&) = default;
+    constexpr Tuple(Tuple&&) noexcept = default;
+    constexpr Tuple& operator=(Tuple&&) noexcept = default;
 
-    constexpr u64 length() const {
+    constexpr u64 length() const noexcept {
         return 1 + sizeof...(Ts);
     }
 
-    Tuple clone() const
+    [[nodiscard]] constexpr Tuple clone() const noexcept
         requires((Clone<T> || Copy_Constructable<T>) && (Clone<Tuple<Ts...>>))
     {
         if constexpr(Clone<T>) {
@@ -91,14 +93,14 @@ struct Tuple<T, Ts...> {
     }
 
     template<u64 Index>
-    auto& get() {
+    [[nodiscard]] constexpr auto& get() noexcept {
         if constexpr(Index == 0)
             return first;
         else
             return rest.template get<Index - 1>();
     }
     template<u64 Index>
-    const auto& get() const {
+    [[nodiscard]] constexpr const auto& get() const noexcept {
         if constexpr(Index == 0)
             return first;
         else
@@ -106,13 +108,14 @@ struct Tuple<T, Ts...> {
     }
 
     template<Invocable<T, Ts...> F>
-    auto invoke(F&& f) -> Invoke_Result<F, T, Ts...> {
+    [[nodiscard]] constexpr auto invoke(F&& f) noexcept -> Invoke_Result<F, T, Ts...> {
         return invoke_(forward<F>(f), Make_Index_Sequence<1 + sizeof...(Ts)>{});
     }
 
 private:
     template<Invocable<T, Ts...> F, u64... Is>
-    auto invoke_(F&& f, Index_Sequence<Is...>) -> Invoke_Result<F, T, Ts...> {
+    [[nodiscard]] constexpr auto invoke_(F&& f, Index_Sequence<Is...>) noexcept
+        -> Invoke_Result<F, T, Ts...> {
         return forward<F>(f)(get<Is>()...);
     }
 
@@ -134,7 +137,7 @@ template<typename... Ts>
     requires(Reflectable<Ts> && ...)
 struct Tuple_Length {
     template<typename Index>
-    void apply() {
+    constexpr void apply() noexcept {
         length += Measure<Decay<decltype(tuple.template get<Index::value>())>>::measure(
             tuple.template get<Index::value>());
     }
@@ -144,7 +147,7 @@ struct Tuple_Length {
 template<typename... Ts>
     requires(Reflectable<Ts> && ...)
 struct Measure<Tuple<Ts...>> {
-    static u64 measure(const Tuple<Ts...>& tuple) {
+    [[nodiscard]] constexpr static u64 measure(const Tuple<Ts...>& tuple) noexcept {
         u64 length = 7;
         constexpr u64 N = sizeof...(Ts);
         if constexpr(N > 1) length += 2 * (N - 1);
@@ -159,7 +162,7 @@ template<Allocator O, typename... Ts>
     requires(Reflectable<Ts> && ...)
 struct Tuple_Write {
     template<typename Index>
-    void apply() {
+    void apply() noexcept {
         constexpr u64 I = Index::value;
         idx = Write<O, Decay<decltype(tuple.template get<I>())>>::write(output, idx,
                                                                         tuple.template get<I>());
@@ -172,7 +175,7 @@ struct Tuple_Write {
 template<Allocator O, typename... Ts>
     requires(Reflectable<Ts> && ...)
 struct Write<O, Tuple<Ts...>> {
-    static u64 write(String<O>& output, u64 idx, const Tuple<Ts...>& tuple) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Tuple<Ts...>& tuple) noexcept {
         idx = output.write(idx, "Tuple{"_v);
         using Indices = Reflect::Enumerate<Ts...>;
         Tuple_Write<O, Ts...> iterator{tuple, output, idx};

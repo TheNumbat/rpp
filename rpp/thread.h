@@ -19,33 +19,33 @@ constexpr OS_Thread OS_Thread_Null = 0;
 constexpr OS_Thread_Ret OS_Thread_Ret_Null = null;
 #endif
 
-Id sys_id(OS_Thread thread);
-void sys_join(OS_Thread thread);
-void sys_detach(OS_Thread thread);
-OS_Thread sys_start(OS_Thread_Ret (*f)(void*), void* data);
+[[nodiscard]] Id sys_id(OS_Thread thread) noexcept;
+void sys_join(OS_Thread thread) noexcept;
+void sys_detach(OS_Thread thread) noexcept;
+[[nodiscard]] OS_Thread sys_start(OS_Thread_Ret (*f)(void*), void* data) noexcept;
 
 template<typename T>
 struct Promise {
 
-    Promise() = default;
-    ~Promise() = default;
+    Promise() noexcept = default;
+    ~Promise() noexcept = default;
 
-    Promise(const Promise&) = delete;
-    Promise(Promise&&) = delete;
-    Promise& operator=(const Promise&) = delete;
-    Promise& operator=(Promise&&) = delete;
+    Promise(const Promise&) noexcept = delete;
+    Promise(Promise&&) noexcept = delete;
+    Promise& operator=(const Promise&) noexcept = delete;
+    Promise& operator=(Promise&&) noexcept = delete;
 
-    void fill(T&& val) {
+    void fill(T&& val) noexcept {
         value = move(val);
         flag.signal();
     }
 
-    T block() {
+    [[nodiscard]] T block() noexcept {
         flag.block();
         return move(value);
     }
 
-    bool ready() {
+    [[nodiscard]] bool ready() noexcept {
         return flag.ready();
     }
 
@@ -59,23 +59,23 @@ private:
 template<>
 struct Promise<void> {
 
-    Promise() = default;
-    ~Promise() = default;
+    Promise() noexcept = default;
+    ~Promise() noexcept = default;
 
-    Promise(const Promise&) = delete;
-    Promise(Promise&&) = delete;
-    Promise& operator=(const Promise&) = delete;
-    Promise& operator=(Promise&&) = delete;
+    Promise(const Promise&) noexcept = delete;
+    Promise(Promise&&) noexcept = delete;
+    Promise& operator=(const Promise&) noexcept = delete;
+    Promise& operator=(Promise&&) noexcept = delete;
 
-    void fill() {
+    void fill() noexcept {
         flag.signal();
     }
 
-    void block() {
+    void block() noexcept {
         flag.block();
     }
 
-    bool ready() {
+    [[nodiscard]] bool ready() noexcept {
         return flag.ready();
     }
 
@@ -91,42 +91,42 @@ using Future = Arc<Promise<T>, A>;
 template<Allocator A = Alloc>
 struct Thread {
 
-    Thread() = default;
+    Thread() noexcept = default;
 
     template<Invocable F>
-    explicit Thread(F&& f) {
+    explicit Thread(F&& f) noexcept {
         F* data = reinterpret_cast<F*>(A::alloc(sizeof(F)));
         new(data) F{forward<F>(f)};
         thread = sys_start(&invoke<F>, data);
     }
-    ~Thread() {
+    ~Thread() noexcept {
         if(thread) join();
     }
 
-    Thread(const Thread&) = delete;
-    Thread(Thread&& src) {
+    Thread(const Thread&) noexcept = delete;
+    Thread& operator=(const Thread&) = delete;
+
+    Thread(Thread&& src) noexcept {
         thread = src.thread;
         src.thread = OS_Thread_Null;
     }
-
-    Thread& operator=(const Thread&) = delete;
-    Thread& operator=(Thread&& src) {
+    Thread& operator=(Thread&& src) noexcept {
         this->~Thread();
         thread = src.thread;
         src.thread = OS_Thread_Null;
         return *this;
     }
 
-    Id id() {
+    [[nodiscard]] Id id() noexcept {
         assert(thread);
         return sys_id(thread);
     }
-    void join() {
+    void join() noexcept {
         assert(thread);
         sys_join(thread);
         thread = OS_Thread_Null;
     }
-    void detach() {
+    void detach() noexcept {
         assert(thread);
         sys_detach(thread);
         thread = OS_Thread_Null;
@@ -136,7 +136,7 @@ private:
     OS_Thread thread = OS_Thread_Null;
 
     template<Invocable F>
-    static OS_Thread_Ret invoke(void* _f) {
+    [[nodiscard]] static OS_Thread_Ret invoke(void* _f) noexcept {
         F* f = static_cast<F*>(_f);
         Profile::start_thread();
         (*f)();
@@ -151,7 +151,7 @@ private:
 
 template<Allocator A = Alloc, typename F, typename... Args>
     requires Invocable<F, Args...>
-auto spawn(F&& f, Args&&... args) -> Future<Invoke_Result<F, Args...>, A> {
+[[nodiscard]] auto spawn(F&& f, Args&&... args) noexcept -> Future<Invoke_Result<F, Args...>, A> {
 
     using Result = Invoke_Result<F, Args...>;
     auto future = Future<Result, A>::make();

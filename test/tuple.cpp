@@ -10,9 +10,7 @@ i32 main() {
 
     {
         Test test{"empty"_v};
-        {
-            Prof_Scope("Pair");
-
+        Trace("Pair") {
             Pair<i32, i32> p{1, 2};
             assert(p.first == 1 && p.second == 2);
 
@@ -40,9 +38,7 @@ i32 main() {
             auto&& [e_, f] = p4;
             assert(e_ == 1 && f == 2);
         }
-        {
-            Prof_Scope("Tuple");
-
+        Trace("Tuple") {
             Tuple<> t0;
             Tuple<i32> t1{1};
             Tuple<i32, i32> t2{1, 2};

@@ -10,11 +10,11 @@ namespace Log {
 using Callback = void(Level, Thread::Id, Time, Location, String_View);
 using Token = u64;
 
-Token subscribe(Function<Callback> f);
-void unsubscribe(Token token);
+[[nodiscard]] Token subscribe(Function<Callback> f) noexcept;
+void unsubscribe(Token token) noexcept;
 
 template<Invocable<Level, Thread::Id, Time, Location, String_View> F>
-Token subscribe(F&& f) {
+[[nodiscard]] Token subscribe(F&& f) noexcept {
     return subscribe(Function<Callback>{forward<F>(f)});
 }
 

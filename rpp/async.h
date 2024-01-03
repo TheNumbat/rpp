@@ -17,7 +17,7 @@ struct Handle { // Thwarts ADL
 using Alloc = Thread::Alloc;
 
 struct Suspend {
-    bool await_ready() noexcept {
+    [[nodiscard]] bool await_ready() noexcept {
         return false;
     }
     void await_resume() noexcept {
@@ -27,7 +27,7 @@ struct Suspend {
 };
 
 struct Continue {
-    bool await_ready() noexcept {
+    [[nodiscard]] bool await_ready() noexcept {
         return true;
     }
     void await_resume() noexcept {
@@ -47,7 +47,7 @@ constexpr i64 TASK_DONE = 1;
 constexpr i64 TASK_ABANDONED = 2;
 
 struct Final_Suspend {
-    bool await_ready() noexcept {
+    [[nodiscard]] bool await_ready() noexcept {
         return false;
     }
     void await_resume() noexcept {
@@ -70,7 +70,8 @@ struct Final_Suspend {
     }
 #else
     template<typename R, Allocator A>
-    std::coroutine_handle<> await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
+    [[nodiscard]] std::coroutine_handle<>
+    await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
 
         i64 state = handle.promise().state.exchange(TASK_DONE);
 
@@ -88,33 +89,33 @@ struct Final_Suspend {
 template<typename R, Allocator A>
 struct Promise_Base {
 
-    Promise_Base() = default;
-    ~Promise_Base() = default;
+    Promise_Base() noexcept = default;
+    ~Promise_Base() noexcept = default;
 
-    Promise_Base(const Promise_Base&) = delete;
-    Promise_Base& operator=(const Promise_Base&) = delete;
+    Promise_Base(const Promise_Base&) noexcept = delete;
+    Promise_Base& operator=(const Promise_Base&) noexcept = delete;
 
-    Promise_Base(Promise_Base&&) = delete;
-    Promise_Base& operator=(Promise_Base&&) = delete;
+    Promise_Base(Promise_Base&&) noexcept = delete;
+    Promise_Base& operator=(Promise_Base&&) noexcept = delete;
 
-    Continue initial_suspend() noexcept {
+    [[nodiscard]] Continue initial_suspend() noexcept {
         return {};
     }
-    Final_Suspend final_suspend() noexcept {
+    [[nodiscard]] Final_Suspend final_suspend() noexcept {
         return Final_Suspend{};
     }
-    void unhandled_exception() {
+    void unhandled_exception() noexcept {
         die("Unhandled exception in coroutine.");
     }
 
-    void* operator new(size_t size) {
+    [[nodiscard]] void* operator new(size_t size) noexcept {
         return A::alloc(size);
     }
-    void operator delete(void* ptr, size_t) {
+    void operator delete(void* ptr, size_t) noexcept {
         A::free(ptr);
     }
 
-    void block() {
+    void block() noexcept {
         flag.block();
     }
 
@@ -128,14 +129,14 @@ protected:
 
 template<typename R, Allocator A>
 struct Promise : Promise_Base<R, A> {
-    Task<R, A> get_return_object() {
+    [[nodiscard]] Task<R, A> get_return_object() noexcept {
         return Task<R, A>{*this};
     }
-    void return_value(const R& val) {
+    void return_value(const R& val) noexcept {
         value = val;
         this->flag.signal();
     }
-    void return_value(R&& val) {
+    void return_value(R&& val) noexcept {
         value = rpp::move(val);
         this->flag.signal();
     }
@@ -151,40 +152,40 @@ struct Task {
     using promise_type = Promise<R, A>;
     using return_type = R;
 
-    Task() : handle{null} {
+    Task() noexcept : handle{null} {
     }
-    explicit Task(Promise<R, A>& promise)
+    explicit Task(Promise<R, A>& promise) noexcept
         : handle{std::coroutine_handle<promise_type>::from_promise(promise)} {
     }
 
-    ~Task() {
+    ~Task() noexcept {
         if(handle && handle.promise().state.exchange(TASK_ABANDONED) == TASK_DONE) {
             handle.destroy();
         }
     }
 
-    Task(const Task&) = delete;
-    Task& operator=(const Task&) = delete;
+    Task(const Task&) noexcept = delete;
+    Task& operator=(const Task&) noexcept = delete;
 
-    Task(Task&& src) {
+    Task(Task&& src) noexcept {
         handle = src.handle;
         src.handle = null;
     }
-    Task& operator=(Task&& src) {
+    Task& operator=(Task&& src) noexcept {
         this->~Task();
         handle = src.handle;
         src.handle = null;
         return *this;
     }
 
-    bool await_ready() {
+    [[nodiscard]] bool await_ready() noexcept {
         return handle.promise().state.load() == TASK_DONE;
     }
-    bool await_suspend(std::coroutine_handle<> continuation) {
+    [[nodiscard]] bool await_suspend(std::coroutine_handle<> continuation) noexcept {
         i64 cont = reinterpret_cast<i64>(continuation.address());
         return handle.promise().state.compare_and_swap(TASK_START, cont) == TASK_START;
     }
-    R await_resume() {
+    [[nodiscard]] R await_resume() noexcept {
         if constexpr(Same<R, void>) {
             return;
         } else {
@@ -192,17 +193,17 @@ struct Task {
         }
     }
 
-    void resume() {
+    void resume() noexcept {
         handle.resume();
     }
-    bool done() {
+    [[nodiscard]] bool done() noexcept {
         return await_ready();
     }
-    R block() {
+    [[nodiscard]] R block() noexcept {
         handle.promise().block();
         return await_resume();
     }
-    operator bool() const {
+    [[nodiscard]] operator bool() const noexcept {
         return handle != null;
     }
 
@@ -212,44 +213,44 @@ private:
 
 template<Allocator A>
 struct Promise<void, A> : Promise_Base<void, A> {
-    Task<void, A> get_return_object() {
+    [[nodiscard]] Task<void, A> get_return_object() noexcept {
         return Task<void, A>{*this};
     }
-    void return_void() {
+    void return_void() noexcept {
         this->flag.signal();
     }
 };
 
 struct Event {
 
-    Event();
-    ~Event();
+    Event() noexcept;
+    ~Event() noexcept;
 
-    Event(const Event&) = delete;
-    Event& operator=(const Event&) = delete;
+    Event(const Event&) noexcept = delete;
+    Event& operator=(const Event&) noexcept = delete;
 
-    Event(Event&& src);
-    Event& operator=(Event&& src);
+    Event(Event&& src) noexcept;
+    Event& operator=(Event&& src) noexcept;
 
-    static u64 wait_any(Slice<Event> events);
+    [[nodiscard]] static u64 wait_any(Slice<Event> events) noexcept;
 
-    void signal() const;
-    void reset() const;
-    bool try_wait() const;
+    void signal() const noexcept;
+    void reset() const noexcept;
+    [[nodiscard]] bool try_wait() const noexcept;
 
 #ifdef RPP_OS_WINDOWS
-    static Event of_sys(void* event);
+    [[nodiscard]] static Event of_sys(void* event) noexcept;
 #else
-    static Event of_sys(i32 fd, i32 mask);
+    [[nodiscard]] static Event of_sys(i32 fd, i32 mask) noexcept;
 #endif
 
 private:
 #ifdef RPP_OS_WINDOWS
-    Event(void* event) : event_{event} {
+    Event(void* event) noexcept : event_{event} {
     }
     void* event_ = null;
 #else
-    Event(i32 fd, i32 mask) : fd{fd}, mask{mask} {
+    Event(i32 fd, i32 mask) noexcept : fd{fd}, mask{mask} {
     }
     i32 fd = -1;
     i32 mask = 0;

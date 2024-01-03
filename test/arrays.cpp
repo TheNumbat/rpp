@@ -11,9 +11,7 @@ i32 main() {
 
     {
         Test test{"empty"_v};
-        {
-            Prof_Scope("Array");
-
+        Trace("Array") {
             Array<i32, 1> a;
             a[0] = 5;
 
@@ -53,9 +51,7 @@ i32 main() {
 
             (void)f;
         }
-        {
-            Prof_Scope("Vec");
-
+        Trace("Vec") {
             Vec<i32> v;
             v.push(1);
             v.push(2);
@@ -130,9 +126,7 @@ i32 main() {
             (void)s3;
             (void)s5;
         }
-        {
-            Prof_Scope("Stack");
-
+        Trace("Stack") {
             Stack<i32> v;
             v.push(1);
             v.push(2);
@@ -184,9 +178,7 @@ i32 main() {
                 vf.push([]() { info("Hello"); });
             }
         }
-        {
-            Prof_Scope("Queue");
-
+        Trace("Queue") {
             {
                 Queue<String<>> sv{"Hello"_v.string(), "World"_v.string()};
                 sv.pop();
@@ -243,9 +235,7 @@ i32 main() {
                 vf.push([]() { info("Hello"); });
             }
         }
-        {
-            Prof_Scope("Heap");
-
+        Trace("Heap") {
             {
                 Heap<String<>> sv{"Hello"_v.string(), "World"_v.string()};
                 sv.pop();

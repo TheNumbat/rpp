@@ -20,7 +20,7 @@ i32 main() {
             for(char c : "Hello"_v) {
                 packet[i++] = c;
             }
-            udp.send(addr, packet, 5);
+            static_cast<void>(udp.send(addr, packet, 5));
 
             auto data = udp.recv(packet);
             assert(data);

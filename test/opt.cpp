@@ -8,9 +8,7 @@ i32 main() {
 
     {
         Test test{"empty"_v};
-        {
-            Prof_Scope("Storage");
-
+        Trace("Storage") {
             Storage<String<>> s;
             s.construct("Hello"_v.string());
             s.destruct();
@@ -29,9 +27,7 @@ i32 main() {
             m->unlock();
             m.destruct();
         }
-        {
-            Prof_Scope("Opt");
-
+        Trace("Opt") {
             Opt<i32> o;
             assert(!o);
             o = 5;

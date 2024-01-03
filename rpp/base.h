@@ -6,6 +6,7 @@
 #define RPP_COMPILER_MSVC
 #define RPP_FORCE_INLINE __forceinline
 #define RPP_MSVC_INTRINSIC [[msvc::intrinsic]]
+#include <vcruntime_new.h>
 
 // TODO(max): bump when they fix the coroutine bug
 #if _MSC_VER < 1937
@@ -15,7 +16,7 @@
 #elif defined __clang__
 
 #define RPP_COMPILER_CLANG
-#define RPP_FORCE_INLINE __attribute__((always_inline))
+#define RPP_FORCE_INLINE __attribute__((always_inline)) inline
 #define RPP_MSVC_INTRINSIC
 #include <new>
 
@@ -97,15 +98,15 @@ static_assert(sizeof(uptr) == 8);
 
 namespace Libc {
 
-[[noreturn]] void exit(i32 code);
-i32 strncmp(const char* a, const char* b, u64 bytes);
-u64 strlen(const char* str);
-void* memset(void* dest, i32 value, u64 bytes);
-void* memcpy(void* dest, const void* src, u64 bytes);
-i32 memcmp(const void* a, const void* b, u64 bytes);
-i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...);
-i64 strtoll(const char* str, char** endptr, i32 base);
-f32 strtof(const char* str, char** endptr);
+[[noreturn]] void exit(i32 code) noexcept;
+[[nodiscard]] i32 strncmp(const char* a, const char* b, u64 bytes) noexcept;
+[[nodiscard]] u64 strlen(const char* str) noexcept;
+void* memset(void* dest, i32 value, u64 bytes) noexcept;
+void* memcpy(void* dest, const void* src, u64 bytes) noexcept;
+[[nodiscard]] i32 memcmp(const void* a, const void* b, u64 bytes) noexcept;
+[[nodiscard]] i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...) noexcept;
+[[nodiscard]] i64 strtoll(const char* str, char** endptr, i32 base) noexcept;
+[[nodiscard]] f32 strtof(const char* str, char** endptr) noexcept;
 
 } // namespace Libc
 

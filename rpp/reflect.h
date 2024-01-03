@@ -17,9 +17,9 @@
     struct ::rpp::Reflect::Refl<TYPE> {                                                            \
         using __T = TYPE;                                                                          \
         using underlying = Underlying<TYPE>;                                                       \
-        static constexpr Literal name = #TYPE;                                                     \
-        static constexpr Kind kind = Kind::enum_;                                                  \
-        static constexpr TYPE default_ = TYPE::DEFAULT;                                            \
+        constexpr static Literal name = #TYPE;                                                     \
+        constexpr static Kind kind = Kind::enum_;                                                  \
+        constexpr static TYPE default_ = TYPE::DEFAULT;                                            \
         using members = List<__VA_ARGS__>;                                                         \
     }
 
@@ -28,9 +28,9 @@
     struct ::rpp::Reflect::Refl<TYPE> {                                                            \
         using __T = TYPE;                                                                          \
         using underlying = Underlying<TYPE>;                                                       \
-        static constexpr Literal name = NAME;                                                      \
-        static constexpr Kind kind = Kind::enum_;                                                  \
-        static constexpr TYPE default_ = TYPE::DEFAULT;                                            \
+        constexpr static Literal name = NAME;                                                      \
+        constexpr static Kind kind = Kind::enum_;                                                  \
+        constexpr static TYPE default_ = TYPE::DEFAULT;                                            \
         using members = List<__VA_ARGS__>;                                                         \
     }
 
@@ -38,8 +38,8 @@
     template<>                                                                                     \
     struct ::rpp::Reflect::Refl<TYPE> {                                                            \
         using __T = TYPE;                                                                          \
-        static constexpr Literal name = #TYPE;                                                     \
-        static constexpr Kind kind = Kind::record_;                                                \
+        constexpr static Literal name = #TYPE;                                                     \
+        constexpr static Kind kind = Kind::record_;                                                \
         using members = List<__VA_ARGS__>;                                                         \
     }
 
@@ -47,24 +47,24 @@
     template<>                                                                                     \
     struct ::rpp::Reflect::Refl<TYPE> {                                                            \
         using __T = TYPE;                                                                          \
-        static constexpr Literal name = NAME;                                                      \
-        static constexpr Kind kind = Kind::record_;                                                \
+        constexpr static Literal name = NAME;                                                      \
+        constexpr static Kind kind = Kind::record_;                                                \
         using members = List<__VA_ARGS__>;                                                         \
     }
 
 #define RPP_TEMPLATE_RECORD(TYPE, ARG_PACK, ...)                                                   \
     struct ::rpp::Reflect::Refl<TYPE<ARG_PACK>> {                                                  \
         using __T = TYPE<ARG_PACK>;                                                                \
-        static constexpr Literal name = #TYPE;                                                     \
-        static constexpr Kind kind = Kind::record_;                                                \
+        constexpr static Literal name = #TYPE;                                                     \
+        constexpr static Kind kind = Kind::record_;                                                \
         using members = List<__VA_ARGS__>;                                                         \
     }
 
 #define RPP_NAMED_TEMPLATE_RECORD(TYPE, NAME, ARG_PACK, ...)                                       \
     struct ::rpp::Reflect::Refl<TYPE<ARG_PACK>> {                                                  \
         using __T = TYPE<ARG_PACK>;                                                                \
-        static constexpr Literal name = NAME;                                                      \
-        static constexpr Kind kind = Kind::record_;                                                \
+        constexpr static Literal name = NAME;                                                      \
+        constexpr static Kind kind = Kind::record_;                                                \
         using members = List<__VA_ARGS__>;                                                         \
     }
 
@@ -107,17 +107,17 @@ struct Cons {
 
 template<typename T>
 struct Is_List {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<>
 struct Is_List<Nil> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename Head, typename Tail>
 struct Is_List<Cons<Head, Tail>> {
-    static constexpr bool value = Is_List<Tail>::value;
+    constexpr static bool value = Is_List<Tail>::value;
 };
 
 template<typename... Ts>
@@ -138,13 +138,13 @@ struct All;
 
 template<typename F>
 struct All<F, Nil> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename F, typename Head, typename Tail>
     requires Predicate<F, Head>
 struct All<F, Cons<Head, Tail>> {
-    static constexpr bool value = F::template value<Head> && All<F, Tail>::value;
+    constexpr static bool value = F::template value<Head> && All<F, Tail>::value;
 };
 
 template<typename F, typename L>
@@ -153,7 +153,7 @@ struct Iter;
 template<typename F>
 struct Iter<F, Nil> {
     template<typename G>
-    static constexpr void apply(G&&) {
+    constexpr static void apply(G&&) {
     }
 };
 
@@ -167,7 +167,7 @@ template<typename F, typename Head, typename Tail>
 struct Iter<F, Cons<Head, Tail>> {
     template<typename G>
         requires Same<Decay<F>, Decay<G>>
-    static constexpr void apply(G&& f) {
+    constexpr static void apply(G&& f) noexcept {
         forward<G>(f).template apply<Head>();
         Iter<F, Tail>::apply(forward<F>(f));
     }
@@ -178,12 +178,12 @@ struct Length;
 
 template<>
 struct Length<Nil> {
-    static constexpr u64 value = 0;
+    constexpr static u64 value = 0;
 };
 
 template<typename Head, typename Tail>
 struct Length<Cons<Head, Tail>> {
-    static constexpr u64 value = 1 + Length<Tail>::value;
+    constexpr static u64 value = 1 + Length<Tail>::value;
 };
 
 template<typename L, typename Acc>
@@ -241,15 +241,15 @@ struct Refl;
 template<typename E, E V, Literal N>
 struct Case {
     using type = E;
-    static constexpr Literal name = N;
-    static constexpr E value = V;
+    constexpr static Literal name = N;
+    constexpr static E value = V;
 };
 
 template<typename F, u64 O, Literal N>
 struct Field {
     using type = F;
-    static constexpr Literal name = N;
-    static constexpr u64 offset = O;
+    constexpr static Literal name = N;
+    constexpr static u64 offset = O;
 };
 
 template<typename T>
@@ -267,7 +267,7 @@ concept Enum_Case = requires() {
 
 struct Is_Enum_Case {
     template<typename EC>
-    static constexpr bool value = Enum_Case<EC>;
+    constexpr static bool value = Enum_Case<EC>;
 };
 
 template<typename RF>
@@ -279,7 +279,7 @@ concept Record_Field = requires() {
 
 struct Is_Record_Field {
     template<typename RF>
-    static constexpr bool value = Record_Field<RF>;
+    constexpr static bool value = Record_Field<RF>;
 };
 
 template<typename E>
@@ -301,14 +301,14 @@ concept Record = requires() {
 template<typename F>
 struct Iter_Case {
     template<typename Case>
-    void apply() {
+    constexpr void apply() noexcept {
         forward<F>(f)(Case::name, Case::value);
     }
     F&& f;
 };
 
 template<Enum E, typename F>
-void iterate_enum(F&& f) {
+constexpr void iterate_enum(F&& f) noexcept {
     Iter<Iter_Case<F>, typename Refl<E>::members>::apply(Iter_Case<F>{forward<F>(f)});
 }
 
@@ -327,7 +327,7 @@ struct Iter_Field {
     template<typename Field>
         requires(is_const ? Const_Field_Iterator<F, Decay<typename Field::type>>
                           : Field_Iterator<F, Decay<typename Field::type>>)
-    void apply() {
+    constexpr void apply() noexcept {
         using Ptr = If<is_const, const typename Field::type*, typename Field::type*>;
         Ptr field = reinterpret_cast<Ptr>(address + Field::offset);
         f.template apply<decltype(*field)>(Field::name, *field);
@@ -337,14 +337,14 @@ struct Iter_Field {
 };
 
 template<Record R, typename F>
-void iterate_record(F&& f, R& record) {
+constexpr void iterate_record(F&& f, R& record) noexcept {
     u8* address = reinterpret_cast<u8*>(&record);
     Iter<Iter_Field<F, false>, typename Refl<R>::members>::apply(
         Iter_Field<F, false>{forward<F>(f), address});
 }
 
 template<Record R, typename F>
-void iterate_record(F&& f, const R& record) {
+constexpr void iterate_record(F&& f, const R& record) noexcept {
     const u8* address = reinterpret_cast<const u8*>(&record);
     Iter<Iter_Field<F, true>, typename Refl<R>::members>::apply(
         Iter_Field<F, true>{forward<F>(f), address});
@@ -365,124 +365,124 @@ struct Refl<T&&> : Refl<T> {};
 template<typename T>
 struct Refl<T*> {
     using underlying = T;
-    static constexpr Literal name = Refl<T>::name;
-    static constexpr Kind kind = Kind::pointer_;
+    constexpr static Literal name = Refl<T>::name;
+    constexpr static Kind kind = Kind::pointer_;
 };
 
 template<typename T>
 struct Refl<const T*> {
     using underlying = T;
-    static constexpr Literal name = Refl<T>::name;
-    static constexpr Kind kind = Kind::pointer_;
+    constexpr static Literal name = Refl<T>::name;
+    constexpr static Kind kind = Kind::pointer_;
 };
 
 template<typename T, u64 N>
 struct Refl<T[N]> {
     using underlying = T;
-    static constexpr Literal name = Refl<T>::name;
-    static constexpr u64 length = N;
-    static constexpr Kind kind = Kind::array_;
+    constexpr static Literal name = Refl<T>::name;
+    constexpr static u64 length = N;
+    constexpr static Kind kind = Kind::array_;
 };
 
 template<typename T, u64 N>
 struct Refl<const T[N]> {
     using underlying = T;
-    static constexpr Literal name = Refl<T>::name;
-    static constexpr u64 length = N;
-    static constexpr Kind kind = Kind::array_;
+    constexpr static Literal name = Refl<T>::name;
+    constexpr static u64 length = N;
+    constexpr static Kind kind = Kind::array_;
 };
 
 template<>
 struct Refl<void> {
-    static constexpr Literal name = "void";
-    static constexpr Kind kind = Kind::void_;
+    constexpr static Literal name = "void";
+    constexpr static Kind kind = Kind::void_;
 };
 
 template<>
 struct Refl<decltype(null)> {
     using underlying = void;
-    static constexpr Literal name = "null";
-    static constexpr Kind kind = Kind::pointer_;
+    constexpr static Literal name = "null";
+    constexpr static Kind kind = Kind::pointer_;
 };
 
 template<>
 struct Refl<char> {
-    static constexpr Literal name = "char";
-    static constexpr Kind kind = Kind::char_;
+    constexpr static Literal name = "char";
+    constexpr static Kind kind = Kind::char_;
 };
 
 template<>
 struct Refl<i8> {
-    static constexpr Literal name = "i8";
-    static constexpr Kind kind = Kind::i8_;
+    constexpr static Literal name = "i8";
+    constexpr static Kind kind = Kind::i8_;
 };
 
 template<>
 struct Refl<u8> {
-    static constexpr Literal name = "u8";
-    static constexpr Kind kind = Kind::u8_;
+    constexpr static Literal name = "u8";
+    constexpr static Kind kind = Kind::u8_;
 };
 
 template<>
 struct Refl<i16> {
-    static constexpr Literal name = "i16";
-    static constexpr Kind kind = Kind::i16_;
+    constexpr static Literal name = "i16";
+    constexpr static Kind kind = Kind::i16_;
 };
 
 template<>
 struct Refl<u16> {
-    static constexpr Literal name = "u16";
-    static constexpr Kind kind = Kind::u16_;
+    constexpr static Literal name = "u16";
+    constexpr static Kind kind = Kind::u16_;
 };
 template<>
 struct Refl<i32> {
-    static constexpr Literal name = "i32";
-    static constexpr Kind kind = Kind::i32_;
+    constexpr static Literal name = "i32";
+    constexpr static Kind kind = Kind::i32_;
 };
 
 template<>
 struct Refl<u32> {
-    static constexpr Literal name = "u32";
-    static constexpr Kind kind = Kind::u32_;
+    constexpr static Literal name = "u32";
+    constexpr static Kind kind = Kind::u32_;
 };
 
 template<>
 struct Refl<i64> {
-    static constexpr Literal name = "i64";
-    static constexpr Kind kind = Kind::i64_;
+    constexpr static Literal name = "i64";
+    constexpr static Kind kind = Kind::i64_;
 };
 
 template<>
 struct Refl<u64> {
-    static constexpr Literal name = "u64";
-    static constexpr Kind kind = Kind::u64_;
+    constexpr static Literal name = "u64";
+    constexpr static Kind kind = Kind::u64_;
 };
 
 template<>
 struct Refl<f32> {
-    static constexpr Literal name = "f32";
-    static constexpr Kind kind = Kind::f32_;
+    constexpr static Literal name = "f32";
+    constexpr static Kind kind = Kind::f32_;
 };
 
 template<>
 struct Refl<f64> {
-    static constexpr Literal name = "f64";
-    static constexpr Kind kind = Kind::f64_;
+    constexpr static Literal name = "f64";
+    constexpr static Kind kind = Kind::f64_;
 };
 
 template<>
 struct Refl<bool> {
-    static constexpr Literal name = "bool";
-    static constexpr Kind kind = Kind::bool_;
+    constexpr static Literal name = "bool";
+    constexpr static Kind kind = Kind::bool_;
 };
 
 template<>
 struct Refl<Kind> {
     using __T = Kind;
     using underlying = u8;
-    static constexpr Literal name = "Kind";
-    static constexpr Kind kind = Kind::enum_;
-    static constexpr Kind default_ = Kind::void_;
+    constexpr static Literal name = "Kind";
+    constexpr static Kind kind = Kind::enum_;
+    constexpr static Kind default_ = Kind::void_;
     using members = List<RPP_CASE(void_), RPP_CASE(i8_), RPP_CASE(i16_), RPP_CASE(i32_),
                          RPP_CASE(i64_), RPP_CASE(u8_), RPP_CASE(u16_), RPP_CASE(u32_),
                          RPP_CASE(u64_), RPP_CASE(f32_), RPP_CASE(f64_), RPP_CASE(bool_),

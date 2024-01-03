@@ -7,26 +7,26 @@ namespace rpp::RNG {
 
 struct Stream {
 
-    Stream() {
+    Stream() noexcept {
         seed();
     }
-    Stream(u64 seed) : state(seed) {
+    constexpr Stream(u64 seed) noexcept : state(seed) {
     }
 
-    u64 operator()() {
+    [[nodiscard]] constexpr u64 operator()() noexcept {
         state = hash(state);
         return state;
     }
 
-    void seed() {
+    void seed() noexcept {
         state = hash(hash(Thread::this_id()), hash(Log::sys_time()));
     }
-    void seed(u64 seed) {
+    constexpr void seed(u64 seed) noexcept {
         state = seed;
     }
 
     template<Float F>
-    F unit() {
+    [[nodiscard]] constexpr F unit() noexcept {
         if constexpr(Same<F, f32>) {
             u64 r = operator()() >> 40;
             return r * 1e-24f;
@@ -38,12 +38,12 @@ struct Stream {
     }
 
     template<Float F>
-    bool coin_flip(F p) {
+    [[nodiscard]] constexpr bool coin_flip(F p) noexcept {
         return unit<F>() < p;
     }
 
     template<Allocator A, Movable T>
-    void shuffle(Vec<T, A>& vec) {
+    constexpr void shuffle(Vec<T, A>& vec) noexcept {
         for(u64 i = 0; i < vec.length() - 1; i++) {
             u64 j = range(i, vec.length());
             swap(vec[i], vec[j]);
@@ -51,12 +51,12 @@ struct Stream {
     }
 
     template<Int I>
-    I integer() {
+    [[nodiscard]] constexpr I integer() noexcept {
         return static_cast<I>(operator()());
     }
 
     template<Int I>
-    I range(I min, I max) {
+    [[nodiscard]] constexpr I range(I min, I max) noexcept {
         I r = max - min;
         return min + static_cast<I>(operator()()) % r;
     }

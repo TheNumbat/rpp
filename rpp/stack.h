@@ -8,25 +8,25 @@ namespace rpp {
 template<Movable T, Allocator A = Mdefault>
 struct Stack {
 
-    Stack() = default;
-    explicit Stack(u64 capacity) : data_(capacity) {
+    Stack() noexcept = default;
+    explicit Stack(u64 capacity) noexcept : data_(capacity) {
     }
 
     template<typename... S>
         requires All_Are<T, S...> && Move_Constructable<T>
-    explicit Stack(S&&... init) : data_(forward<S>(init)...) {
+    explicit Stack(S&&... init) noexcept : data_(forward<S>(init)...) {
     }
 
-    Stack(const Stack& src) = delete;
-    Stack& operator=(const Stack& src) = delete;
+    Stack(const Stack& src) noexcept = delete;
+    Stack& operator=(const Stack& src) noexcept = delete;
 
-    Stack(Stack&& src) = default;
-    Stack& operator=(Stack&& src) = default;
+    Stack(Stack&& src) noexcept = default;
+    Stack& operator=(Stack&& src) noexcept = default;
 
-    ~Stack() = default;
+    ~Stack() noexcept = default;
 
     template<Allocator B = A>
-    Stack<T, B> clone() const
+    [[nodiscard]] Stack<T, B> clone() const noexcept
         requires Clone<T> || Copy_Constructable<T>
     {
         Stack<T, B> ret;
@@ -34,23 +34,23 @@ struct Stack {
         return ret;
     }
 
-    u64 length() const {
+    [[nodiscard]] u64 length() const noexcept {
         return data_.length();
     }
-    bool empty() const {
+    [[nodiscard]] bool empty() const noexcept {
         return data_.empty();
     }
-    bool full() const {
+    [[nodiscard]] bool full() const noexcept {
         return data_.full();
     }
 
-    T& push(const T& value)
+    T& push(const T& value) noexcept
         requires Copy_Constructable<T>
     {
         return push(T{value});
     }
 
-    T& push(T&& value)
+    T& push(T&& value) noexcept
         requires Move_Constructable<T>
     {
         return data_.push(move(value));
@@ -58,35 +58,35 @@ struct Stack {
 
     template<typename... Args>
         requires Constructable<T, Args...>
-    T& emplace(Args&&... args) {
+    T& emplace(Args&&... args) noexcept {
         return data_.emplace(forward<Args>(args)...);
     }
 
-    void pop() {
+    void pop() noexcept {
         return data_.pop();
     }
 
-    T& top() {
+    [[nodiscard]] T& top() noexcept {
         return data_.back();
     }
-    const T& top() const {
+    [[nodiscard]] const T& top() const noexcept {
         return data_.back();
     }
 
-    void clear() {
+    void clear() noexcept {
         data_.clear();
     }
 
-    const T* begin() const {
+    [[nodiscard]] const T* begin() const noexcept {
         return data_.begin();
     }
-    const T* end() const {
+    [[nodiscard]] const T* end() const noexcept {
         return data_.end();
     }
-    T* begin() {
+    [[nodiscard]] T* begin() noexcept {
         return data_.begin();
     }
-    T* end() {
+    [[nodiscard]] T* end() noexcept {
         return data_.end();
     }
 
@@ -103,7 +103,7 @@ namespace Format {
 
 template<Reflectable T, Allocator A>
 struct Measure<Stack<T, A>> {
-    static u64 measure(const Stack<T, A>& stack) {
+    [[nodiscard]] static u64 measure(const Stack<T, A>& stack) noexcept {
         u64 n = 0;
         u64 length = 7;
         for(const T& item : stack) {
@@ -116,7 +116,7 @@ struct Measure<Stack<T, A>> {
 };
 template<Allocator O, Reflectable T, Allocator A>
 struct Write<O, Stack<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Stack<T, A>& stack) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Stack<T, A>& stack) noexcept {
         idx = output.write(idx, "Stack["_v);
         u64 n = 0;
         for(const T& item : stack) {

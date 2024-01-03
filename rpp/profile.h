@@ -17,44 +17,49 @@ constexpr bool DO_PROFILE = false;
 constexpr bool DO_PROFILE = true;
 #endif
 
-#define PROF_SCOPE2(name, line) Profile::Scope prof_scope__##line(name##_v)
-#define PROF_SCOPE1(name, line) PROF_SCOPE2(name, line)
-#define Prof_Scope(name) PROF_SCOPE1(name, __COUNTER__)
+#define TRACE2(COUNTER) __profile_##COUNTER
+#define TRACE1(NAME, COUNTER) if(::rpp::Profile::Scope TRACE2(COUNTER){String_View{NAME}})
+
+#define Trace(NAME) TRACE1(NAME, __COUNTER__)
 
 struct Profile {
 
-    static void start_thread();
-    static void end_thread();
+    static void start_thread() noexcept;
+    static void end_thread() noexcept;
 
-    static float begin_frame();
-    static void end_frame();
+    static float begin_frame() noexcept;
+    static void end_frame() noexcept;
 
     using Time_Point = u64;
 
-    static void enter(Log::Location l);
-    static void enter(String_View l);
-    static void exit();
+    static void enter(Log::Location l) noexcept;
+    static void enter(String_View l) noexcept;
+    static void exit() noexcept;
 
     struct Alloc {
         String_View name;
         void* address = null;
         u64 size = 0; // 0 means free
     };
-    static void alloc(Alloc a);
+    static void alloc(Alloc a) noexcept;
 
-    static Time_Point timestamp();
-    static f32 ms(Time_Point duration);
-    static f32 s(Time_Point duration);
+    [[nodiscard]] static Time_Point timestamp() noexcept;
+    [[nodiscard]] static f32 ms(Time_Point duration) noexcept;
+    [[nodiscard]] static f32 s(Time_Point duration) noexcept;
 
     struct Scope {
-        Scope(Log::Location loc) {
+        Scope(Log::Location loc) noexcept {
             Profile::enter(move(loc));
         }
-        Scope(String_View name) {
+        Scope(String_View name) noexcept {
             Profile::enter(move(name));
         }
-        ~Scope() {
+        ~Scope() noexcept {
             Profile::exit();
+        }
+
+        consteval operator bool() noexcept {
+            return true;
         }
     };
 
@@ -66,7 +71,7 @@ struct Profile {
         u64 parent = 0;
         Vec<u64, Mhidden> children;
 
-        static Timing_Node make(Log::Location loc, u64 parent) {
+        [[nodiscard]] static Timing_Node make(Log::Location loc, u64 parent) noexcept {
             Timing_Node ret;
             ret.loc = move(loc);
             ret.parent = parent;
@@ -77,7 +82,7 @@ struct Profile {
     };
 
     template<typename F>
-    static void iterate_timings(F&& f) {
+    static void iterate_timings(F&& f) noexcept {
         Thread::Lock lock(threads_lock);
 
         for(auto& entry : threads) {
@@ -101,12 +106,12 @@ struct Profile {
         }
     }
 
-    static void finalizer(Function<void()> f);
-    static void finalize();
+    static void finalizer(Function<void()> f) noexcept;
+    static void finalize() noexcept;
 
 private:
     struct Alloc_Profile {
-        Alloc_Profile() {
+        Alloc_Profile() noexcept {
         }
 
         i64 allocates = 0, frees = 0;
@@ -117,11 +122,11 @@ private:
     };
 
     struct Frame_Profile {
-        Time_Point begin();
-        void end();
-        void enter(Log::Location loc);
-        void exit();
-        void compute_self_times(u64 idx);
+        [[nodiscard]] Time_Point begin() noexcept;
+        void end() noexcept;
+        void enter(Log::Location loc) noexcept;
+        void exit() noexcept;
+        void compute_self_times(u64 idx) noexcept;
 
         u64 current_node = 0;
         Vec<Timing_Node, Mhidden> nodes;
@@ -129,7 +134,7 @@ private:
     };
 
     struct Thread_Profile {
-        Thread_Profile() : during_frame(false) {
+        Thread_Profile() noexcept : during_frame(false) {
         }
 
         bool during_frame;

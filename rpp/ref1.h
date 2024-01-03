@@ -8,25 +8,25 @@
 namespace rpp {
 
 template<typename T>
-T& Ref<T>::operator*() {
+constexpr T& Ref<T>::operator*() {
     assert(value_);
     return *value_;
 }
 
 template<typename T>
-const T& Ref<T>::operator*() const {
+constexpr const T& Ref<T>::operator*() const {
     assert(value_);
     return *value_;
 }
 
 template<typename T>
-T* Ref<T>::operator->() {
+constexpr T* Ref<T>::operator->() {
     assert(value_);
     return value_;
 }
 
 template<typename T>
-const T* Ref<T>::operator->() const {
+constexpr const T* Ref<T>::operator->() const {
     assert(value_);
     return value_;
 }

@@ -8,7 +8,7 @@ namespace rpp {
 namespace Format {
 
 template<Enum E>
-constexpr Literal enum_name(E value) {
+[[nodiscard]] consteval Literal enum_name(E value) noexcept {
     Literal ret{"Invalid"};
     iterate_enum<E>([&](const Literal& check, const E& check_value) {
         if(value == check_value) {
@@ -18,7 +18,7 @@ constexpr Literal enum_name(E value) {
     return ret;
 }
 
-inline Opt<Pair<i64, String_View>> parse_i64(String_View input) {
+[[nodiscard]] inline Opt<Pair<i64, String_View>> parse_i64(String_View input) noexcept {
     Region(R) {
         auto term = input.terminate<Mregion<R>>();
         const char* start = reinterpret_cast<const char*>(term.data());
@@ -32,7 +32,7 @@ inline Opt<Pair<i64, String_View>> parse_i64(String_View input) {
     }
 }
 
-inline Opt<Pair<f32, String_View>> parse_f32(String_View input) {
+[[nodiscard]] inline Opt<Pair<f32, String_View>> parse_f32(String_View input) noexcept {
     Region(R) {
         auto term = input.terminate<Mregion<R>>();
         const char* start = reinterpret_cast<const char*>(term.data());
@@ -46,7 +46,7 @@ inline Opt<Pair<f32, String_View>> parse_f32(String_View input) {
     }
 }
 
-inline Opt<Pair<String_View, String_View>> parse_string(String_View s) {
+[[nodiscard]] inline Opt<Pair<String_View, String_View>> parse_string(String_View s) noexcept {
     u64 start = 0;
     while(start < s.length() && ascii::is_whitespace(s[start])) {
         start++;
@@ -64,7 +64,7 @@ inline Opt<Pair<String_View, String_View>> parse_string(String_View s) {
 }
 
 template<Enum E>
-Opt<Pair<E, String_View>> parse_enum(String_View s) {
+[[nodiscard]] inline Opt<Pair<E, String_View>> parse_enum(String_View s) noexcept {
     Opt<Pair<E, String_View>> ret = {};
     if(auto n = parse_string(s)) {
         auto [name, rest] = move(*n);

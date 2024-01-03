@@ -8,9 +8,7 @@ i32 main() {
 
     {
         Test test{"empty"_v};
-        {
-            Prof_Scope("String0");
-
+        Trace("String0") {
             String_View sv = "Hello World"_v;
             String s = sv.string();
 

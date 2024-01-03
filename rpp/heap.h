@@ -8,9 +8,9 @@ namespace rpp {
 template<Ordered T, Allocator A = Mdefault>
 struct Heap {
 
-    Heap() = default;
+    Heap() noexcept = default;
 
-    explicit Heap(u64 capacity) {
+    explicit Heap(u64 capacity) noexcept {
         data_ = reinterpret_cast<T*>(A::alloc(capacity * sizeof(T)));
         length_ = 0;
         capacity_ = capacity;
@@ -18,15 +18,15 @@ struct Heap {
 
     template<typename... S>
         requires All_Are<T, S...> && Move_Constructable<T>
-    explicit Heap(S&&... init) {
+    explicit Heap(S&&... init) noexcept {
         reserve(sizeof...(S));
         (push(forward<S>(init)), ...);
     }
 
-    explicit Heap(const Heap& src) = delete;
-    Heap& operator=(const Heap& src) = delete;
+    explicit Heap(const Heap& src) noexcept = delete;
+    Heap& operator=(const Heap& src) noexcept = delete;
 
-    Heap(Heap&& src) {
+    Heap(Heap&& src) noexcept {
         data_ = src.data_;
         length_ = src.length_;
         capacity_ = src.capacity_;
@@ -34,7 +34,7 @@ struct Heap {
         src.length_ = 0;
         src.capacity_ = 0;
     }
-    Heap& operator=(Heap&& src) {
+    Heap& operator=(Heap&& src) noexcept {
         this->~Heap();
         data_ = src.data_;
         length_ = src.length_;
@@ -45,7 +45,7 @@ struct Heap {
         return *this;
     }
 
-    ~Heap() {
+    ~Heap() noexcept {
         if constexpr(Must_Destruct<T>) {
             for(T& v : *this) {
                 v.~T();
@@ -58,7 +58,7 @@ struct Heap {
     }
 
     template<Allocator B = A>
-    Heap<T, B> clone() const
+    [[nodiscard]] Heap<T, B> clone() const noexcept
         requires(Clone<T> || Copy_Constructable<T>)
     {
         Heap<T, B> ret;
@@ -80,7 +80,7 @@ struct Heap {
         return ret;
     }
 
-    void reserve(u64 new_capacity)
+    void reserve(u64 new_capacity) noexcept
         requires Trivially_Movable<T> || Move_Constructable<T>
     {
         if(new_capacity <= capacity_) return;
@@ -100,14 +100,14 @@ struct Heap {
         data_ = new_data;
     }
 
-    void grow()
+    void grow() noexcept
         requires Trivially_Movable<T> || Move_Constructable<T>
     {
         u64 new_capacity = capacity_ ? 2 * capacity_ : 8;
         reserve(new_capacity);
     }
 
-    void clear() {
+    void clear() noexcept {
         if constexpr(Must_Destruct<T>) {
             for(T& v : *this) {
                 v.~T();
@@ -116,17 +116,17 @@ struct Heap {
         length_ = 0;
     }
 
-    bool empty() const {
+    [[nodiscard]] bool empty() const noexcept {
         return length_ == 0;
     }
-    bool full() const {
+    [[nodiscard]] bool full() const noexcept {
         return length_ == capacity_;
     }
-    u64 length() const {
+    [[nodiscard]] u64 length() const noexcept {
         return length_;
     }
 
-    void push(T&& value)
+    void push(T&& value) noexcept
         requires Move_Constructable<T>
     {
         if(full()) grow();
@@ -135,7 +135,7 @@ struct Heap {
     }
 
     template<typename... Args>
-    void emplace(Args&&... args)
+    void emplace(Args&&... args) noexcept
         requires Constructable<T, Args...>
     {
         if(full()) grow();
@@ -143,7 +143,7 @@ struct Heap {
         reheap_up(length_ - 1);
     }
 
-    void pop()
+    void pop() noexcept
         requires Trivially_Movable<T> || Move_Constructable<T>
     {
         assert(length_ > 0);
@@ -164,28 +164,28 @@ struct Heap {
         }
     }
 
-    T& top() {
+    [[nodiscard]] T& top() noexcept {
         return data_[0];
     }
-    const T& top() const {
+    [[nodiscard]] const T& top() const noexcept {
         return data_[0];
     }
 
-    const T* begin() const {
+    [[nodiscard]] const T* begin() const noexcept {
         return data_;
     }
-    const T* end() const {
+    [[nodiscard]] const T* end() const noexcept {
         return data_ + length_;
     }
-    T* begin() {
+    [[nodiscard]] T* begin() noexcept {
         return data_;
     }
-    T* end() {
+    [[nodiscard]] T* end() noexcept {
         return data_ + length_;
     }
 
 private:
-    void swap(u64 a, u64 b)
+    void swap(u64 a, u64 b) noexcept
         requires Move_Constructable<T>
     {
         T temp{move(data_[a])};
@@ -193,7 +193,7 @@ private:
         new(&data_[b]) T{move(temp)};
     }
 
-    void reheap_up(u64 idx)
+    void reheap_up(u64 idx) noexcept
         requires Move_Constructable<T>
     {
         while(idx) {
@@ -209,7 +209,7 @@ private:
         }
     }
 
-    void reheap_down(u64 idx)
+    void reheap_down(u64 idx) noexcept
         requires Move_Constructable<T>
     {
         while(true) {
@@ -257,7 +257,7 @@ namespace Format {
 
 template<Reflectable T, Allocator A>
 struct Measure<Heap<T, A>> {
-    static u64 measure(const Heap<T, A>& heap) {
+    [[nodiscard]] static u64 measure(const Heap<T, A>& heap) noexcept {
         u64 n = 0;
         u64 length = 6;
         for(const T& item : heap) {
@@ -270,7 +270,7 @@ struct Measure<Heap<T, A>> {
 };
 template<Allocator O, Reflectable T, Allocator A>
 struct Write<O, Heap<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Heap<T, A>& heap) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Heap<T, A>& heap) noexcept {
         idx = output.write(idx, "Heap["_v);
         u64 n = 0;
         for(const T& item : heap) {

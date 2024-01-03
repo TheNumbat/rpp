@@ -13,14 +13,14 @@ struct Slice;
 template<typename T, Allocator A = Mdefault>
 struct Vec {
 
-    Vec() = default;
+    Vec() noexcept = default;
 
-    explicit Vec(u64 capacity)
+    explicit Vec(u64 capacity) noexcept
         : data_(reinterpret_cast<T*>(A::alloc(capacity * sizeof(T)))), length_(0),
           capacity_(capacity) {
     }
 
-    static Vec make(u64 length)
+    [[nodiscard]] static Vec make(u64 length) noexcept
         requires Default_Constructable<T>
     {
         Vec ret;
@@ -33,15 +33,15 @@ struct Vec {
 
     template<typename... Ss>
         requires All_Are<T, Ss...> && Move_Constructable<T>
-    explicit Vec(Ss&&... init) {
+    explicit Vec(Ss&&... init) noexcept {
         reserve(sizeof...(Ss));
         (push(move(init)), ...);
     }
 
-    Vec(const Vec& src) = delete;
-    Vec& operator=(const Vec& src) = delete;
+    Vec(const Vec& src) noexcept = delete;
+    Vec& operator=(const Vec& src) noexcept = delete;
 
-    Vec(Vec&& src) {
+    Vec(Vec&& src) noexcept {
         data_ = src.data_;
         length_ = src.length_;
         capacity_ = src.capacity_;
@@ -49,7 +49,7 @@ struct Vec {
         src.length_ = 0;
         src.capacity_ = 0;
     }
-    Vec& operator=(Vec&& src) {
+    Vec& operator=(Vec&& src) noexcept {
         this->~Vec();
         data_ = src.data_;
         length_ = src.length_;
@@ -60,7 +60,7 @@ struct Vec {
         return *this;
     }
 
-    ~Vec() {
+    ~Vec() noexcept {
         if constexpr(Must_Destruct<T>) {
             for(u64 i = 0; i < length_; i++) {
                 data_[i].~T();
@@ -73,7 +73,7 @@ struct Vec {
     }
 
     template<Allocator B = A>
-    Vec<T, B> clone() const
+    [[nodiscard]] Vec<T, B> clone() const noexcept
         requires(Clone<T> || Copy_Constructable<T>)
     {
         Vec<T, B> ret(capacity_);
@@ -93,12 +93,12 @@ struct Vec {
         return ret;
     }
 
-    void grow() {
+    void grow() noexcept {
         u64 new_capacity = capacity_ ? 2 * capacity_ : 8;
         reserve(new_capacity);
     }
 
-    void clear() {
+    void clear() noexcept {
         if constexpr(Must_Destruct<T>) {
             for(u64 i = 0; i < length_; i++) {
                 data_[i].~T();
@@ -107,7 +107,7 @@ struct Vec {
         length_ = 0;
     }
 
-    void reserve(u64 new_capacity) {
+    void reserve(u64 new_capacity) noexcept {
         if(new_capacity <= capacity_) return;
 
         T* new_data = reinterpret_cast<T*>(A::alloc(new_capacity * sizeof(T)));
@@ -128,13 +128,13 @@ struct Vec {
         data_ = new_data;
     }
 
-    void extend(u64 additional_length)
+    void extend(u64 additional_length) noexcept
         requires Default_Constructable<T>
     {
         resize(length_ + additional_length);
     }
 
-    void resize(u64 new_length)
+    void resize(u64 new_length) noexcept
         requires Default_Constructable<T>
     {
         reserve(new_length);
@@ -148,23 +148,23 @@ struct Vec {
         length_ = new_length;
     }
 
-    bool empty() const {
+    [[nodiscard]] bool empty() const noexcept {
         return length_ == 0;
     }
-    bool full() const {
+    [[nodiscard]] bool full() const noexcept {
         return length_ == capacity_;
     }
-    void unsafe_fill() {
+    void unsafe_fill() noexcept {
         length_ = capacity_;
     }
 
-    T& push(const T& value)
+    T& push(const T& value) noexcept
         requires Copy_Constructable<T>
     {
         return push(T{value});
     }
 
-    T& push(T&& value)
+    T& push(T&& value) noexcept
         requires Move_Constructable<T>
     {
         if(full()) grow();
@@ -175,14 +175,14 @@ struct Vec {
 
     template<typename... Args>
         requires Constructable<T, Args...>
-    T& emplace(Args&&... args) {
+    T& emplace(Args&&... args) noexcept {
         if(full()) grow();
         assert(length_ < capacity_);
         new(&data_[length_]) T{rpp::forward<Args>(args)...};
         return data_[length_++];
     }
 
-    void pop() {
+    void pop() noexcept {
         assert(length_ > 0);
         length_--;
         if constexpr(Must_Destruct<T>) {
@@ -190,64 +190,64 @@ struct Vec {
         }
     }
 
-    T& front() {
+    [[nodiscard]] T& front() noexcept {
         assert(length_ > 0);
         return data_[0];
     }
-    const T& front() const {
+    [[nodiscard]] const T& front() const noexcept {
         assert(length_ > 0);
         return data_[0];
     }
 
-    T& back() {
+    [[nodiscard]] T& back() noexcept {
         assert(length_ > 0);
         return data_[length_ - 1];
     }
-    const T& back() const {
+    [[nodiscard]] const T& back() const noexcept {
         assert(length_ > 0);
         return data_[length_ - 1];
     }
 
-    T& operator[](u64 idx) {
+    [[nodiscard]] T& operator[](u64 idx) noexcept {
         assert(idx < length_);
         return data_[idx];
     }
-    const T& operator[](u64 idx) const {
+    [[nodiscard]] const T& operator[](u64 idx) const noexcept {
         assert(idx < length_);
         return data_[idx];
     }
 
-    const T* begin() const {
+    [[nodiscard]] const T* begin() const noexcept {
         return data_;
     }
-    const T* end() const {
+    [[nodiscard]] const T* end() const noexcept {
         return data_ + length_;
     }
-    T* begin() {
+    [[nodiscard]] T* begin() noexcept {
         return data_;
     }
-    T* end() {
+    [[nodiscard]] T* end() noexcept {
         return data_ + length_;
     }
 
-    u64 length() const {
+    [[nodiscard]] u64 length() const noexcept {
         return length_;
     }
-    u64 capacity() const {
+    [[nodiscard]] u64 capacity() const noexcept {
         return capacity_;
     }
-    u64 bytes() const {
+    [[nodiscard]] u64 bytes() const noexcept {
         return length_ * sizeof(T);
     }
 
-    T* data() {
+    [[nodiscard]] T* data() noexcept {
         return data_;
     }
-    const T* data() const {
+    [[nodiscard]] const T* data() const noexcept {
         return data_;
     }
 
-    Slice<T> slice() const {
+    [[nodiscard]] Slice<T> slice() const noexcept {
         return Slice<T>{data_, length_};
     }
 
@@ -262,82 +262,84 @@ private:
 template<typename T>
 struct Slice {
 
-    Slice() = default;
+    constexpr Slice() noexcept = default;
 
     template<Allocator A>
-    explicit Slice(const Vec<T, A>& v) {
+    explicit Slice(const Vec<T, A>& v) noexcept {
         data_ = v.data();
         length_ = v.length();
     }
+
     template<u64 N>
-    explicit Slice(const Array<T, N>& a) {
+    constexpr explicit Slice(const Array<T, N>& a) noexcept {
         data_ = a.data();
         length_ = a.length();
     }
-    explicit Slice(const T* data, u64 length) {
+
+    constexpr explicit Slice(const T* data, u64 length) noexcept {
         data_ = data;
         length_ = length;
     }
 
-    explicit Slice(std::initializer_list<T> init) {
+    constexpr explicit Slice(std::initializer_list<T> init) noexcept {
         data_ = init.begin();
         length_ = init.size();
     }
 
-    Slice(const Slice& src) = default;
-    Slice& operator=(const Slice& src) = default;
+    constexpr Slice(const Slice& src) noexcept = default;
+    constexpr Slice& operator=(const Slice& src) noexcept = default;
 
-    Slice(Slice&& src) = default;
-    Slice& operator=(Slice&& src) = default;
+    constexpr Slice(Slice&& src) noexcept = default;
+    constexpr Slice& operator=(Slice&& src) noexcept = default;
 
-    ~Slice() = default;
+    constexpr ~Slice() noexcept = default;
 
-    Slice clone() const {
+    [[nodiscard]] constexpr Slice clone() const noexcept {
         return Slice{data_, length_};
     }
 
-    bool empty() const {
+    [[nodiscard]] constexpr bool empty() const noexcept {
         return length_ == 0;
     }
 
-    const T& front() const {
+    [[nodiscard]] constexpr const T& front() const noexcept {
         assert(length_ > 0);
         return data_[0];
     }
-    const T& back() const {
+    [[nodiscard]] constexpr const T& back() const noexcept {
         assert(length_ > 0);
         return data_[length_ - 1];
     }
 
-    const T& operator[](u64 idx) const {
+    [[nodiscard]] constexpr const T& operator[](u64 idx) const noexcept {
         assert(idx < length_);
         return data_[idx];
     }
 
-    const T* data() const {
+    [[nodiscard]] constexpr const T* data() const noexcept {
         return data_;
     }
 
-    const T* begin() const {
+    [[nodiscard]] constexpr const T* begin() const noexcept {
         return data_;
     }
-    const T* end() const {
+    [[nodiscard]] constexpr const T* end() const noexcept {
         return data_ + length_;
     }
 
-    u64 length() const {
+    [[nodiscard]] constexpr u64 length() const noexcept {
         return length_;
     }
-    u64 bytes() const {
+    [[nodiscard]] constexpr u64 bytes() const noexcept {
         return length_ * sizeof(T);
     }
 
-    Slice sub(u64 start, u64 length) const {
+    [[nodiscard]] constexpr Slice sub(u64 start, u64 length) const noexcept {
         assert(start + length <= length_);
         return Slice{data_ + start, length};
     }
 
-    Slice<u8> to_bytes() {
+    [[nodiscard]] Slice<u8> to_bytes() noexcept {
         Slice<u8> ret;
         ret.data_ = reinterpret_cast<const u8*>(data_);
         ret.length_ = length_ * sizeof(T);
@@ -364,7 +366,7 @@ namespace Format {
 
 template<Reflectable T, Allocator A>
 struct Measure<Vec<T, A>> {
-    static u64 measure(const Vec<T, A>& vec) {
+    [[nodiscard]] constexpr static u64 measure(const Vec<T, A>& vec) noexcept {
         u64 length = 5;
         for(u64 i = 0; i < vec.length(); i++) {
             length += Measure<T>::measure(vec[i]);
@@ -375,7 +377,7 @@ struct Measure<Vec<T, A>> {
 };
 template<Reflectable T>
 struct Measure<Slice<T>> {
-    static u64 measure(const Slice<T>& slice) {
+    [[nodiscard]] static u64 measure(const Slice<T>& slice) noexcept {
         u64 length = 7;
         for(u64 i = 0; i < slice.length(); i++) {
             length += Measure<T>::measure(slice[i]);
@@ -387,7 +389,7 @@ struct Measure<Slice<T>> {
 
 template<Allocator O, Reflectable T, Allocator A>
 struct Write<O, Vec<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Vec<T, A>& vec) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Vec<T, A>& vec) noexcept {
         idx = output.write(idx, "Vec["_v);
         for(u64 i = 0; i < vec.length(); i++) {
             idx = Write<O, T>::write(output, idx, vec[i]);
@@ -398,7 +400,7 @@ struct Write<O, Vec<T, A>> {
 };
 template<Allocator O, Reflectable T>
 struct Write<O, Slice<T>> {
-    static u64 write(String<O>& output, u64 idx, const Slice<T>& slice) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Slice<T>& slice) noexcept {
         idx = output.write(idx, "Slice["_v);
         for(u64 i = 0; i < slice.length(); i++) {
             idx = Write<O, T>::write(output, idx, slice[i]);

@@ -11,122 +11,122 @@ namespace detail {
 
 template<typename T>
 struct Is_Int {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<>
 struct Is_Int<u8> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Int<i8> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Int<u16> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Int<i16> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Int<u32> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Int<i32> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Int<u64> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Int<i64> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
 struct Is_Unsigned_Int {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<>
 struct Is_Unsigned_Int<u8> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Unsigned_Int<u16> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Unsigned_Int<u32> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Unsigned_Int<u64> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
 struct Is_Signed_Int {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<>
 struct Is_Signed_Int<i8> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Signed_Int<i16> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Signed_Int<i32> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Signed_Int<i64> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
 struct Is_Float {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<>
 struct Is_Float<f32> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Is_Float<f64> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
 struct Is_Const {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<typename T>
 struct Is_Const<const T> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
@@ -146,12 +146,12 @@ struct Remove_Const<const T> {
 
 template<typename T>
 struct Is_Pointer {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<typename T>
 struct Is_Pointer<T*> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
@@ -171,17 +171,17 @@ struct Remove_Pointer<T*> {
 
 template<typename T>
 struct Is_Reference {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<typename T>
 struct Is_Reference<T&> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
 struct Is_Reference<T&&> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
@@ -201,12 +201,12 @@ struct Remove_Reference<T&&> {
 
 template<typename T>
 struct Is_Lvalue_Reference {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<typename T>
 struct Is_Lvalue_Reference<T&> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
@@ -216,12 +216,12 @@ struct Add_Lvalue_Reference {
 
 template<typename T>
 struct Is_Rvalue_Reference {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<typename T>
 struct Is_Rvalue_Reference<T&&> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
@@ -257,12 +257,12 @@ constexpr bool False = false;
 
 template<typename L, typename R>
 struct Is_Same {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<typename T>
 struct Is_Same<T, T> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename... Ts>
@@ -270,17 +270,17 @@ struct All_Same;
 
 template<typename L, typename R, typename... Ts>
 struct All_Same<L, R, Ts...> {
-    static constexpr bool value = Is_Same<L, R>::value && All_Same<R, Ts...>::value;
+    constexpr static bool value = Is_Same<L, R>::value && All_Same<R, Ts...>::value;
 };
 
 template<typename T>
 struct All_Same<T> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct All_Same<> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename Q, typename... Ts>
@@ -288,17 +288,17 @@ struct All_Are;
 
 template<typename Q, typename T, typename... Ts>
 struct All_Are<Q, T, Ts...> {
-    static constexpr bool value = Is_Same<Q, T>::value && All_Are<Q, Ts...>::value;
+    constexpr static bool value = Is_Same<Q, T>::value && All_Are<Q, Ts...>::value;
 };
 
 template<typename Q, typename T>
 struct All_Are<Q, T> {
-    static constexpr bool value = Is_Same<Q, T>::value;
+    constexpr static bool value = Is_Same<Q, T>::value;
 };
 
 template<typename Q>
 struct All_Are<Q> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename Q, typename... Ts>
@@ -306,17 +306,17 @@ struct One_Is;
 
 template<typename Q, typename T, typename... Ts>
 struct One_Is<Q, T, Ts...> {
-    static constexpr bool value = Is_Same<Q, T>::value || One_Is<Q, Ts...>::value;
+    constexpr static bool value = Is_Same<Q, T>::value || One_Is<Q, Ts...>::value;
 };
 
 template<typename Q, typename T>
 struct One_Is<Q, T> {
-    static constexpr bool value = Is_Same<Q, T>::value;
+    constexpr static bool value = Is_Same<Q, T>::value;
 };
 
 template<typename Q>
 struct One_Is<Q> {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<bool b, typename T, typename F>
@@ -351,12 +351,12 @@ struct Index_Of;
 
 template<typename T, typename... Ts>
 struct Index_Of<T, T, Ts...> {
-    static constexpr u64 value = 0;
+    constexpr static u64 value = 0;
 };
 
 template<typename T, typename H, typename... Ts>
 struct Index_Of<T, H, Ts...> {
-    static constexpr u64 value = 1 + Index_Of<T, Ts...>::value;
+    constexpr static u64 value = 1 + Index_Of<T, Ts...>::value;
 };
 
 template<typename... Ts>
@@ -365,17 +365,17 @@ struct Distinct;
 template<typename L, typename R, typename... Ts>
 struct Distinct<L, R, Ts...> {
     // NOTE(max): quadratic
-    static constexpr bool value = !One_Is<L, R, Ts...>::value && Distinct<R, Ts...>::value;
+    constexpr static bool value = !One_Is<L, R, Ts...>::value && Distinct<R, Ts...>::value;
 };
 
 template<typename T>
 struct Distinct<T> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<>
 struct Distinct<> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 template<typename T>
@@ -404,7 +404,7 @@ forward(typename Remove_Reference<T>::type&& value) noexcept {
 
 template<typename F, typename... Args>
 struct Is_Invocable {
-    static constexpr bool value = requires(F&& f, Args&&... args) {
+    constexpr static bool value = requires(F&& f, Args&&... args) {
         { forward<F>(f)(forward<Args>(args)...) };
     };
 };
@@ -568,30 +568,30 @@ struct Empty {};
 
 template<typename T, T N>
 struct Constant {
-    static constexpr T value = N;
+    constexpr static T value = N;
 };
 
 struct Literal {
-    static constexpr u64 max_len = 24;
+    constexpr static u64 max_len = 24;
 
     constexpr Literal() = default;
 
     template<size_t N>
-    constexpr Literal(const char (&literal)[N]) {
+    constexpr Literal(const char (&literal)[N]) noexcept {
         static_assert(N <= max_len);
         for(u64 i = 0; i < N; i++) {
             c_string[i] = literal[i];
         }
     }
 
-    constexpr operator const char*() const {
+    [[nodiscard]] constexpr operator const char*() const noexcept {
         return c_string;
     }
     char c_string[max_len] = {};
 };
 
 template<Movable T>
-void swap(T& a, T& b) {
+constexpr void swap(T& a, T& b) noexcept {
     if constexpr(Trivially_Movable<T>) {
         alignas(alignof(T)) u8 tmp[sizeof(T)];
         Libc::memcpy(tmp, &a, sizeof(T));
@@ -602,6 +602,10 @@ void swap(T& a, T& b) {
         a = move(b);
         b = move(tmp);
     }
+}
+
+[[nodiscard]] constexpr bool is_constexpr() noexcept {
+    return __builtin_is_constant_evaluated();
 }
 
 } // namespace rpp

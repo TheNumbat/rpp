@@ -5,48 +5,48 @@
 
 namespace rpp::Thread {
 
-u64 id_len() {
+[[nodiscard]] u64 id_len() noexcept {
     return 5;
 }
 
-void sleep(u64 ms) {
+void sleep(u64 ms) noexcept {
     Sleep(static_cast<DWORD>(ms));
 }
 
-Id this_id() {
+[[nodiscard]] Id this_id() noexcept {
     static thread_local Id cache = (Id)GetCurrentThreadId();
     return cache;
 }
 
-void pause() {
+void pause() noexcept {
     YieldProcessor();
 }
 
-u64 perf_counter() {
+[[nodiscard]] u64 perf_counter() noexcept {
     LARGE_INTEGER li;
     QueryPerformanceCounter(&li);
     return li.QuadPart;
 }
 
-static u64 get_perf_frequency() {
+[[nodiscard]] static u64 get_perf_frequency() noexcept {
     LARGE_INTEGER li;
     bool ret = QueryPerformanceFrequency(&li);
     assert(ret);
     return li.QuadPart;
 }
 
-u64 perf_frequency() {
+[[nodiscard]] u64 perf_frequency() noexcept {
     static u64 cache = get_perf_frequency();
     return cache;
 }
 
-u64 hardware_threads() {
+[[nodiscard]] u64 hardware_threads() noexcept {
     SYSTEM_INFO info;
     GetNativeSystemInfo(&info);
     return static_cast<u64>(info.dwNumberOfProcessors);
 }
 
-void set_priority(Priority p) {
+void set_priority(Priority p) noexcept {
     int value;
     switch(p) {
     case Priority::low: value = THREAD_PRIORITY_LOWEST; break;
@@ -61,7 +61,7 @@ void set_priority(Priority p) {
     }
 }
 
-void set_affinity(u64 core) {
+void set_affinity(u64 core) noexcept {
     assert(core < hardware_threads());
     if(core >= 64) {
         warn("Can't set affinity for more than 64 cores!");
@@ -78,7 +78,7 @@ static_assert(sizeof(SRWLOCK) == sizeof(void*));
 static_assert(sizeof(CONDITION_VARIABLE) == sizeof(void*));
 static_assert(sizeof(HANDLE) == sizeof(OS_Thread));
 
-void Flag::block() {
+void Flag::block() noexcept {
     u16 zero = 0;
     while(value_ == 0) {
         bool ret = WaitOnAddress(&value_, &zero, sizeof(value_), INFINITE);
@@ -88,64 +88,64 @@ void Flag::block() {
     }
 }
 
-void Flag::signal() {
+void Flag::signal() noexcept {
     InterlockedIncrement16(&value_);
     WakeByAddressAll(&value_);
 }
 
-bool Flag::ready() {
+[[nodiscard]] bool Flag::ready() noexcept {
     return value_ != 0;
 }
 
-Mutex::Mutex() {
+Mutex::Mutex() noexcept {
     InitializeSRWLock(reinterpret_cast<PSRWLOCK>(&lock_));
 }
 
-Mutex::~Mutex() {
+Mutex::~Mutex() noexcept {
     lock_ = null;
 }
 
-void Mutex::lock() {
+void Mutex::lock() noexcept {
     AcquireSRWLockExclusive(reinterpret_cast<PSRWLOCK>(&lock_));
 }
 
-void Mutex::unlock() {
+void Mutex::unlock() noexcept {
     ReleaseSRWLockExclusive(reinterpret_cast<PSRWLOCK>(&lock_));
 }
 
-bool Mutex::try_lock() {
+[[nodiscard]] bool Mutex::try_lock() noexcept {
     return TryAcquireSRWLockExclusive(reinterpret_cast<PSRWLOCK>(&lock_));
 }
 
-i64 Atomic::load() const {
+[[nodiscard]] i64 Atomic::load() const noexcept {
     return value_;
 }
 
-i64 Atomic::incr() {
+i64 Atomic::incr() noexcept {
     return InterlockedIncrement64(&value_);
 }
 
-i64 Atomic::decr() {
+i64 Atomic::decr() noexcept {
     return InterlockedDecrement64(&value_);
 }
 
-i64 Atomic::exchange(i64 value) {
+i64 Atomic::exchange(i64 value) noexcept {
     return InterlockedExchange64(&value_, value);
 }
 
-i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {
+[[nodiscard]] i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) noexcept {
     return InterlockedCompareExchange64(&value_, set_to, compare_with);
 }
 
-Cond::Cond() {
+Cond::Cond() noexcept {
     InitializeConditionVariable(reinterpret_cast<PCONDITION_VARIABLE>(&cond_));
 }
 
-Cond::~Cond() {
+Cond::~Cond() noexcept {
     cond_ = CONDITION_VARIABLE_INIT;
 }
 
-void Cond::wait(Mutex& mut) {
+void Cond::wait(Mutex& mut) noexcept {
     bool ret = SleepConditionVariableSRW(reinterpret_cast<PCONDITION_VARIABLE>(&cond_),
                                          reinterpret_cast<PSRWLOCK>(&mut.lock_), INFINITE, 0);
     if(!ret) {
@@ -153,21 +153,21 @@ void Cond::wait(Mutex& mut) {
     }
 }
 
-void Cond::signal() {
+void Cond::signal() noexcept {
     WakeConditionVariable(reinterpret_cast<PCONDITION_VARIABLE>(&cond_));
 }
 
-void Cond::broadcast() {
+void Cond::broadcast() noexcept {
     WakeAllConditionVariable(reinterpret_cast<PCONDITION_VARIABLE>(&cond_));
 }
 
-Id sys_id(OS_Thread thread_) {
+[[nodiscard]] Id sys_id(OS_Thread thread_) noexcept {
     HANDLE thread = reinterpret_cast<HANDLE>(thread_);
     assert(thread != INVALID_HANDLE_VALUE);
     return GetThreadId(thread);
 }
 
-void sys_join(OS_Thread thread_) {
+void sys_join(OS_Thread thread_) noexcept {
     Id id = sys_id(thread_);
     assert(id != this_id());
 
@@ -184,7 +184,7 @@ void sys_join(OS_Thread thread_) {
     assert(ok);
 }
 
-void sys_detach(OS_Thread thread_) {
+void sys_detach(OS_Thread thread_) noexcept {
     HANDLE thread = reinterpret_cast<HANDLE>(thread_);
     if(thread == INVALID_HANDLE_VALUE) return;
     bool ret = CloseHandle(thread);
@@ -192,7 +192,7 @@ void sys_detach(OS_Thread thread_) {
     thread = INVALID_HANDLE_VALUE;
 }
 
-OS_Thread sys_start(OS_Thread_Ret (*f)(void*), void* data) {
+[[nodiscard]] OS_Thread sys_start(OS_Thread_Ret (*f)(void*), void* data) noexcept {
     HANDLE thread = INVALID_HANDLE_VALUE;
     DWORD id = 0;
     thread = CreateThread(null, 0, reinterpret_cast<LPTHREAD_START_ROUTINE>(f), data, 0, &id);

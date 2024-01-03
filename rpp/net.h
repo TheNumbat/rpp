@@ -19,8 +19,8 @@ struct Address {
 
     Address() = default;
 
-    explicit Address(u16 port);
-    explicit Address(String_View address, u16 port);
+    explicit Address(u16 port) noexcept;
+    explicit Address(String_View address, u16 port) noexcept;
 
 private:
 #ifdef RPP_OS_WINDOWS
@@ -38,18 +38,18 @@ struct Udp {
         Address from;
     };
 
-    Udp();
-    ~Udp();
+    Udp() noexcept;
+    ~Udp() noexcept;
 
-    Udp(const Udp& src) = delete;
-    Udp& operator=(const Udp& src) = delete;
+    Udp(const Udp& src) noexcept = delete;
+    Udp& operator=(const Udp& src) noexcept = delete;
 
-    Udp(Udp&& src);
-    Udp& operator=(Udp&& src);
+    Udp(Udp&& src) noexcept;
+    Udp& operator=(Udp&& src) noexcept;
 
-    void bind(Address address);
-    u64 send(Address address, const Packet& out, u64 length);
-    Opt<Data> recv(Packet& in);
+    void bind(Address address) noexcept;
+    [[nodiscard]] u64 send(Address address, const Packet& out, u64 length) noexcept;
+    [[nodiscard]] Opt<Data> recv(Packet& in) noexcept;
 
 private:
 #ifdef RPP_OS_WINDOWS

@@ -12,64 +12,69 @@ struct String;
 
 struct String_View {
 
-    String_View() = default;
+    constexpr String_View() noexcept = default;
 
-    explicit String_View(const char* c_string)
+    template<u64 N>
+    explicit String_View(const char (&c_string)[N]) noexcept : data_(c_string), length_(N - 1) {
+    }
+
+    explicit String_View(const char* c_string) noexcept
         : data_(reinterpret_cast<const u8*>(c_string)), length_(Libc::strlen(c_string)) {
     }
 
-    explicit String_View(const Literal& literal)
+    explicit String_View(const Literal& literal) noexcept
         : data_(reinterpret_cast<const u8*>(literal.c_string)) {
         while(length_ < Literal::max_len && literal.c_string[length_]) length_++;
     }
 
-    explicit String_View(const u8* data, u64 length) : data_(data), length_(length) {
+    constexpr explicit String_View(const u8* data, u64 length) noexcept
+        : data_(data), length_(length) {
     }
 
-    ~String_View() = default;
+    constexpr ~String_View() noexcept = default;
 
-    String_View(const String_View& src) = default;
-    String_View& operator=(const String_View& src) = default;
+    constexpr String_View(const String_View& src) noexcept = default;
+    constexpr String_View& operator=(const String_View& src) noexcept = default;
 
-    String_View(String_View&& src) = default;
-    String_View& operator=(String_View&& src) = default;
+    constexpr String_View(String_View&& src) noexcept = default;
+    constexpr String_View& operator=(String_View&& src) noexcept = default;
 
-    const u8& operator[](u64 idx) const;
+    [[nodiscard]] constexpr const u8& operator[](u64 idx) const noexcept;
 
-    constexpr String_View file_suffix() const;
-    constexpr String_View file_extension() const;
-    constexpr String_View remove_file_suffix() const;
+    [[nodiscard]] constexpr String_View file_suffix() const noexcept;
+    [[nodiscard]] constexpr String_View file_extension() const noexcept;
+    [[nodiscard]] constexpr String_View remove_file_suffix() const noexcept;
 
     template<Allocator A = Mdefault>
-    String<A> string() const;
+    [[nodiscard]] String<A> string() const noexcept;
 
-    const u8* begin() const {
+    [[nodiscard]] constexpr const u8* begin() const noexcept {
         return data_;
     }
-    const u8* end() const {
+    [[nodiscard]] constexpr const u8* end() const noexcept {
         return data_ + length_;
     }
 
-    const u8* data() const {
+    [[nodiscard]] constexpr const u8* data() const noexcept {
         return data_;
     }
-    u64 length() const {
+    [[nodiscard]] constexpr u64 length() const noexcept {
         return length_;
     }
 
-    bool empty() const {
+    [[nodiscard]] constexpr bool empty() const noexcept {
         return length_ == 0;
     }
 
     template<Allocator A>
-    String<A> terminate() const;
+    [[nodiscard]] String<A> terminate() const noexcept;
 
     template<Allocator A>
-    String<A> append(String_View next) const;
+    [[nodiscard]] String<A> append(String_View next) const noexcept;
 
-    String_View sub(u64 start, u64 end) const;
+    [[nodiscard]] constexpr String_View sub(u64 start, u64 end) const noexcept;
 
-    String_View clone() const {
+    [[nodiscard]] constexpr String_View clone() const noexcept {
         return String_View{data_, length_};
     }
 
@@ -83,27 +88,28 @@ private:
 template<Allocator A>
 struct String {
 
-    String() = default;
-    explicit String(u64 capacity)
+    String() noexcept = default;
+    explicit String(u64 capacity) noexcept
         : data_(reinterpret_cast<u8*>(A::alloc(capacity))), length_(0), capacity_(capacity) {
     }
 
-    ~String() {
+    ~String() noexcept {
         A::free(data_);
         data_ = null;
         capacity_ = 0;
         length_ = 0;
     }
 
-    String(const String& src) = delete;
-    String& operator=(const String& src) = delete;
+    String(const String& src) noexcept = delete;
+    String& operator=(const String& src) noexcept = delete;
 
-    String(String&& src) : data_(src.data_), length_(src.length_), capacity_(src.capacity_) {
+    String(String&& src) noexcept
+        : data_(src.data_), length_(src.length_), capacity_(src.capacity_) {
         src.data_ = null;
         src.length_ = 0;
         src.capacity_ = 0;
     }
-    String& operator=(String&& src) {
+    String& operator=(String&& src) noexcept {
         this->~String();
         data_ = src.data_;
         length_ = src.length_;
@@ -115,7 +121,7 @@ struct String {
     }
 
     template<Allocator B = A>
-    String<B> clone() const {
+    [[nodiscard]] String<B> clone() const noexcept {
         String<B> ret;
         ret.data_ = reinterpret_cast<u8*>(B::alloc(capacity_));
         ret.length_ = length_;
@@ -124,56 +130,56 @@ struct String {
         return ret;
     }
 
-    void set_length(u64 length);
+    void set_length(u64 length) noexcept;
 
-    u8& operator[](u64 idx);
-    const u8& operator[](u64 idx) const;
+    [[nodiscard]] u8& operator[](u64 idx) noexcept;
+    [[nodiscard]] const u8& operator[](u64 idx) const noexcept;
 
-    String_View view() const {
+    [[nodiscard]] String_View view() const noexcept {
         return String_View{data_, length_};
     }
-    String_View sub(u64 start, u64 end) const;
+    [[nodiscard]] String_View sub(u64 start, u64 end) const noexcept;
 
-    u64 write(u64 i, char c);
+    [[nodiscard]] u64 write(u64 i, char c) noexcept;
     template<Allocator B>
-    u64 write(u64 i, const String<B>& text);
-    u64 write(u64 i, String_View text);
+    [[nodiscard]] u64 write(u64 i, const String<B>& text) noexcept;
+    [[nodiscard]] u64 write(u64 i, String_View text) noexcept;
 
-    u8* begin() {
+    [[nodiscard]] u8* begin() noexcept {
         return data_;
     }
-    u8* end() {
+    [[nodiscard]] u8* end() noexcept {
         return data_ + length_;
     }
-    const u8* begin() const {
+    [[nodiscard]] const u8* begin() const noexcept {
         return data_;
     }
-    const u8* end() const {
+    [[nodiscard]] const u8* end() const noexcept {
         return data_ + length_;
     }
 
-    u8* data() {
+    [[nodiscard]] u8* data() noexcept {
         return data_;
     }
-    const u8* data() const {
+    [[nodiscard]] const u8* data() const noexcept {
         return data_;
     }
-    u64 length() const {
+    [[nodiscard]] u64 length() const noexcept {
         return length_;
     }
-    u64 capacity() const {
+    [[nodiscard]] u64 capacity() const noexcept {
         return capacity_;
     }
 
-    bool empty() const {
+    [[nodiscard]] bool empty() const noexcept {
         return length_ == 0;
     }
 
     template<Allocator RA>
-    String<RA> terminate() const;
+    [[nodiscard]] String<RA> terminate() const noexcept;
 
     template<Allocator RA, Allocator B>
-    String<RA> append(const String<B>& next) const;
+    [[nodiscard]] String<RA> append(const String<B>& next) const noexcept;
 
 private:
     u8* data_ = null;
@@ -185,7 +191,7 @@ private:
 };
 
 template<Allocator A>
-String<A> String_View::string() const {
+[[nodiscard]] String<A> String_View::string() const noexcept {
     String<A> ret;
     ret.data_ = reinterpret_cast<u8*>(A::alloc(length_));
     ret.length_ = length_;
@@ -194,17 +200,18 @@ String<A> String_View::string() const {
     return ret;
 }
 
-inline String_View operator""_v(const char* c_string, size_t length) {
+[[nodiscard]] RPP_FORCE_INLINE String_View operator""_v(const char* c_string,
+                                                        size_t length) noexcept {
     return String_View{reinterpret_cast<const u8*>(c_string), length};
 }
 
-inline bool operator==(String_View l, String_View r) {
+[[nodiscard]] constexpr bool operator==(String_View l, String_View r) noexcept {
     if(l.length() != r.length()) return false;
     return Libc::strncmp(reinterpret_cast<const char*>(l.data()),
                          reinterpret_cast<const char*>(r.data()), l.length()) == 0;
 }
 
-inline bool operator<(String_View l, String_View r) {
+[[nodiscard]] constexpr bool operator<(String_View l, String_View r) noexcept {
     u64 length = l.length() < r.length() ? l.length() : r.length();
     for(u64 i = 0; i < length; i++) {
         if(l[i] < r[i]) return true;
@@ -214,28 +221,28 @@ inline bool operator<(String_View l, String_View r) {
 }
 
 template<Allocator A>
-bool operator==(const String<A>& l, String_View r) {
+[[nodiscard]] bool operator==(const String<A>& l, String_View r) noexcept {
     if(l.length() != r.length()) return false;
     return Libc::strncmp(reinterpret_cast<const char*>(l.data()),
                          reinterpret_cast<const char*>(r.data()), l.length()) == 0;
 }
 
 template<Allocator B>
-bool operator==(String_View l, const String<B>& r) {
+[[nodiscard]] bool operator==(String_View l, const String<B>& r) noexcept {
     if(l.length() != r.length()) return false;
     return Libc::strncmp(reinterpret_cast<const char*>(l.data()),
                          reinterpret_cast<const char*>(r.data()), l.length()) == 0;
 }
 
 template<Allocator A, Allocator B>
-inline bool operator==(const String<A>& l, const String<B>& r) {
+[[nodiscard]] bool operator==(const String<A>& l, const String<B>& r) noexcept {
     if(l.length() != r.length()) return false;
     return Libc::strncmp(reinterpret_cast<const char*>(l.data()),
                          reinterpret_cast<const char*>(r.data()), l.length()) == 0;
 }
 
 template<Allocator A, Allocator B>
-bool operator<(const String<A>& l, const String<B>& r) {
+[[nodiscard]] bool operator<(const String<A>& l, const String<B>& r) noexcept {
     u64 length = l.length() < r.length() ? l.length() : r.length();
     for(u64 i = 0; i < length; i++) {
         if(l[i] < r[i]) return true;
@@ -246,15 +253,15 @@ bool operator<(const String<A>& l, const String<B>& r) {
 
 namespace ascii {
 
-constexpr u8 to_uppercase(u8 c) {
+[[nodiscard]] constexpr u8 to_uppercase(u8 c) noexcept {
     if(c >= 'a' && c <= 'z') return c - 'a' + 'A';
     return c;
 }
-constexpr u8 to_lowercase(u8 c) {
+[[nodiscard]] constexpr u8 to_lowercase(u8 c) noexcept {
     if(c >= 'A' && c <= 'Z') return c - 'A' + 'a';
     return c;
 }
-constexpr bool is_whitespace(u8 c) {
+[[nodiscard]] constexpr bool is_whitespace(u8 c) noexcept {
     return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v';
 }
 
@@ -264,12 +271,12 @@ namespace detail {
 
 template<typename T>
 struct Is_String {
-    static constexpr bool value = false;
+    constexpr static bool value = false;
 };
 
 template<Allocator A>
 struct Is_String<String<A>> {
-    static constexpr bool value = true;
+    constexpr static bool value = true;
 };
 
 } // namespace detail
@@ -286,7 +293,7 @@ namespace Hash {
 
 template<Allocator A>
 struct Hash<String<A>> {
-    static u64 hash(const String<A>& string) {
+    [[nodiscard]] static u64 hash(const String<A>& string) noexcept {
         u64 h = 0;
         for(u8 c : string) h = hash_combine(h, rpp::hash(c));
         return h;
@@ -295,7 +302,7 @@ struct Hash<String<A>> {
 
 template<>
 struct Hash<String_View> {
-    static u64 hash(const String_View& string) {
+    [[nodiscard]] static u64 hash(const String_View& string) noexcept {
         u64 h = 0;
         for(u8 c : string) h = hash_combine(h, rpp::hash(c));
         return h;

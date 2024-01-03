@@ -9,7 +9,7 @@ namespace rpp {
 
 namespace detail {
 
-static consteval Literal pool_name(u64 N) {
+[[nodiscard]] consteval Literal pool_name(u64 N) noexcept {
     Literal ret{"Pool<"};
     u64 n = 0;
     for(u64 i = N; i > 0; i /= 10) {
@@ -25,11 +25,11 @@ static consteval Literal pool_name(u64 N) {
 
 template<u64 N>
 struct Pool {
-    static constexpr Literal name = pool_name(N);
+    constexpr static Literal name = pool_name(N);
 
     template<typename T, typename... Args>
         requires(sizeof(T) == N) && Constructable<T, Args...>
-    static T* make(Args&&... args) {
+    [[nodiscard]] static T* make(Args&&... args) noexcept {
         finalizer.keep_alive();
         Block* block = null;
         {
@@ -42,7 +42,7 @@ struct Pool {
 
     template<typename T>
         requires(sizeof(T) == N)
-    static void destroy(T* value) {
+    static void destroy(T* value) noexcept {
         finalizer.keep_alive();
         if constexpr(Must_Destruct<T>) {
             value->~T();
@@ -61,10 +61,10 @@ private:
     };
 
     struct Finalizer {
-        Finalizer(Free_List<Block, Backing>& l) {
+        Finalizer(Free_List<Block, Backing>& l) noexcept {
             Profile::finalizer([&l]() { l.clear(); });
         }
-        RPP_FORCE_INLINE void keep_alive() {
+        consteval void keep_alive() noexcept {
         }
     };
 
@@ -78,18 +78,18 @@ private:
 struct Mpool {
     template<typename T, typename... Args>
         requires Constructable<T, Args...>
-    static T* make(Args&&... args) {
+    [[nodiscard]] constexpr static T* make(Args&&... args) noexcept {
         return detail::Pool<sizeof(T)>::template make<T, Args...>(forward<Args>(args)...);
     }
 
     template<typename T>
-    static void destroy(T* value) {
+    constexpr static void destroy(T* value) noexcept {
         detail::Pool<sizeof(T)>::template destroy<T>(value);
     }
 };
 
 template<Literal N, bool log>
-void* Mallocator<N, log>::alloc(u64 size) {
+[[nodiscard]] void* Mallocator<N, log>::alloc(u64 size) noexcept {
     if(!size) return null;
     void* ret = sys_alloc(size);
     if constexpr(log) {
@@ -99,7 +99,7 @@ void* Mallocator<N, log>::alloc(u64 size) {
 }
 
 template<Literal N, bool log>
-void Mallocator<N, log>::free(void* mem) {
+void Mallocator<N, log>::free(void* mem) noexcept {
     if(!mem) return;
     if constexpr(log) {
         Profile::alloc({String_View{N}, mem, 0});

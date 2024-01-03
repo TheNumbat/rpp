@@ -11,7 +11,7 @@
 
 namespace rpp::Thread {
 
-static String_View error(int code) {
+[[nodiscard]] static String_View error(int code) noexcept {
     constexpr int buffer_size = 256;
     static thread_local char buffer[buffer_size];
     return String_View{strerror_r(code, buffer, buffer_size)};
@@ -19,23 +19,23 @@ static String_View error(int code) {
 
 static_assert(sizeof(Id) == sizeof(pthread_t), "Id != pthread_t");
 
-void sleep(u64 ms) {
+void sleep(u64 ms) noexcept {
     usleep(ms * 1000);
 }
 
-u64 id_len() {
+[[nodiscard]] u64 id_len() noexcept {
     return 15;
 }
 
-Id this_id() {
+[[nodiscard]] Id this_id() noexcept {
     return (Id)pthread_self();
 }
 
-void pause() {
+void pause() noexcept {
     _mm_pause();
 }
 
-u64 perf_counter() {
+[[nodiscard]] u64 perf_counter() noexcept {
     u64 ticks;
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
@@ -45,17 +45,17 @@ u64 perf_counter() {
     return ticks;
 }
 
-u64 perf_frequency() {
+[[nodiscard]] u64 perf_frequency() noexcept {
     return 1000000000;
 }
 
-u64 hardware_threads() {
+[[nodiscard]] u64 hardware_threads() noexcept {
     long ret = sysconf(_SC_NPROCESSORS_ONLN);
     assert(ret > 0);
     return static_cast<u64>(ret);
 }
 
-void set_priority(Priority p) {
+void set_priority(Priority p) noexcept {
 
     pthread_t id = pthread_self();
     pthread_attr_t attr;
@@ -110,7 +110,7 @@ void set_priority(Priority p) {
     }
 }
 
-void set_affinity(u64 core) {
+void set_affinity(u64 core) noexcept {
     assert(core < hardware_threads());
     cpu_set_t set = {};
     CPU_SET(static_cast<int>(core), &set);
@@ -120,7 +120,7 @@ void set_affinity(u64 core) {
     }
 }
 
-void Flag::block() {
+void Flag::block() noexcept {
     while(__atomic_load_n(&value_, __ATOMIC_SEQ_CST) == 0) {
         int ret = syscall(SYS_futex, &value_, FUTEX_WAIT, 0, NULL, NULL, 0);
         if(ret == -1 && errno != EAGAIN) {
@@ -129,7 +129,7 @@ void Flag::block() {
     }
 }
 
-void Flag::signal() {
+void Flag::signal() noexcept {
     __atomic_exchange_n(&value_, 1, __ATOMIC_SEQ_CST);
     int ret = syscall(SYS_futex, &value_, FUTEX_WAKE, RPP_INT32_MAX, NULL, NULL, 0);
     if(ret == -1) {
@@ -137,39 +137,39 @@ void Flag::signal() {
     }
 }
 
-bool Flag::ready() {
+[[nodiscard]] bool Flag::ready() noexcept {
     return __atomic_load_n(&value_, __ATOMIC_SEQ_CST) != 0;
 }
 
-Mutex::Mutex() {
+Mutex::Mutex() noexcept {
     int ret = pthread_mutex_init(&lock_, null);
     if(ret) {
         die("Failed to create mutex: %", error(ret));
     }
 }
 
-Mutex::~Mutex() {
+Mutex::~Mutex() noexcept {
     int ret = pthread_mutex_destroy(&lock_);
     if(ret) {
         die("Failed to destroy mutex: %", error(ret));
     }
 }
 
-void Mutex::lock() {
+void Mutex::lock() noexcept {
     int ret = pthread_mutex_lock(&lock_);
     if(ret) {
         die("Failed to lock mutex: %", error(ret));
     }
 }
 
-void Mutex::unlock() {
+void Mutex::unlock() noexcept {
     int ret = pthread_mutex_unlock(&lock_);
     if(ret) {
         die("Failed to unlock mutex: %", error(ret));
     }
 }
 
-bool Mutex::try_lock() {
+[[nodiscard]] bool Mutex::try_lock() noexcept {
     int ret = pthread_mutex_trylock(&lock_);
     if(ret == EBUSY)
         return false;
@@ -178,68 +178,68 @@ bool Mutex::try_lock() {
     return true;
 }
 
-i64 Atomic::load() const {
+[[nodiscard]] i64 Atomic::load() const noexcept {
     return __atomic_load_n(&value_, __ATOMIC_SEQ_CST);
 }
 
-i64 Atomic::incr() {
+i64 Atomic::incr() noexcept {
     return __atomic_fetch_add(&value_, 1, __ATOMIC_SEQ_CST) + 1;
 }
 
-i64 Atomic::decr() {
+i64 Atomic::decr() noexcept {
     return __atomic_fetch_sub(&value_, 1, __ATOMIC_SEQ_CST) - 1;
 }
 
-i64 Atomic::exchange(i64 value) {
+i64 Atomic::exchange(i64 value) noexcept {
     return __atomic_exchange_n(&value_, value, __ATOMIC_SEQ_CST);
 }
 
-i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) {
+[[nodiscard]] i64 Atomic::compare_and_swap(i64 compare_with, i64 set_to) noexcept {
     __atomic_compare_exchange_n(&value_, &compare_with, set_to, false, __ATOMIC_SEQ_CST,
                                 __ATOMIC_SEQ_CST);
     return compare_with;
 }
 
-Cond::Cond() {
+Cond::Cond() noexcept {
     int ret = pthread_cond_init(&cond_, null);
     if(ret) {
         die("Failed to create condvar: %", error(ret));
     }
 }
 
-Cond::~Cond() {
+Cond::~Cond() noexcept {
     int ret = pthread_cond_destroy(&cond_);
     if(ret) {
         die("Failed to destroy condvar: %", error(ret));
     }
 }
 
-void Cond::wait(Mutex& mut) {
+void Cond::wait(Mutex& mut) noexcept {
     int ret = pthread_cond_wait(&cond_, &mut.lock_);
     if(ret) {
         die("Failed to wait on cond: %", error(ret));
     }
 }
 
-void Cond::signal() {
+void Cond::signal() noexcept {
     int ret = pthread_cond_signal(&cond_);
     if(ret) {
         die("Failed to signal cond: %", error(ret));
     }
 }
 
-void Cond::broadcast() {
+void Cond::broadcast() noexcept {
     int ret = pthread_cond_broadcast(&cond_);
     if(ret) {
         die("Failed to broadcast cond: %", error(ret));
     }
 }
 
-Id sys_id(OS_Thread thread) {
+[[nodiscard]] Id sys_id(OS_Thread thread) noexcept {
     return static_cast<Id>(thread);
 }
 
-void sys_join(OS_Thread thread) {
+void sys_join(OS_Thread thread) noexcept {
     if(!thread) return;
     assert(!pthread_equal(pthread_self(), thread));
     int ret = pthread_join(thread, null);
@@ -248,7 +248,7 @@ void sys_join(OS_Thread thread) {
     }
 }
 
-void sys_detach(OS_Thread thread) {
+void sys_detach(OS_Thread thread) noexcept {
     if(!thread) return;
     int ret = pthread_detach(thread);
     if(ret) {
@@ -256,7 +256,7 @@ void sys_detach(OS_Thread thread) {
     }
 }
 
-OS_Thread sys_start(OS_Thread_Ret (*f)(void*), void* data) {
+[[nodiscard]] OS_Thread sys_start(OS_Thread_Ret (*f)(void*), void* data) noexcept {
     OS_Thread thread = OS_Thread_Null;
     int ret = pthread_create(&thread, null, f, data);
     if(ret) {

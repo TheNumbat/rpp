@@ -9,11 +9,11 @@ namespace detail {
 
 template<typename T>
 struct Rc_Data {
-    explicit Rc_Data(u64 r)
+    explicit Rc_Data(u64 r) noexcept
         requires Default_Constructable<T>
         : references(r) {
     }
-    explicit Rc_Data(u64 r, T&& t)
+    explicit Rc_Data(u64 r, T&& t) noexcept
         requires Move_Constructable<T>
         : references(r), value(move(t)) {
     }
@@ -24,11 +24,11 @@ struct Rc_Data {
 
 template<typename T>
 struct Arc_Data {
-    explicit Arc_Data(Thread::Atomic r)
+    explicit Arc_Data(Thread::Atomic r) noexcept
         requires Default_Constructable<T>
         : references(r) {
     }
-    explicit Arc_Data(Thread::Atomic r, T&& t)
+    explicit Arc_Data(Thread::Atomic r, T&& t) noexcept
         requires Move_Constructable<T>
         : references(r), value(move(t)) {
     }
@@ -44,18 +44,18 @@ struct Rc {
     using A = Pool_Adaptor<P>;
     using Data = detail::Rc_Data<T>;
 
-    Rc() = default;
-    ~Rc() {
+    Rc() noexcept = default;
+    ~Rc() noexcept {
         drop();
     }
 
     template<typename... Args>
         requires Constructable<T, Args...> && Move_Constructable<T>
-    explicit Rc(Args&&... args) {
+    explicit Rc(Args&&... args) noexcept {
         data_ = A::template make<Data>(static_cast<u64>(1), T{forward<Args>(args)...});
     }
 
-    static Rc make()
+    [[nodiscard]] static Rc make() noexcept
         requires Default_Constructable<T>
     {
         Rc ret;
@@ -63,57 +63,57 @@ struct Rc {
         return ret;
     }
 
-    Rc(const Rc& src) = delete;
-    Rc& operator=(const Rc& src) = delete;
+    Rc(const Rc& src) noexcept = delete;
+    Rc& operator=(const Rc& src) noexcept = delete;
 
-    Rc dup() const {
+    [[nodiscard]] Rc dup() const noexcept {
         Rc ret;
         ret.data_ = data_;
         if(data_) data_->references++;
         return ret;
     }
 
-    Rc(Rc&& src) {
+    Rc(Rc&& src) noexcept {
         data_ = src.data_;
         src.data_ = null;
     }
-    Rc& operator=(Rc&& src) {
+    Rc& operator=(Rc&& src) noexcept {
         drop();
         data_ = src.data_;
         src.data_ = null;
         return *this;
     }
 
-    T* operator->() {
+    [[nodiscard]] T* operator->() noexcept {
         assert(data_);
         return &data_->value;
     }
-    const T* operator->() const {
+    [[nodiscard]] const T* operator->() const noexcept {
         assert(data_);
         return &data_->value;
     }
-    T& operator*() {
+    [[nodiscard]] T& operator*() noexcept {
         assert(data_);
         return data_->value;
     }
-    const T& operator*() const {
+    [[nodiscard]] const T& operator*() const noexcept {
         assert(data_);
         return data_->value;
     }
 
-    operator bool() const {
+    [[nodiscard]] operator bool() const noexcept {
         return data_ != null;
     }
 
-    u64 references() const {
+    [[nodiscard]] u64 references() const noexcept {
         return data_ ? data_->references : 0;
     }
-    void clear() {
+    void clear() noexcept {
         drop();
     }
 
 private:
-    void drop() {
+    void drop() noexcept {
         if(!data_) return;
         data_->references--;
         if(data_->references == 0) {
@@ -132,18 +132,18 @@ struct Arc {
     using A = Pool_Adaptor<P>;
     using Data = detail::Arc_Data<T>;
 
-    Arc() = default;
-    ~Arc() {
+    Arc() noexcept = default;
+    ~Arc() noexcept {
         drop();
     }
 
     template<typename... Args>
         requires Constructable<T, Args...> && Move_Constructable<T>
-    explicit Arc(Args&&... args) {
+    explicit Arc(Args&&... args) noexcept {
         data_ = A::template make<Data>(Thread::Atomic{1}, T{forward<Args>(args)...});
     }
 
-    static Arc make()
+    [[nodiscard]] static Arc make() noexcept
         requires Default_Constructable<T>
     {
         Arc ret;
@@ -151,49 +151,49 @@ struct Arc {
         return ret;
     }
 
-    Arc(const Arc& src) = delete;
-    Arc& operator=(const Arc& src) = delete;
+    Arc(const Arc& src) noexcept = delete;
+    Arc& operator=(const Arc& src) noexcept = delete;
 
-    Arc dup() const {
+    [[nodiscard]] Arc dup() const noexcept {
         Arc ret;
         ret.data_ = data_;
         if(data_) data_->references.incr();
         return ret;
     }
 
-    Arc(Arc&& src) {
+    Arc(Arc&& src) noexcept {
         data_ = src.data_;
         src.data_ = null;
     }
-    Arc& operator=(Arc&& src) {
+    Arc& operator=(Arc&& src) noexcept {
         drop();
         data_ = src.data_;
         src.data_ = null;
         return *this;
     }
 
-    T* operator->() {
+    [[nodiscard]] T* operator->() noexcept {
         assert(data_);
         return &data_->value;
     }
-    const T* operator->() const {
+    [[nodiscard]] const T* operator->() const noexcept {
         assert(data_);
         return &data_->value;
     }
-    T& operator*() {
+    [[nodiscard]] T& operator*() noexcept {
         assert(data_);
         return data_->value;
     }
-    const T& operator*() const {
+    [[nodiscard]] const T& operator*() const noexcept {
         assert(data_);
         return data_->value;
     }
 
-    operator bool() const {
+    [[nodiscard]] operator bool() const noexcept {
         return data_ != null;
     }
 
-    u64 references() const {
+    [[nodiscard]] u64 references() const noexcept {
         return data_ ? data_->references.load() : 0;
     }
     void clear() {
@@ -201,7 +201,7 @@ struct Arc {
     }
 
 private:
-    void drop() {
+    void drop() noexcept {
         if(!data_) return;
         if(data_->references.decr() == 0) {
             A::template destroy<Data>(data_);
@@ -232,7 +232,7 @@ namespace Format {
 
 template<Reflectable T, Allocator A>
 struct Measure<Rc<T, A>> {
-    static u64 measure(const Rc<T, A>& rc) {
+    [[nodiscard]] static u64 measure(const Rc<T, A>& rc) noexcept {
         if(rc)
             return 6 + Measure<T>::measure(*rc) +
                    Measure<decltype(rc.references())>::measure(rc.references());
@@ -241,7 +241,7 @@ struct Measure<Rc<T, A>> {
 };
 template<Reflectable T, Allocator A>
 struct Measure<Arc<T, A>> {
-    static u64 measure(const Arc<T, A>& arc) {
+    [[nodiscard]] static u64 measure(const Arc<T, A>& arc) noexcept {
         if(arc)
             return 7 + Measure<T>::measure(*arc) +
                    Measure<decltype(arc.references())>::measure(arc.references());
@@ -251,7 +251,7 @@ struct Measure<Arc<T, A>> {
 
 template<Allocator O, Reflectable T, Allocator A>
 struct Write<O, Rc<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Rc<T, A>& rc) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Rc<T, A>& rc) noexcept {
         if(!rc) return output.write(idx, "Rc{null}"_v);
         idx = output.write(idx, "Rc["_v);
         idx = Write<O, decltype(rc.references())>::write(output, idx, rc.references());
@@ -262,7 +262,7 @@ struct Write<O, Rc<T, A>> {
 };
 template<Allocator O, Reflectable T, Allocator A>
 struct Write<O, Arc<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Arc<T, A>& arc) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Arc<T, A>& arc) noexcept {
         if(!arc) return output.write(idx, "Arc{null}"_v);
         idx = output.write(idx, "Arc["_v);
         idx = Write<O, decltype(arc.references())>::write(output, idx, arc.references());

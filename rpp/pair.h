@@ -10,43 +10,43 @@ namespace rpp {
 template<typename A, typename B>
 struct Pair {
 
-    explicit constexpr Pair()
+    constexpr explicit Pair() noexcept
         requires Default_Constructable<A> && Default_Constructable<B>
     = default;
 
-    explicit constexpr Pair(const A& first, const B& second)
+    constexpr explicit Pair(const A& first, const B& second) noexcept
         requires Copy_Constructable<A> && Copy_Constructable<B>
         : first(A{first}), second(B{second}) {
     }
 
-    explicit constexpr Pair(A&& first, B&& second)
+    constexpr explicit Pair(A&& first, B&& second) noexcept
         requires Move_Constructable<A> && Move_Constructable<B>
         : first(move(first)), second(move(second)) {
     }
 
-    explicit constexpr Pair(const A& first, B&& second)
+    constexpr explicit Pair(const A& first, B&& second) noexcept
         requires Copy_Constructable<A> && Move_Constructable<B>
         : first(A{first}), second(move(second)) {
     }
 
-    explicit constexpr Pair(A&& first, const B& second)
+    constexpr explicit Pair(A&& first, const B& second) noexcept
         requires Move_Constructable<A> && Copy_Constructable<B>
         : first(move(first)), second(B{second}) {
     }
 
-    ~Pair() = default;
+    constexpr ~Pair() noexcept = default;
 
-    constexpr Pair(const Pair& src)
+    constexpr Pair(const Pair& src) noexcept
         requires Copy_Constructable<A> && Copy_Constructable<B>
     = default;
-    constexpr Pair& operator=(const Pair& src)
+    constexpr Pair& operator=(const Pair& src) noexcept
         requires Copy_Constructable<A> && Copy_Constructable<B>
     = default;
 
-    constexpr Pair(Pair&& src) = default;
-    constexpr Pair& operator=(Pair&& src) = default;
+    constexpr Pair(Pair&& src) noexcept = default;
+    constexpr Pair& operator=(Pair&& src) noexcept = default;
 
-    constexpr Pair<A, B> clone() const
+    [[nodiscard]] constexpr Pair<A, B> clone() const noexcept
         requires(Clone<A> || Copy_Constructable<A>) && (Clone<B> || Copy_Constructable<B>)
     {
         if constexpr(Clone<A> && Clone<B>) {
@@ -62,12 +62,12 @@ struct Pair {
     }
 
     template<u64 Index>
-    constexpr auto& get() {
+    [[nodiscard]] constexpr auto& get() noexcept {
         if constexpr(Index == 0) return first;
         if constexpr(Index == 1) return second;
     }
     template<u64 Index>
-    constexpr const auto& get() const {
+    [[nodiscard]] constexpr const auto& get() const noexcept {
         if constexpr(Index == 0) return first;
         if constexpr(Index == 1) return second;
     }
@@ -83,13 +83,13 @@ namespace Format {
 
 template<Reflectable L, Reflectable R>
 struct Measure<Pair<L, R>> {
-    static u64 measure(const Pair<L, R>& pair) {
+    [[nodiscard]] constexpr static u64 measure(const Pair<L, R>& pair) noexcept {
         return 8 + Measure<L>::measure(pair.first) + Measure<R>::measure(pair.second);
     }
 };
 template<Allocator O, Reflectable L, Reflectable R>
 struct Write<O, Pair<L, R>> {
-    static u64 write(String<O>& output, u64 idx, const Pair<L, R>& pair) {
+    static u64 write(String<O>& output, u64 idx, const Pair<L, R>& pair) noexcept {
         idx = output.write(idx, "Pair{"_v);
         idx = Write<O, L>::write(output, idx, pair.first);
         idx = output.write(idx, ", "_v);

@@ -14,27 +14,27 @@ namespace detail {
 
 template<Key K, Movable V>
 struct Map_Slot {
-    Map_Slot() = default;
+    constexpr Map_Slot() = default;
 
-    explicit Map_Slot(K&& key, V&& value) : hash(hash_nonzero(key)) {
+    constexpr explicit Map_Slot(K&& key, V&& value) noexcept : hash(hash_nonzero(key)) {
         data.construct(move(key), move(value));
     }
-    ~Map_Slot() {
+    constexpr ~Map_Slot() noexcept {
         if constexpr(Must_Destruct<Pair<K, V>>) {
             if(hash != EMPTY) data.destruct();
         }
         hash = EMPTY;
     }
 
-    Map_Slot(const Map_Slot&) = delete;
-    Map_Slot& operator=(const Map_Slot&) = delete;
+    constexpr Map_Slot(const Map_Slot&) noexcept = delete;
+    constexpr Map_Slot& operator=(const Map_Slot&) noexcept = delete;
 
-    Map_Slot(Map_Slot&& src) {
+    constexpr Map_Slot(Map_Slot&& src) noexcept {
         hash = src.hash;
         src.hash = EMPTY;
         if(hash != EMPTY) data.construct(move(*src.data));
     }
-    Map_Slot& operator=(Map_Slot&& src) {
+    constexpr Map_Slot& operator=(Map_Slot&& src) noexcept {
         this->~Map_Slot();
         hash = src.hash;
         src.hash = EMPTY;
@@ -42,7 +42,7 @@ struct Map_Slot {
         return *this;
     }
 
-    Map_Slot clone() const
+    [[nodiscard]] constexpr Map_Slot clone() const noexcept
         requires((Clone<K> || Copy_Constructable<K>) && (Clone<V> || Copy_Constructable<V>))
     {
         if(hash == EMPTY) return Map_Slot{};
@@ -58,7 +58,7 @@ struct Map_Slot {
         }
     }
 
-    static constexpr u64 EMPTY = 0;
+    constexpr static u64 EMPTY = 0;
     u64 hash = EMPTY;
     Storage<Pair<K, V>> data;
 };
@@ -69,9 +69,9 @@ template<Key K, Movable V, Allocator A = Mdefault>
 struct Map {
     using Slot = detail::Map_Slot<K, V>;
 
-    Map() = default;
+    Map() noexcept = default;
 
-    explicit Map(u64 capacity) {
+    explicit Map(u64 capacity) noexcept {
         capacity_ = Math::next_pow2(capacity);
         shift_ = Math::ctlz(capacity_) + 1;
         usable_ = (capacity_ / 4) * 3;
@@ -82,14 +82,14 @@ struct Map {
 
     template<typename... Ss>
         requires All_Are<Pair<K, V>, Ss...> && Move_Constructable<Pair<K, V>>
-    explicit Map(Ss&&... init) {
+    explicit Map(Ss&&... init) noexcept {
         (insert(move(init.first), move(init.second)), ...);
     }
 
-    Map(const Map& src) = delete;
-    Map& operator=(const Map& src) = delete;
+    Map(const Map& src) noexcept = delete;
+    Map& operator=(const Map& src) noexcept = delete;
 
-    Map(Map&& src) {
+    Map(Map&& src) noexcept {
         data_ = src.data_;
         capacity_ = src.capacity_;
         length_ = src.length_;
@@ -101,7 +101,7 @@ struct Map {
         src.usable_ = 0;
         src.shift_ = 0;
     }
-    Map& operator=(Map&& src) {
+    Map& operator=(Map&& src) noexcept {
         this->~Map();
         data_ = src.data_;
         capacity_ = src.capacity_;
@@ -116,7 +116,7 @@ struct Map {
         return *this;
     }
 
-    ~Map() {
+    ~Map() noexcept {
         if constexpr(Must_Destruct<Pair<K, V>>) {
             for(u64 i = 0; i < capacity_; i++) {
                 data_[i].~Slot();
@@ -131,7 +131,7 @@ struct Map {
     }
 
     template<Allocator B = A>
-    Map<K, V, B> clone() const
+    [[nodiscard]] Map<K, V, B> clone() const noexcept
         requires((Clone<K> || Copy_Constructable<K>) && (Clone<V> || Copy_Constructable<V>))
     {
         Map<K, V, B> ret(capacity_);
@@ -146,7 +146,7 @@ struct Map {
         return ret;
     }
 
-    void reserve(u64 new_capacity) {
+    void reserve(u64 new_capacity) noexcept {
         if(new_capacity <= capacity_) return;
 
         Slot* old_data = data_;
@@ -159,17 +159,17 @@ struct Map {
         shift_ = Math::ctlz(capacity_) + 1;
 
         for(u64 i = 0; i < old_capacity; i++) {
-            if(old_data[i].hash != Slot::EMPTY) insert_slot(move(old_data[i]));
+            if(old_data[i].hash != Slot::EMPTY) static_cast<void>(insert_slot(move(old_data[i])));
         }
         A::free(old_data);
     }
 
-    void grow() {
+    void grow() noexcept {
         u64 new_capacity = capacity_ ? 2 * capacity_ : 32;
         reserve(new_capacity);
     }
 
-    void clear() {
+    void clear() noexcept {
         if constexpr(Must_Destruct<Pair<K, V>>) {
             for(u64 i = 0; i < capacity_; i++) {
                 data_[i].~Slot();
@@ -180,35 +180,35 @@ struct Map {
         length_ = 0;
     }
 
-    bool empty() const {
+    [[nodiscard]] bool empty() const noexcept {
         return length_ == 0;
     }
-    bool full() const {
+    [[nodiscard]] bool full() const noexcept {
         return length_ == usable_;
     }
-    u64 length() const {
+    [[nodiscard]] u64 length() const noexcept {
         return length_;
     }
 
-    V& insert(const K& key, const V& value)
+    V& insert(const K& key, const V& value) noexcept
         requires Copy_Constructable<K> && Copy_Constructable<V>
     {
         return insert(K{key}, V{value});
     }
 
-    V& insert(K&& key, const V& value)
+    V& insert(K&& key, const V& value) noexcept
         requires Copy_Constructable<V>
     {
         return insert(move(key), V{value});
     }
 
-    V& insert(const K& key, V&& value)
+    V& insert(const K& key, V&& value) noexcept
         requires Copy_Constructable<K>
     {
         return insert(K{key}, move(value));
     }
 
-    V& insert(K&& key, V&& value) {
+    V& insert(K&& key, V&& value) noexcept {
         if(full()) grow();
         Slot slot{move(key), move(value)};
         Slot& placed = insert_slot(move(slot));
@@ -218,7 +218,7 @@ struct Map {
 
     template<typename... Args>
         requires Constructable<V, Args...>
-    V& emplace(K&& key, Args&&... args) {
+    V& emplace(K&& key, Args&&... args) noexcept {
         if(full()) grow();
         Slot slot{move(key), V{forward<Args>(args)...}};
         Slot& placed = insert_slot(move(slot));
@@ -226,7 +226,7 @@ struct Map {
         return placed.data->second;
     }
 
-    Opt<Ref<V>> try_get(const K& key) {
+    [[nodiscard]] Opt<Ref<V>> try_get(const K& key) noexcept {
         if(empty()) return {};
         if(auto idx = try_get_<K>(key)) {
             return Opt{Ref{data_[*idx].data->second}};
@@ -234,7 +234,7 @@ struct Map {
         return {};
     }
 
-    Opt<Ref<const V>> try_get(const K& key) const {
+    [[nodiscard]] Opt<Ref<const V>> try_get(const K& key) const noexcept {
         if(empty()) return {};
         if(auto idx = try_get_<K>(key)) {
             return Opt{Ref<const V>{data_[*idx].data->second}};
@@ -242,7 +242,7 @@ struct Map {
         return {};
     }
 
-    bool try_erase(const K& key) {
+    [[nodiscard]] bool try_erase(const K& key) noexcept {
         if(empty()) return false;
         u64 hash = hash_nonzero(key);
         u64 idx = hash >> shift_;
@@ -263,14 +263,14 @@ struct Map {
         }
     }
 
-    bool contains(String_View key) const
+    [[nodiscard]] bool contains(String_View key) const noexcept
         requires(Any_String<K>)
     {
         if(empty()) return false;
         return try_get_<String_View>(key);
     }
 
-    Opt<Ref<V>> try_get(String_View key)
+    [[nodiscard]] Opt<Ref<V>> try_get(String_View key) noexcept
         requires(Any_String<K>)
     {
         if(empty()) return {};
@@ -280,7 +280,7 @@ struct Map {
         return {};
     }
 
-    V& get(String_View key)
+    [[nodiscard]] V& get(String_View key) noexcept
         requires(Any_String<K>)
     {
         if(auto idx = try_get_<String_View>(key)) {
@@ -289,27 +289,27 @@ struct Map {
         die("Failed to find key %!", key);
     }
 
-    bool contains(const K& key) const {
+    [[nodiscard]] bool contains(const K& key) const noexcept {
         return try_get(key);
     }
 
-    V& get(const K& key) {
+    [[nodiscard]] V& get(const K& key) noexcept {
         Opt<Ref<V>> value = try_get(key);
         if(!value) die("Failed to find key %!", key);
         return **value;
     }
 
-    const V& get(const K& key) const {
+    [[nodiscard]] const V& get(const K& key) const noexcept {
         Opt<Ref<const V>> value = try_get(key);
         if(!value) die("Failed to find key %!", key);
         return **value;
     }
 
-    void erase(const K& key) {
+    void erase(const K& key) noexcept {
         if(!try_erase(key)) die("Failed to erase key %!", key);
     }
 
-    V& get_or_insert(const K& key)
+    [[nodiscard]] V& get_or_insert(const K& key) noexcept
         requires Copy_Constructable<K> && Default_Constructable<V>
     {
         Opt<Ref<V>> entry = try_get(key);
@@ -319,7 +319,7 @@ struct Map {
         return insert(K{key}, V{});
     }
 
-    V& get_or_insert(K&& key)
+    [[nodiscard]] V& get_or_insert(K&& key) noexcept
         requires Default_Constructable<V>
     {
         Opt<Ref<V>> entry = try_get(key);
@@ -333,45 +333,45 @@ struct Map {
     struct Iterator {
         using M = If<is_const, const Map, Map>;
 
-        Iterator operator++(int) {
+        Iterator operator++(int) noexcept {
             Iterator i = *this;
             count_++;
             skip();
             return i;
         }
-        Iterator operator++() {
+        Iterator operator++() noexcept {
             count_++;
             skip();
             return *this;
         }
 
-        Pair<const K, V>& operator*() const
+        [[nodiscard]] Pair<const K, V>& operator*() const noexcept
             requires(!is_const)
         {
             return reinterpret_cast<Pair<const K, V>&>(*map_.data_[count_].data);
         }
-        const Pair<K, V>& operator*() const {
+        [[nodiscard]] const Pair<K, V>& operator*() const noexcept {
             return *map_.data_[count_].data;
         }
 
-        Pair<const K, V>* operator->() const
+        [[nodiscard]] Pair<const K, V>* operator->() const noexcept
             requires(!is_const)
         {
             return reinterpret_cast<Pair<const K, V>*>(&*map_.data_[count_].data);
         }
-        const Pair<K, V>* operator->() const {
+        [[nodiscard]] const Pair<K, V>* operator->() const noexcept {
             return &*map_.data_[count_].data;
         }
 
-        bool operator==(const Iterator& rhs) const {
+        [[nodiscard]] bool operator==(const Iterator& rhs) const noexcept {
             return &map_ == &rhs.map_ && count_ == rhs.count_;
         }
 
     private:
-        void skip() {
+        void skip() noexcept {
             while(count_ < map_.capacity_ && map_.data_[count_].hash == Slot::EMPTY) count_++;
         }
-        Iterator(M& map, u64 count) : map_(map), count_(count) {
+        Iterator(M& map, u64 count) noexcept : map_(map), count_(count) {
             skip();
         }
         M& map_;
@@ -383,21 +383,21 @@ struct Map {
     using iterator = Iterator<false>;
     using const_iterator = Iterator<true>;
 
-    const_iterator begin() const {
+    [[nodiscard]] const_iterator begin() const noexcept {
         return const_iterator(*this, 0);
     }
-    const_iterator end() const {
+    [[nodiscard]] const_iterator end() const noexcept {
         return const_iterator(*this, capacity_);
     }
-    iterator begin() {
+    [[nodiscard]] iterator begin() noexcept {
         return iterator(*this, 0);
     }
-    iterator end() {
+    [[nodiscard]] iterator end() noexcept {
         return iterator(*this, capacity_);
     }
 
 private:
-    Slot& insert_slot(Slot&& slot) {
+    [[nodiscard]] Slot& insert_slot(Slot&& slot) noexcept {
         u64 idx = slot.hash >> shift_;
         Slot* placement = null;
         u64 dist = 0;
@@ -423,7 +423,7 @@ private:
         }
     }
 
-    void fix_up(u64 idx) {
+    void fix_up(u64 idx) noexcept {
         for(;;) {
             u64 next = idx == capacity_ - 1 ? 0 : idx + 1;
             u64 nexthash_ = data_[next].hash;
@@ -436,7 +436,7 @@ private:
     }
 
     template<Hashable K2>
-    Opt<u64> try_get_(const K2& key) const {
+    [[nodiscard]] Opt<u64> try_get_(const K2& key) const noexcept {
         u64 hash = hash_nonzero(key);
         u64 idx = hash >> shift_;
         u64 dist = 0;
@@ -477,7 +477,7 @@ namespace Format {
 
 template<Reflectable K, Reflectable V, Allocator A>
 struct Measure<Map<K, V, A>> {
-    static u64 measure(const Map<K, V, A>& map) {
+    [[nodiscard]] static u64 measure(const Map<K, V, A>& map) noexcept {
         u64 n = 0;
         u64 length = 5;
         for(const Pair<K, V>& item : map) {
@@ -492,7 +492,7 @@ struct Measure<Map<K, V, A>> {
 
 template<Allocator O, Reflectable K, Reflectable V, Allocator A>
 struct Write<O, Map<K, V, A>> {
-    static u64 write(String<O>& output, u64 idx, const Map<K, V, A>& map) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Map<K, V, A>& map) noexcept {
         idx = output.write(idx, "Map["_v);
         u64 n = 0;
         for(const Pair<K, V>& item : map) {

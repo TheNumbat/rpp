@@ -7,7 +7,7 @@
 
 namespace rpp::Net {
 
-static String_View wsa_error_code(int err) {
+[[nodiscard]] static String_View wsa_error_code(int err) noexcept {
 
     constexpr u64 buffer_size = 256;
     static thread_local char buffer[buffer_size] = {};
@@ -26,14 +26,14 @@ static String_View wsa_error_code(int err) {
     return String_View{reinterpret_cast<const u8*>(buffer), static_cast<u64>(written - 1)};
 }
 
-static String_View wsa_error() {
+[[nodiscard]] static String_View wsa_error() noexcept {
     int err = WSAGetLastError();
     if(err == 0) return String_View{};
     return wsa_error_code(err);
 }
 
 struct WSA_Startup {
-    WSA_Startup() {
+    WSA_Startup() noexcept {
         WSADATA wsa;
         int err = WSAStartup(MAKEWORD(2, 2), &wsa);
         if(err != 0) {
@@ -47,7 +47,7 @@ static WSA_Startup g_wsa_startup;
 static_assert(sizeof(sockaddr_in) == 16);
 static_assert(alignof(sockaddr_in) == 4);
 
-Address::Address(String_View address_, u16 port) {
+Address::Address(String_View address_, u16 port) noexcept {
     Region(R) {
         auto address = address_.terminate<Mregion<R>>();
 
@@ -68,7 +68,7 @@ Address::Address(String_View address_, u16 port) {
     }
 }
 
-Address::Address(u16 port) {
+Address::Address(u16 port) noexcept {
     sockaddr_in& sockaddr_ = *reinterpret_cast<sockaddr_in*>(sockaddr_storage);
     sockaddr_ = {};
     sockaddr_.sin_family = AF_INET;
@@ -76,7 +76,7 @@ Address::Address(u16 port) {
     sockaddr_.sin_addr.s_addr = INADDR_ANY;
 }
 
-Udp::Udp() {
+Udp::Udp() noexcept {
 
     socket = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(socket == INVALID_SOCKET) {
@@ -89,25 +89,25 @@ Udp::Udp() {
     }
 }
 
-Udp::~Udp() {
+Udp::~Udp() noexcept {
     if(socket != INVALID_SOCKET) {
         closesocket(socket);
     }
     socket = INVALID_SOCKET;
 }
 
-Udp::Udp(Udp&& src) {
+Udp::Udp(Udp&& src) noexcept {
     socket = src.socket;
     src.socket = INVALID_SOCKET;
 }
 
-Udp& Udp::operator=(Udp&& src) {
+Udp& Udp::operator=(Udp&& src) noexcept {
     socket = src.socket;
     src.socket = INVALID_SOCKET;
     return *this;
 }
 
-void Udp::bind(Address address) {
+void Udp::bind(Address address) noexcept {
 
     if(::bind(socket, reinterpret_cast<SOCKADDR*>(address.sockaddr_storage), sizeof(sockaddr_in)) ==
        SOCKET_ERROR) {
@@ -115,7 +115,7 @@ void Udp::bind(Address address) {
     }
 }
 
-Opt<Udp::Data> Udp::recv(Packet& in) {
+[[nodiscard]] Opt<Udp::Data> Udp::recv(Packet& in) noexcept {
 
     sockaddr_in src;
 
@@ -132,7 +132,7 @@ Opt<Udp::Data> Udp::recv(Packet& in) {
     return Opt{Data{static_cast<u64>(ret), move(retaddr)}};
 }
 
-u64 Udp::send(Address address, const Packet& out, u64 length) {
+[[nodiscard]] u64 Udp::send(Address address, const Packet& out, u64 length) noexcept {
 
     i32 ret =
         sendto(socket, reinterpret_cast<const char*>(out.data()), static_cast<i32>(length), 0,

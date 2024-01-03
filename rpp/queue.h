@@ -10,8 +10,8 @@ namespace rpp {
 template<Movable T, Allocator A = Mdefault>
 struct Queue {
 
-    Queue() = default;
-    explicit Queue(u64 capacity) {
+    Queue() noexcept = default;
+    explicit Queue(u64 capacity) noexcept {
         data_ = reinterpret_cast<T*>(A::alloc(capacity * sizeof(T)));
         length_ = 0;
         last_ = 0;
@@ -20,15 +20,15 @@ struct Queue {
 
     template<typename... Ss>
         requires All_Are<T, Ss...> && Move_Constructable<T>
-    explicit Queue(Ss&&... init) {
+    explicit Queue(Ss&&... init) noexcept {
         reserve(sizeof...(Ss));
         (push(move(init)), ...);
     }
 
-    Queue(const Queue& src) = delete;
-    Queue& operator=(const Queue& src) = delete;
+    Queue(const Queue& src) noexcept = delete;
+    Queue& operator=(const Queue& src) noexcept = delete;
 
-    Queue(Queue&& src) {
+    Queue(Queue&& src) noexcept {
         data_ = src.data_;
         length_ = src.length_;
         last_ = src.last_;
@@ -38,7 +38,7 @@ struct Queue {
         src.last_ = 0;
         src.capacity_ = 0;
     }
-    Queue& operator=(Queue&& src) {
+    Queue& operator=(Queue&& src) noexcept {
         this->~Queue();
         data_ = src.data_;
         length_ = src.length_;
@@ -51,7 +51,7 @@ struct Queue {
         return *this;
     }
 
-    ~Queue() {
+    ~Queue() noexcept {
         clear();
         A::free(data_);
         data_ = null;
@@ -59,7 +59,7 @@ struct Queue {
     }
 
     template<Allocator B = A>
-    Queue<T, B> clone() const
+    [[nodiscard]] Queue<T, B> clone() const noexcept
         requires Clone<T> || Copy_Constructable<T>
     {
         Queue<T, B> ret;
@@ -87,12 +87,12 @@ struct Queue {
         return ret;
     }
 
-    void grow() {
+    void grow() noexcept {
         u64 new_capacity = capacity_ ? 2 * capacity_ : 8;
         reserve(new_capacity);
     }
 
-    void reserve(u64 new_capacity) {
+    void reserve(u64 new_capacity) noexcept {
         if(new_capacity <= capacity_) return;
 
         T* new_data = reinterpret_cast<T*>(A::alloc(new_capacity * sizeof(T)));
@@ -129,13 +129,13 @@ struct Queue {
         data_ = new_data;
     }
 
-    T& push(const T& value)
+    T& push(const T& value) noexcept
         requires Copy_Constructable<T>
     {
         return push(T{value});
     }
 
-    T& push(T&& value)
+    T& push(T&& value) noexcept
         requires Move_Constructable<T>
     {
         if(full()) grow();
@@ -149,7 +149,7 @@ struct Queue {
     }
 
     template<typename... Args>
-    T& emplace(Args&&... args)
+    T& emplace(Args&&... args) noexcept
         requires Constructable<T, Args...>
     {
         if(full()) grow();
@@ -162,14 +162,14 @@ struct Queue {
         return ret;
     }
 
-    void pop() {
+    void pop() noexcept {
         assert(length_ > 0);
         u64 idx = length_ <= last_ ? last_ - length_ : last_ - length_ + capacity_;
         length_--;
         data_[idx].~T();
     }
 
-    void clear() {
+    void clear() noexcept {
         if constexpr(Must_Destruct<T>) {
             for(T& value : *this) {
                 value.~T();
@@ -179,59 +179,59 @@ struct Queue {
         last_ = 0;
     }
 
-    T& front() {
+    [[nodiscard]] T& front() noexcept {
         assert(!empty());
         return data_[start_idx()];
     }
-    const T& front() const {
+    [[nodiscard]] const T& front() const noexcept {
         assert(!empty());
         return data_[start_idx()];
     }
 
-    T& back() {
+    [[nodiscard]] T& back() noexcept {
         assert(!empty());
         return data_[end_idx()];
     }
-    const T& back() const {
+    [[nodiscard]] const T& back() const noexcept {
         assert(!empty());
         return data_[end_idx()];
     }
 
-    T& penultimate() {
+    [[nodiscard]] T& penultimate() noexcept {
         assert(length_ > 1);
         u64 idx = last_ == 0 ? capacity_ - 2 : last_ == 1 ? capacity_ - 1 : last_ - 2;
         return data_[idx];
     }
-    const T& penultimate() const {
+    [[nodiscard]] const T& penultimate() const noexcept {
         assert(length_ > 1);
         u64 idx = last_ == 0 ? capacity_ - 2 : last_ == 1 ? capacity_ - 1 : last_ - 2;
         return data_[idx];
     }
 
-    bool empty() const {
+    [[nodiscard]] bool empty() const noexcept {
         return length_ == 0;
     }
-    bool full() const {
+    [[nodiscard]] bool full() const noexcept {
         return length_ == capacity_;
     }
-    u64 length() const {
+    [[nodiscard]] u64 length() const noexcept {
         return length_;
     }
 
-    T& operator[](u64 idx) {
+    [[nodiscard]] T& operator[](u64 idx) noexcept {
         assert(idx < length_);
         u64 i = idx + start_idx();
         i = i >= capacity_ ? i - capacity_ : i;
         return data_[i];
     }
-    const T& operator[](u64 idx) const {
+    [[nodiscard]] const T& operator[](u64 idx) const noexcept {
         assert(idx < length_);
         u64 i = idx + start_idx();
         i = i >= capacity_ ? i - capacity_ : i;
         return data_[i];
     }
 
-    bool erase_first(const T& value)
+    [[nodiscard]] bool erase_first(const T& value) noexcept
         requires Equality<T> && (Trivially_Movable<T> || Move_Constructable<T>)
     {
         bool found = false;
@@ -266,40 +266,40 @@ struct Queue {
     struct Iterator {
         using Q = If<is_const, const Queue, Queue>;
 
-        Iterator operator++() {
+        Iterator operator++() noexcept {
             count_++;
             return *this;
         }
-        Iterator operator++(int) {
+        Iterator operator++(int) noexcept {
             Iterator prev{queue_, count_};
             count_++;
             return prev;
         }
 
-        T& operator*() const
+        [[nodiscard]] T& operator*() const noexcept
             requires(!is_const)
         {
             return queue_.data_[queue_.idx_at(count_)];
         }
-        const T& operator*() const {
+        [[nodiscard]] const T& operator*() const noexcept {
             return queue_.data_[queue_.idx_at(count_)];
         }
 
-        T* operator->() const
+        [[nodiscard]] T* operator->() const noexcept
             requires(!is_const)
         {
             return &queue_.data_[queue_.idx_at(count_)];
         }
-        const T* operator->() const {
+        [[nodiscard]] const T* operator->() const noexcept {
             return &queue_.data_[queue_.idx_at(count_)];
         }
 
-        bool operator==(const Iterator& rhs) const {
+        [[nodiscard]] bool operator==(const Iterator& rhs) const noexcept {
             return &queue_ == &rhs.queue_ && count_ == rhs.count_;
         }
 
     private:
-        Iterator(Q& queue, u64 count) : queue_(queue), count_(count) {
+        Iterator(Q& queue, u64 count) noexcept : queue_(queue), count_(count) {
         }
 
         Q& queue_;
@@ -311,30 +311,30 @@ struct Queue {
     using iterator = Iterator<false>;
     using const_iterator = Iterator<true>;
 
-    iterator begin() {
+    [[nodiscard]] iterator begin() noexcept {
         return iterator{*this, 0};
     }
-    const_iterator begin() const {
+    [[nodiscard]] const_iterator begin() const noexcept {
         return const_iterator{*this, 0};
     }
 
-    iterator end() {
+    [[nodiscard]] iterator end() noexcept {
         return iterator{*this, length_};
     }
-    const_iterator end() const {
+    [[nodiscard]] const_iterator end() const noexcept {
         return const_iterator{*this, length_};
     }
 
 private:
-    u64 start_idx() const {
+    [[nodiscard]] u64 start_idx() const noexcept {
         u64 idx = last_ - length_;
         return idx >= capacity_ ? idx + capacity_ : idx;
     }
-    u64 end_idx() const {
+    [[nodiscard]] u64 end_idx() const noexcept {
         if(capacity_ == 0) return 0;
         return last_ == 0 ? capacity_ - 1 : last_ - 1;
     }
-    u64 idx_at(u64 i) const {
+    [[nodiscard]] u64 idx_at(u64 i) const noexcept {
         u64 idx = last_ - length_ + i;
         return idx >= capacity_ ? idx + capacity_ : idx;
     }
@@ -357,7 +357,7 @@ namespace Format {
 
 template<Reflectable T, Allocator A>
 struct Measure<Queue<T, A>> {
-    static u64 measure(const Queue<T, A>& queue) {
+    [[nodiscard]] static u64 measure(const Queue<T, A>& queue) noexcept {
         u64 n = 0;
         u64 length = 7;
         for(const T& item : queue) {
@@ -370,7 +370,7 @@ struct Measure<Queue<T, A>> {
 };
 template<Allocator O, Reflectable T, Allocator A>
 struct Write<O, Queue<T, A>> {
-    static u64 write(String<O>& output, u64 idx, const Queue<T, A>& queue) {
+    [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Queue<T, A>& queue) noexcept {
         idx = output.write(idx, "Queue["_v);
         u64 n = 0;
         for(const T& item : queue) {

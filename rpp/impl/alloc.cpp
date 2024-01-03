@@ -4,22 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef RPP_COMPILER_MSVC
-namespace std {
-enum class align_val_t : rpp::u64 {};
-}
-void* operator new(rpp::u64, std::align_val_t, void* ptr) noexcept {
-    return ptr;
-}
-void* operator new[](rpp::u64, std::align_val_t, void* ptr) noexcept {
-    return ptr;
-}
-void operator delete(void*, std::align_val_t, void*) noexcept {
-}
-void operator delete[](void*, std::align_val_t, void*) noexcept {
-}
-#endif
-
 namespace rpp {
 
 static Thread::Atomic g_net_allocs;
@@ -48,7 +32,7 @@ thread_local Region region_brands[MAX_REGION_DEPTH] = {};
 thread_local First_Chunk first_chunk;
 thread_local Chunk* chunks = &first_chunk.chunk;
 
-static void new_chunk(u64 request) {
+static void new_chunk(u64 request) noexcept {
     u64 size = Math::max(request + sizeof(Chunk), 2 * (chunks->size + sizeof(Chunk)));
     Chunk* chunk = reinterpret_cast<Chunk*>(Regions::alloc(size));
     chunk->size = size - sizeof(Chunk);
@@ -57,13 +41,13 @@ static void new_chunk(u64 request) {
     chunks = chunk;
 }
 
-void assert_brand(Region brand) {
+static void assert_brand(Region brand) noexcept {
     if(region_brands[current_region] != brand) {
         die("Region brand mismatch!");
     }
 }
 
-void* Region_Allocator::alloc(Region brand, u64 size) {
+[[nodiscard]] void* Region_Allocator::alloc(Region brand, u64 size) noexcept {
     assert_brand(brand);
     if(chunks->size - chunks->used < size) {
         new_chunk(size);
@@ -74,18 +58,18 @@ void* Region_Allocator::alloc(Region brand, u64 size) {
     return ret;
 }
 
-void Region_Allocator::free(Region brand, void*) {
+void Region_Allocator::free(Region brand, void*) noexcept {
     assert_brand(brand);
 }
 
-void Region_Allocator::begin(Region brand) {
+void Region_Allocator::begin(Region brand) noexcept {
     current_region++;
     assert(current_region < MAX_REGION_DEPTH);
     region_offsets[current_region] = region_offsets[current_region - 1];
     region_brands[current_region] = brand;
 }
 
-void Region_Allocator::end(Region brand) {
+void Region_Allocator::end(Region brand) noexcept {
     assert(current_region > 0);
     assert_brand(brand);
     u64 end_offset = region_offsets[current_region];
@@ -106,15 +90,15 @@ void Region_Allocator::end(Region brand) {
     }
 }
 
-u64 Region_Allocator::depth() {
+[[nodiscard]] u64 Region_Allocator::depth() noexcept {
     return current_region;
 }
 
-u64 Region_Allocator::size() {
+[[nodiscard]] u64 Region_Allocator::size() noexcept {
     return region_offsets[current_region];
 }
 
-void* sys_alloc(u64 sz) {
+[[nodiscard]] void* sys_alloc(u64 sz) noexcept {
     void* ret = malloc(sz);
     assert(ret);
 #ifndef RPP_RELEASE_BUILD
@@ -123,7 +107,7 @@ void* sys_alloc(u64 sz) {
     return ret;
 }
 
-void sys_free(void* mem) {
+void sys_free(void* mem) noexcept {
     if(!mem) return;
 #ifndef RPP_RELEASE_BUILD
     g_net_allocs.decr();
@@ -131,7 +115,7 @@ void sys_free(void* mem) {
     free(mem);
 }
 
-i64 sys_net_allocs() {
+[[nodiscard]] i64 sys_net_allocs() noexcept {
     return g_net_allocs.load();
 }
 
