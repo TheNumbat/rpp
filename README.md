@@ -67,9 +67,6 @@ Utilities
 
 To-Do:
 - Update readme
-- constexpr all the things
-- nodiscard all the things
-- noexcept all the things
 - Modules
 - Result<T,E> type
 - Thread pool
