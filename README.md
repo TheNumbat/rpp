@@ -67,10 +67,9 @@ Utilities
 
 To-Do:
 - Update readme
-- Switch refl iterators to operator()
-- Modules
 - More constexpr
 - More nodiscard
+- Modules
 - Result<T,E> type
 - Thread pool
     - Priorities & CPU affinity
