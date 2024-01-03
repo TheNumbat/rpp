@@ -14,10 +14,6 @@ struct String_View {
 
     constexpr String_View() noexcept = default;
 
-    template<u64 N>
-    explicit String_View(const char (&c_string)[N]) noexcept : data_(c_string), length_(N - 1) {
-    }
-
     explicit String_View(const char* c_string) noexcept
         : data_(reinterpret_cast<const u8*>(c_string)), length_(Libc::strlen(c_string)) {
     }

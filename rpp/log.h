@@ -91,7 +91,7 @@ namespace Hash {
 
 template<>
 struct Hash<Log::Location> {
-    [[nodiscard]] consteval static u64 hash(const Log::Location& l) noexcept {
+    [[nodiscard]] constexpr static u64 hash(const Log::Location& l) noexcept {
         return rpp::hash(l.file, l.function, l.line);
     }
 };

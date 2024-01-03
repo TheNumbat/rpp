@@ -8,7 +8,7 @@ namespace rpp {
 namespace Format {
 
 template<Enum E>
-[[nodiscard]] consteval Literal enum_name(E value) noexcept {
+[[nodiscard]] constexpr Literal enum_name(E value) noexcept {
     Literal ret{"Invalid"};
     iterate_enum<E>([&](const Literal& check, const E& check_value) {
         if(value == check_value) {
