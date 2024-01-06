@@ -1,1 +1,1 @@
-core.autocrlf: false
+test/*.expect text eol=lf
