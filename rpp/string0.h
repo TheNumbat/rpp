@@ -298,7 +298,7 @@ struct Hash<String<A>> {
 
 template<>
 struct Hash<String_View> {
-    [[nodiscard]] static u64 hash(const String_View& string) noexcept {
+    [[nodiscard]] constexpr static u64 hash(const String_View& string) noexcept {
         u64 h = 0;
         for(u8 c : string) h = hash_combine(h, rpp::hash(c));
         return h;
