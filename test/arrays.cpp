@@ -4,6 +4,12 @@
 #include <heap.h>
 #include <stack.h>
 
+struct X {
+    X(i32 i) : i{i} {
+    }
+    i32 i;
+};
+
 i32 main() {
 
     Profile::start_thread();
@@ -48,6 +54,8 @@ i32 main() {
             Array<String_View, 3> f = e.clone();
 
             Array<Thread::Mutex, 2> m;
+
+            Array<X, 2> xes{X{1}, X{2}};
 
             (void)f;
         }
