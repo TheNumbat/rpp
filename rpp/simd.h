@@ -3,11 +3,11 @@
 
 #include "base.h"
 
+// The implementation of these functions are compiled assuming AVX2 support.
+
 namespace rpp::SIMD {
 
 struct F32x4 {
-    // Assumes SSE4.2 is supported.
-
     alignas(16) f32 data[4];
 
     [[nodiscard]] static F32x4 set1(f32 v) noexcept;
@@ -29,8 +29,6 @@ struct F32x4 {
 };
 
 struct F32x8 {
-    // Assumes AVX2 is supported.
-
     alignas(32) f32 data[8];
 
     [[nodiscard]] static F32x8 set1(f32 v) noexcept;
