@@ -53,12 +53,6 @@
 #error "Unsupported architecture: only x64 is supported."
 #endif
 
-#ifdef __AVX2__
-#define RPP_ARCH_AVX2
-#else
-#error "Unsupported architecture: AVX2 is required."
-#endif
-
 #define null nullptr
 
 namespace rpp {

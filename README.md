@@ -17,7 +17,7 @@ git submodule add https://github.com/TheNumbat/rpp
 Then add the following lines to your CMakeLists.txt:
 
 ```cmake
-add_subdirectory(rpp)
+add_subdirectory(rpp/rpp)
 target_link_libraries($your_target PRIVATE rpp)
 target_include_directories($your_target PRIVATE "rpp")
 ```
@@ -60,10 +60,10 @@ For faster parallel builds, you can instead generate [ninja](https://ninja-build
 
 Only the following configurations are supported:
 
-| OS      | Compiler    | Arch |
-|---------|-------------|------|
-| Windows | MSVC 19.37+ | AVX2 |
-| Linux   | Clang 17+   | AVX2 |
+| OS      | Compiler    | Arch   |
+|---------|-------------|--------|
+| Windows | MSVC 19.37+ | x86_64 |
+| Linux   | Clang 17+   | x86_64 |
 
 Other configurations (macOS, aarch64, GCC, etc.) may be added in the future.
 
