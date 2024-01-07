@@ -33,7 +33,7 @@ mkdir build
 cd build
 cmake ..
 cmake --build .
-ctest
+ctest -C Debug
 ```
 
 For faster parallel builds, you can instead generate [ninja](https://ninja-build.org/) build files with `cmake -G Ninja ..`.
