@@ -4,10 +4,7 @@
 #include <rc.h>
 
 i32 main() {
-
-    Profile::start_thread();
     Profile::begin_frame();
-
     {
         Test test{"empty"_v};
         Region(R0) {
@@ -59,9 +56,7 @@ i32 main() {
             }
         }
     }
-
     Profile::end_frame();
     Profile::finalize();
-
     return 0;
 }

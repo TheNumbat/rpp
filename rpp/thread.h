@@ -138,11 +138,9 @@ private:
     template<Invocable F>
     [[nodiscard]] static OS_Thread_Ret invoke(void* _f) noexcept {
         F* f = static_cast<F*>(_f);
-        Profile::start_thread();
         (*f)();
         f->~F();
         A::free(f);
-        Profile::end_thread();
         return OS_Thread_Ret_Null;
     }
 

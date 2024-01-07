@@ -27,7 +27,7 @@ struct F32x4 {
 };
 
 struct F32x8 {
-    alignas(32) f32 data[4];
+    alignas(32) f32 data[8];
 
     [[nodiscard]] static F32x8 set1(f32 v) noexcept;
     [[nodiscard]] static F32x8 set(f32 a, f32 b, f32 c, f32 d, f32 e, f32 f, f32 g, f32 h) noexcept;

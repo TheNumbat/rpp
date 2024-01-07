@@ -15,23 +15,24 @@ namespace rpp {
     return static_cast<f32>(duration / static_cast<f64>(Thread::perf_frequency()));
 }
 
-void Profile::start_thread() noexcept {
+void Profile::register_thread() noexcept {
     Thread::Lock lock(threads_lock);
 
     Thread::Id id = Thread::this_id();
     assert(!threads.contains(id));
 
+    this_thread.registered = true;
     this_thread.during_frame = false;
     threads.insert(id, Ref{this_thread});
 }
 
-void Profile::end_thread() noexcept {
+void Profile::unregister_thread() noexcept {
     Thread::Lock lock(threads_lock);
 
     Thread::Id id = Thread::this_id();
-    threads.erase(id);
+    static_cast<void>(threads.try_erase(id));
 
-    this_thread.~Thread_Profile();
+    this_thread.registered = false;
 }
 
 [[nodiscard]] Profile::Time_Point Profile::Frame_Profile::begin() noexcept {
@@ -60,6 +61,10 @@ void Profile::Frame_Profile::compute_self_times(u64 idx) noexcept {
 
 f32 Profile::begin_frame() noexcept {
 
+    if(!this_thread.registered) return 0.0f;
+
+    assert(!this_thread.during_frame);
+
     Thread_Profile& prof = this_thread;
     Thread::Lock lock(prof.frames_lock);
 
@@ -84,6 +89,10 @@ f32 Profile::begin_frame() noexcept {
 
 void Profile::end_frame() noexcept {
 
+    if(!this_thread.registered) return;
+
+    assert(this_thread.during_frame);
+
     Thread_Profile& prof = this_thread;
     Thread::Lock lock(prof.frames_lock);
 
@@ -97,12 +106,14 @@ void Profile::end_frame() noexcept {
 
 void Profile::enter(String_View name) noexcept {
     if constexpr(DO_PROFILE) {
+        if(!this_thread.ready()) return;
         enter(Log::Location{move(name), ""_v, 0});
     }
 }
 
 void Profile::enter(Log::Location loc) noexcept {
     if constexpr(DO_PROFILE) {
+        if(!this_thread.ready()) return;
         Thread::Lock lock(this_thread.frames_lock);
         this_thread.frames.back().enter(move(loc));
     }
@@ -134,6 +145,7 @@ void Profile::Frame_Profile::enter(Log::Location loc) noexcept {
 
 void Profile::exit() noexcept {
     if constexpr(DO_PROFILE) {
+        if(!this_thread.ready()) return;
         Thread::Lock lock(this_thread.frames_lock);
         this_thread.frames.back().exit();
     }
@@ -196,6 +208,7 @@ void Profile::finalizer(Function<void()> f) noexcept {
 }
 
 void Profile::finalize() noexcept {
+    // All threads must have exited before we can finalize.
     {
         Thread::Lock lock(finalizers_lock);
         for(auto& f : finalizers) {
@@ -203,7 +216,8 @@ void Profile::finalize() noexcept {
         }
         finalizers.~Vec();
     }
-    end_thread();
+    unregister_thread();
+    this_thread.~Thread_Profile();
     {
         Thread::Lock lock(allocs_lock);
         for(auto& prof : allocs) {

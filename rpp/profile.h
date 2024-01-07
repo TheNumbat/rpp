@@ -24,9 +24,6 @@ constexpr bool DO_PROFILE = true;
 
 struct Profile {
 
-    static void start_thread() noexcept;
-    static void end_thread() noexcept;
-
     static float begin_frame() noexcept;
     static void end_frame() noexcept;
 
@@ -110,6 +107,9 @@ struct Profile {
     static void finalize() noexcept;
 
 private:
+    static void register_thread() noexcept;
+    static void unregister_thread() noexcept;
+
     struct Alloc_Profile {
         Alloc_Profile() noexcept {
         }
@@ -136,8 +136,18 @@ private:
     struct Thread_Profile {
         Thread_Profile() noexcept : during_frame(false) {
         }
+        ~Thread_Profile() noexcept {
+            if(during_frame) Profile::end_frame();
+            if(registered) Profile::unregister_thread();
+        }
 
-        bool during_frame;
+        bool ready() {
+            if(!registered) Profile::register_thread();
+            return during_frame;
+        }
+
+        bool registered = false;
+        bool during_frame = false;
         Thread::Mutex frames_lock;
         Queue<Frame_Profile, Mhidden> frames;
     };

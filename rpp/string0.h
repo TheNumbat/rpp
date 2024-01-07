@@ -196,11 +196,6 @@ template<Allocator A>
     return ret;
 }
 
-[[nodiscard]] RPP_FORCE_INLINE String_View operator""_v(const char* c_string,
-                                                        size_t length) noexcept {
-    return String_View{reinterpret_cast<const u8*>(c_string), length};
-}
-
 [[nodiscard]] constexpr bool operator==(String_View l, String_View r) noexcept {
     if(l.length() != r.length()) return false;
     return Libc::strncmp(reinterpret_cast<const char*>(l.data()),
@@ -308,3 +303,8 @@ struct Hash<String_View> {
 } // namespace Hash
 
 } // namespace rpp
+
+[[nodiscard]] RPP_FORCE_INLINE rpp::String_View operator""_v(const char* c_string,
+                                                             size_t length) noexcept {
+    return rpp::String_View{reinterpret_cast<const rpp::u8*>(c_string), length};
+}
