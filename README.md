@@ -30,7 +30,7 @@ To build rpp and run the tests, run the following commands:
 
 ### Windows
 
-Assure MSVC 19.37+ and cmake 3.17+ are installed and in your PATH.
+Assure MSVC 19.37 and cmake 3.17 (or newer) are installed and in your PATH.
 
 ```bash
 mkdir build
@@ -44,7 +44,7 @@ For faster parallel builds, you can instead generate [ninja](https://ninja-build
 
 ### Linux
 
-Assure clang-17 and cmake 3.17+ are installed.
+Assure clang-17 and cmake 3.17 (or newer) are installed.
 
 ```bash
 mkdir build
@@ -53,6 +53,8 @@ CXX=clang++-17 cmake ..
 make -j
 ctest -C Debug
 ```
+
+For faster parallel builds, you can instead generate [ninja](https://ninja-build.org/) build files with `cmake -G Ninja ..`.
 
 ## Platform Support
 
