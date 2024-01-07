@@ -61,9 +61,7 @@ void Profile::Frame_Profile::compute_self_times(u64 idx) noexcept {
 
 f32 Profile::begin_frame() noexcept {
 
-    if(!this_thread.registered) return 0.0f;
-
-    assert(!this_thread.during_frame);
+    assert(!this_thread.ready());
 
     Thread_Profile& prof = this_thread;
     Thread::Lock lock(prof.frames_lock);
@@ -89,9 +87,7 @@ f32 Profile::begin_frame() noexcept {
 
 void Profile::end_frame() noexcept {
 
-    if(!this_thread.registered) return;
-
-    assert(this_thread.during_frame);
+    assert(this_thread.registered && this_thread.during_frame);
 
     Thread_Profile& prof = this_thread;
     Thread::Lock lock(prof.frames_lock);
