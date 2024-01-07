@@ -56,6 +56,8 @@ Other configurations (macOS, aarch64, GCC, etc.) may be added in the future.
 ```cpp
 #include <rpp/base.h>
 
+using namespace rpp;
+
 i32 main() {
     assert(true);
     info("Information");
@@ -78,24 +80,24 @@ using namespace rpp;
 
 i32 main() {
     Ref<i32> ref;
-    Box<i32, A> box;
-    Rc<i32, A> rc;
-    Arc<i32, A> arc;
+    Box<i32> box;
+    Rc<i32> rc;
+    Arc<i32> arc;
     Opt<i32> optional;
     Storage<i32> storage;
-    String<A> string;
+    String<> string;
     String_View string_view;
     Array<i32, 1> array;
-    Vec<i32, A> vec;
-    Slice<i32, A> slice;
-    Stack<i32, A> stack;
-    Queue<i32, A> queue;
-    Heap<i32, A> heap;
+    Vec<i32> vec;
+    Slice<i32> slice;
+    Stack<i32> stack;
+    Queue<i32> queue;
+    Heap<i32> heap;
     Map<i32, i32> map;
     Pair<i32, i32> pair;
     Tuple<i32, i32, i32> tuple;
-    Variant<i32, f32> variant;
-    Function<i32()> function;
+    Variant<i32, f32> variant{0};
+    Function<i32()> function{[]() { return 0; }};
 }
 ```
 
@@ -127,6 +129,26 @@ i32 main() {
 }
 ```
 
+### Trace
+
+```cpp
+#include <rpp/base.h>
+
+using namespace rpp;
+
+i32 main() {
+    Profile::begin_frame();
+    Trace("Section") {
+        // ...
+    }
+    Profile::end_frame();
+
+    Profile::iterate_timings([](Thread::Id id, const Profile::Timing_Node& n) {
+        // ...
+    });
+}
+```
+
 ### Reflection
 
 ```cpp
@@ -153,6 +175,26 @@ i32 main() {
 }
 ```
 
+### Thread
+
+```cpp
+#include <rpp/base.h>
+#include <rpp/thread.h>
+
+using namespace rpp;
+
+i32 main() {
+    Thread::set_priority(Thread::Priority::high);
+
+    auto future = Thread::spawn([]() {
+        info("Hello from thread %!", Thread::this_id());
+        return 0;
+    });
+
+    info("Thread returned: %", future->block());
+}
+```
+
 ### Async
 
 ```cpp
@@ -168,7 +210,7 @@ i32 main() {
     auto coro = [](Async::Pool<>& pool) -> Async::Task<i32> {
         co_await pool.suspend();
         info("Hello from thread %!", Thread::this_id());
-        co_await AsyncIO::wait(pool, 100);
+        co_await Async::wait(pool, 100);
         co_return 0;
     };
 
@@ -191,8 +233,8 @@ i32 main() {
     Mat4 m = Mat4::translate(v);
     info("Translated: %", m * v);
 
-    F32x8 simd = F32x8::set1(1.0f);
-    info("Dot product: %", F32x8::dot(simd, simd));
+    auto simd = SIMD::F32x8::set1(1.0f);
+    info("Dot product: %", SIMD::F32x8::dp(simd, simd));
 }
 ```
 
