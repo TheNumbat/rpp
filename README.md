@@ -6,6 +6,13 @@
 Minimal Rust-inspired C++20 STL replacement.
 Refer to the [blog post](https://thenumb.at/rpp/) for details.
 
+Goals:
+- Fast Compilation
+- Debuggability
+- High Performance
+- Explicit Code
+- Easy Metaprogramming
+
 ## Integration
 
 To use rpp in your project, run the following command (or manually download the source):
