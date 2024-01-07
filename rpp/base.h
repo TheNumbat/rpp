@@ -1,11 +1,11 @@
 
 #pragma once
 
-#if __cplusplus < 202002L
+#ifdef _MSC_VER
+
+#if _MSVC_LANG < 202002L
 #error "Unsupported C++ standard: only C++20 or newer is supported."
 #endif
-
-#ifdef _MSC_VER
 
 #define RPP_COMPILER_MSVC
 #define RPP_FORCE_INLINE __forceinline
@@ -18,6 +18,10 @@
 #endif
 
 #elif defined __clang__
+
+#if __cplusplus < 202002L
+#error "Unsupported C++ standard: only C++20 or newer is supported."
+#endif
 
 #define RPP_COMPILER_CLANG
 #define RPP_FORCE_INLINE __attribute__((always_inline)) inline
