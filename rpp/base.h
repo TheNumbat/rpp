@@ -1,6 +1,10 @@
 
 #pragma once
 
+#if __cplusplus < 202002L
+#error "Unsupported C++ standard: only C++20 or newer is supported."
+#endif
+
 #ifdef _MSC_VER
 
 #define RPP_COMPILER_MSVC
@@ -10,7 +14,7 @@
 
 // TODO(max): bump when they fix the coroutine bug
 #if _MSC_VER < 1937
-#error "Unsupported MSVC version: only 19.37+ is supported."
+#error "Unsupported MSVC version: only 19.37 or newer is supported."
 #endif
 
 #elif defined __clang__
@@ -21,7 +25,7 @@
 #include <new>
 
 #if __clang_major__ < 17
-#error "Unsupported Clang version: only 17+ is supported."
+#error "Unsupported Clang version: only 17 or newer is supported."
 #endif
 
 #else
@@ -50,7 +54,7 @@
 #if defined __x86_64__ || defined _M_X64
 #define RPP_ARCH_X64
 #else
-#error "Unsupported architecture: only x64 is supported."
+#error "Unsupported architecture: only x86_64 is supported."
 #endif
 
 #define null nullptr
