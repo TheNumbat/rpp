@@ -63,12 +63,11 @@ endif()
 add_library(rpp STATIC ${SOURCES_RPP})
 set_target_properties(rpp PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS OFF LINKER_LANGUAGE CXX)
 
-target_compile_definitions(rpp
-    PRIVATE
+add_compile_definitions(
     $<$<CONFIG:Debug>:RPP_DEBUG_BUILD>
     $<$<CONFIG:RelWithDebInfo>:RPP_RELWITHDEBINFO_BUILD>
-    $<$<CONFIG:Release>:RPP_RELEASE_BUILD _NO_DEBUG_HEAP=1>
-    $<$<CONFIG:MinSizeRel>:RPP_RELEASE_BUILD _NO_DEBUG_HEAP=1>
+    $<$<CONFIG:Release>:RPP_RELEASE_BUILD>
+    $<$<CONFIG:MinSizeRel>:RPP_RELEASE_BUILD>
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -84,10 +83,16 @@ if(MSVC)
         message(FATAL_ERROR "Unsupported MSVC version: only 19.37+ is supported.")
     endif()
 
-    string(REPLACE "/GR" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-
-    target_compile_definitions(rpp PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX _HAS_EXCEPTIONS=0)
+    target_compile_definitions(rpp
+        PRIVATE
+        WIN32_LEAN_AND_MEAN NOMINMAX _HAS_EXCEPTIONS=0
+        $<$<CONFIG:Debug>:>
+        $<$<CONFIG:RelWithDebInfo>:>
+        $<$<CONFIG:Release>:_NO_DEBUG_HEAP=1>
+        $<$<CONFIG:MinSizeRel>:_NO_DEBUG_HEAP=1>
+    )
     target_compile_options(rpp PRIVATE /arch:AVX2 /MP /W4 /GR- /GS- /EHa- /wd4201)
+
 elseif(CLANG)
     if(CLANG_VERSION_MAJOR LESS 17)
         message(FATAL_ERROR "Unsupported Clang version: only 17+ is supported.")

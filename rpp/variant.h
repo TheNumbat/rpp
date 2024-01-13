@@ -122,6 +122,7 @@ private:
                                         if constexpr(Must_Destruct<Ts>) {
                                             v.~Ts();
                                         }
+                                        static_cast<void>(v);
                                     }...},
                                     data_, index_);
         }
