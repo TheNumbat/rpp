@@ -53,7 +53,7 @@ void set_priority(Priority p) noexcept {
     case Priority::normal: value = THREAD_PRIORITY_NORMAL; break;
     case Priority::high: value = THREAD_PRIORITY_HIGHEST; break;
     case Priority::critical: value = THREAD_PRIORITY_TIME_CRITICAL; break;
-    default: UNREACHABLE;
+    default: RPP_UNREACHABLE;
     }
     bool ret = SetThreadPriority(GetCurrentThread(), value);
     if(!ret) {

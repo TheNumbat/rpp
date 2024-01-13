@@ -5,7 +5,7 @@
 #error "Include base.h instead."
 #endif
 
-#define LOCATION_HASH ::rpp::hash_literal(__FILE__, __LINE__)
+#define RPP_LOCATION_HASH ::rpp::hash_literal(__FILE__, __LINE__)
 
 namespace rpp {
 

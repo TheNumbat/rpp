@@ -136,7 +136,7 @@ void output(Level level, const Location& loc, String_View msg) noexcept {
         level_str = "fatal";
         format_str = "\033[0;31m%.*s [%s/%zu] [%.*s:%zu]: %*s%.*s\033[0m\n";
     } break;
-    default: UNREACHABLE;
+    default: RPP_UNREACHABLE;
     }
 
     Thread::Id thread = Thread::this_id();

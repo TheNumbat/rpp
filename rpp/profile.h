@@ -17,10 +17,10 @@ constexpr bool DO_PROFILE = false;
 constexpr bool DO_PROFILE = true;
 #endif
 
-#define TRACE2(COUNTER) __profile_##COUNTER
-#define TRACE1(NAME, COUNTER) if(::rpp::Profile::Scope TRACE2(COUNTER){String_View{NAME}})
+#define RPP_TRACE2(COUNTER) __profile_##COUNTER
+#define RPP_TRACE1(NAME, COUNTER) if(::rpp::Profile::Scope RPP_TRACE2(COUNTER){String_View{NAME}})
 
-#define Trace(NAME) TRACE1(NAME, __COUNTER__)
+#define Trace(NAME) RPP_TRACE1(NAME, __COUNTER__)
 
 struct Profile {
 
@@ -55,7 +55,7 @@ struct Profile {
             Profile::exit();
         }
 
-        consteval operator bool() noexcept {
+        [[nodiscard]] consteval operator bool() noexcept {
             return true;
         }
     };

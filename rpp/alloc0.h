@@ -105,12 +105,12 @@ struct Mregion {
     }
 };
 
-#define REGION2(COUNTER) __region_##COUNTER
-#define REGION1(R, BRAND, COUNTER)                                                                 \
+#define RPP_REGION2(COUNTER) __region_##COUNTER
+#define RPP_REGION1(R, BRAND, COUNTER)                                                             \
     if constexpr(constexpr u64 R = BRAND)                                                          \
-        if(::rpp::Region_Allocator::Scope<BRAND> REGION2(COUNTER){})
+        if(::rpp::Region_Allocator::Scope<BRAND> RPP_REGION2(COUNTER){})
 
-#define Region(R) REGION1(R, LOCATION_HASH, __COUNTER__)
+#define Region(R) RPP_REGION1(R, RPP_LOCATION_HASH, __COUNTER__)
 
 using Mdefault = Mallocator<"Default">;
 using Mhidden = Mallocator<"Hidden", false>;

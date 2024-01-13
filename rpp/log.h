@@ -6,34 +6,40 @@
 #endif
 
 #ifdef RPP_COMPILER_MSVC
-#define __PRETTY_FUNCTION__ __FUNCTION__
+#define RPP_PRETTY_FUNCTION __FUNCTION__
+#elif defined RPP_COMPILER_CLANG
+#define RPP_PRETTY_FUNCTION __PRETTY_FUNCTION__
 #endif
 
-#define Here ::rpp::Log::Location::make(__FILE__, __LINE__, __PRETTY_FUNCTION__)
-#define Log_Scope ::rpp::Log::Scope log_scope__##__COUNTER__
+#define RPP_HERE ::rpp::Log::Location::make(__FILE__, __LINE__, RPP_PRETTY_FUNCTION)
 
 #define info(fmt, ...)                                                                             \
-    (void)(::rpp::Log::log(::rpp::Log::Level::info, Here, fmt##_v, ##__VA_ARGS__), 0)
+    (void)(::rpp::Log::log(::rpp::Log::Level::info, RPP_HERE, fmt##_v, ##__VA_ARGS__), 0)
 
 #define warn(fmt, ...)                                                                             \
-    (void)(::rpp::Log::log(::rpp::Log::Level::warn, Here, fmt##_v, ##__VA_ARGS__), 0)
+    (void)(::rpp::Log::log(::rpp::Log::Level::warn, RPP_HERE, fmt##_v, ##__VA_ARGS__), 0)
 
 #define die(fmt, ...)                                                                              \
-    (void)(::rpp::Log::log(::rpp::Log::Level::fatal, Here, fmt##_v, ##__VA_ARGS__), DEBUG_BREAK,   \
-           ::rpp::Libc::exit(1), 0)
+    (void)(::rpp::Log::log(::rpp::Log::Level::fatal, RPP_HERE, fmt##_v, ##__VA_ARGS__),            \
+           RPP_DEBUG_BREAK, ::rpp::Libc::exit(1), 0)
 
 #undef assert
 #define assert(expr)                                                                               \
     (void)((!!(expr)) ||                                                                           \
-           (::rpp::Log::log(::rpp::Log::Level::fatal, Here, ::rpp::String_View{"Assert: %"},       \
+           (::rpp::Log::log(::rpp::Log::Level::fatal, RPP_HERE, ::rpp::String_View{"Assert: %"},   \
                             ::rpp::String_View{#expr}),                                            \
-            DEBUG_BREAK, ::rpp::Libc::exit(1), 0))
+            RPP_DEBUG_BREAK, ::rpp::Libc::exit(1), 0))
 
-#define UNREACHABLE                                                                                \
-    (void)(::rpp::Log::log(::rpp::Log::Level::fatal, Here, ::rpp::String_View{"Unreachable"}),     \
-           DEBUG_BREAK, ::rpp::Libc::exit(1), 0)
+#define RPP_UNREACHABLE                                                                            \
+    (void)(::rpp::Log::log(::rpp::Log::Level::fatal, RPP_HERE, ::rpp::String_View{"Unreachable"}), \
+           RPP_DEBUG_BREAK, ::rpp::Libc::exit(1), 0)
 
-#define DEBUG_BREAK (::rpp::Log::debug_break())
+#define RPP_DEBUG_BREAK (::rpp::Log::debug_break())
+
+#define RPP_INDENT2(COUNTER) __log_scope_##COUNTER
+#define RPP_INDENT1(COUNTER) if(::rpp::Log::Scope RPP_INDENT2(COUNTER){})
+
+#define Log_Indent RPP_INDENT1(__COUNTER__)
 
 namespace rpp {
 namespace Log {
@@ -66,6 +72,10 @@ struct Location {
 struct Scope {
     Scope() noexcept;
     ~Scope() noexcept;
+
+    [[nodiscard]] consteval operator bool() noexcept {
+        return true;
+    }
 };
 
 using Time = u64;
