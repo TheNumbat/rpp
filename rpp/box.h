@@ -24,7 +24,10 @@ struct Box {
     }
 
     template<Base_Of<T> D>
-    explicit Box(Box<D, P>&& derived) noexcept {
+        requires Allocator<P>
+    explicit Box(Box<D, P>&& derived)
+
+        noexcept {
         data_ = derived.data_;
         derived.data_ = null;
     }
