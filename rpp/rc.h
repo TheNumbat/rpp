@@ -18,9 +18,7 @@ struct Rc_Data {
 
 template<typename T>
 struct Arc_Data {
-    explicit Arc_Data(Thread::Atomic r) noexcept
-        requires Default_Constructable<T>
-        : references(r) {
+    explicit Arc_Data(Thread::Atomic r) noexcept : references(r) {
     }
 
     Thread::Atomic references;
