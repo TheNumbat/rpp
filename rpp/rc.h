@@ -9,17 +9,11 @@ namespace detail {
 
 template<typename T>
 struct Rc_Data {
-    explicit Rc_Data(u64 r) noexcept
-        requires Default_Constructable<T>
-        : references(r) {
-    }
-    explicit Rc_Data(u64 r, T&& t) noexcept
-        requires Move_Constructable<T>
-        : references(r), value(move(t)) {
+    explicit Rc_Data(u64 r) noexcept : references(r) {
     }
 
-    u64 references = 0;
-    T value;
+    u64 references;
+    Storage<T> value;
 };
 
 template<typename T>
@@ -28,13 +22,9 @@ struct Arc_Data {
         requires Default_Constructable<T>
         : references(r) {
     }
-    explicit Arc_Data(Thread::Atomic r, T&& t) noexcept
-        requires Move_Constructable<T>
-        : references(r), value(move(t)) {
-    }
 
     Thread::Atomic references;
-    T value;
+    Storage<T> value;
 };
 
 } // namespace detail
@@ -50,16 +40,18 @@ struct Rc {
     }
 
     template<typename... Args>
-        requires Constructable<T, Args...> && Move_Constructable<T>
+        requires Constructable<T, Args...>
     explicit Rc(Args&&... args) noexcept {
-        data_ = A::template make<Data>(static_cast<u64>(1), T{forward<Args>(args)...});
+        data_ = A::template make<Data>(static_cast<u64>(1));
+        data_->value.construct(forward<Args>(args)...);
     }
 
-    [[nodiscard]] static Rc make() noexcept
-        requires Default_Constructable<T>
-    {
+    template<typename... Args>
+        requires Constructable<T, Args...>
+    [[nodiscard]] static Rc make(Args&&... args) noexcept {
         Rc ret;
         ret.data_ = A::template make<Data>(static_cast<u64>(1));
+        ret.data->value.construct(forward<Args>(args)...);
         return ret;
     }
 
@@ -86,19 +78,19 @@ struct Rc {
 
     [[nodiscard]] T* operator->() noexcept {
         assert(data_);
-        return &data_->value;
+        return &*data_->value;
     }
     [[nodiscard]] const T* operator->() const noexcept {
         assert(data_);
-        return &data_->value;
+        return &*data_->value;
     }
     [[nodiscard]] T& operator*() noexcept {
         assert(data_);
-        return data_->value;
+        return *data_->value;
     }
     [[nodiscard]] const T& operator*() const noexcept {
         assert(data_);
-        return data_->value;
+        return *data_->value;
     }
 
     [[nodiscard]] operator bool() const noexcept {
@@ -117,6 +109,7 @@ private:
         if(!data_) return;
         data_->references--;
         if(data_->references == 0) {
+            data_->value.destruct();
             A::template destroy<Data>(data_);
         }
         data_ = null;
@@ -138,16 +131,18 @@ struct Arc {
     }
 
     template<typename... Args>
-        requires Constructable<T, Args...> && Move_Constructable<T>
+        requires Constructable<T, Args...>
     explicit Arc(Args&&... args) noexcept {
-        data_ = A::template make<Data>(Thread::Atomic{1}, T{forward<Args>(args)...});
+        data_ = A::template make<Data>(Thread::Atomic{1});
+        data_->value.construct(forward<Args>(args)...);
     }
 
-    [[nodiscard]] static Arc make() noexcept
-        requires Default_Constructable<T>
-    {
+    template<typename... Args>
+        requires Constructable<T, Args...>
+    [[nodiscard]] static Arc make(Args&&... args) noexcept {
         Arc ret;
         ret.data_ = A::template make<Data>(Thread::Atomic{1});
+        ret.data_->value.construct(forward<Args>(args)...);
         return ret;
     }
 
@@ -174,19 +169,19 @@ struct Arc {
 
     [[nodiscard]] T* operator->() noexcept {
         assert(data_);
-        return &data_->value;
+        return &*data_->value;
     }
     [[nodiscard]] const T* operator->() const noexcept {
         assert(data_);
-        return &data_->value;
+        return &*data_->value;
     }
     [[nodiscard]] T& operator*() noexcept {
         assert(data_);
-        return data_->value;
+        return *data_->value;
     }
     [[nodiscard]] const T& operator*() const noexcept {
         assert(data_);
-        return data_->value;
+        return *data_->value;
     }
 
     [[nodiscard]] operator bool() const noexcept {
@@ -204,6 +199,7 @@ private:
     void drop() noexcept {
         if(!data_) return;
         if(data_->references.decr() == 0) {
+            data_->value.destruct();
             A::template destroy<Data>(data_);
         }
         data_ = null;
