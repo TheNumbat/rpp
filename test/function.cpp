@@ -1,7 +1,7 @@
 
 #include "test.h"
 
-#include <function.h>
+#include <rpp/function.h>
 
 i32 main() {
     Test test{"function"_v};

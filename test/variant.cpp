@@ -1,7 +1,7 @@
 
 #include "test.h"
 
-#include <variant.h>
+#include <rpp/variant.h>
 
 i32 main() {
     Test test{"variant"_v};
