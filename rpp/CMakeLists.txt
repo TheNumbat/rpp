@@ -63,7 +63,7 @@ endif()
 add_library(rpp STATIC ${SOURCES_RPP})
 set_target_properties(rpp PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS OFF LINKER_LANGUAGE CXX)
 
-add_compile_definitions(
+target_compile_definitions(rpp PUBLIC
     $<$<CONFIG:Debug>:RPP_DEBUG_BUILD>
     $<$<CONFIG:RelWithDebInfo>:RPP_RELWITHDEBINFO_BUILD>
     $<$<CONFIG:Release>:RPP_RELEASE_BUILD>
