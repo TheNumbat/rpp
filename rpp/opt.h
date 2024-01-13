@@ -68,6 +68,21 @@ struct Opt {
         return *this;
     }
 
+    template<typename... Args>
+    void emplace(Args&&... args) noexcept
+        requires Constructable<T, Args...>
+    {
+        ok_ = true;
+        value_.construct(forward<Args>(args)...);
+    }
+
+    void clear() noexcept {
+        if(ok_) {
+            value_.destruct();
+            ok_ = false;
+        }
+    }
+
     Opt clone() const noexcept
         requires Clone<T> || Copy_Constructable<T>
     {
