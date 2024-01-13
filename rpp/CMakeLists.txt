@@ -83,6 +83,8 @@ if(MSVC)
         message(FATAL_ERROR "Unsupported MSVC version: only 19.37+ is supported.")
     endif()
 
+    string(REPLACE "/GR" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+
     target_compile_definitions(rpp
         PRIVATE
         WIN32_LEAN_AND_MEAN NOMINMAX _HAS_EXCEPTIONS=0

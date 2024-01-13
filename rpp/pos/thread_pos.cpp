@@ -97,7 +97,7 @@ void set_priority(Priority p) noexcept {
 #endif
         break;
     case Priority::critical: prio = max_prio; break;
-    default: UNREACHABLE;
+    default: RPP_UNREACHABLE;
     }
 
     ret = pthread_setschedprio(id, prio);

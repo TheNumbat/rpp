@@ -97,7 +97,7 @@ void Event::reset() const noexcept {
             return i;
         }
     }
-    UNREACHABLE;
+    RPP_UNREACHABLE;
 }
 
 } // namespace rpp::Async
