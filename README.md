@@ -31,6 +31,8 @@ target_include_directories($your_target PRIVATE ${RPP_INCLUDE_DIRS})
 
 To use rpp with another build system, add `rpp` to your include path, add `rpp/rpp/impl/unify.cpp` to the build, and add either `rpp/rpp/pos/unify.cpp` or `rpp/rpp/w32/unify.cpp` based on your platform.
 
+Alternatively, to start an rpp project from scratch, you can fork [rpp_example_project](https://github.com/TheNumbat/rpp_example_project).
+
 ## Build and Run Tests
 
 To build rpp and run the tests, run the following commands:
