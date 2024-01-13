@@ -70,6 +70,8 @@ target_compile_definitions(rpp PUBLIC
     $<$<CONFIG:MinSizeRel>:RPP_RELEASE_BUILD>
 )
 
+set(RPP_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "rpp include directory")
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CLANG TRUE)
 endif()

@@ -24,9 +24,9 @@ git submodule add https://github.com/TheNumbat/rpp
 Then add the following lines to your CMakeLists.txt:
 
 ```cmake
-add_subdirectory(rpp/rpp)
+add_subdirectory(rpp)
 target_link_libraries($your_target PRIVATE rpp)
-target_include_directories($your_target PRIVATE "rpp")
+target_include_directories($your_target PRIVATE ${RPP_INCLUDE_DIR})
 ```
 
 To use rpp with another build system, add `rpp` to your include path, add `rpp/rpp/impl/unify.cpp` to the build, and add either `rpp/rpp/pos/unify.cpp` or `rpp/rpp/w32/unify.cpp` based on your platform.
@@ -43,7 +43,7 @@ Assure MSVC 19.37 and cmake 3.17 (or newer) are installed and in your PATH.
 mkdir build
 cd build
 cmake ..
-cmake --build .
+cmake --build . -DRPP_TEST=ON
 ctest -C Debug
 ```
 
@@ -56,7 +56,7 @@ Assure clang-17 and cmake 3.17 (or newer) are installed.
 ```bash
 mkdir build
 cd build
-CXX=clang++-17 cmake ..
+CXX=clang++-17 cmake .. -DRPP_TEST=ON
 make -j
 ctest -C Debug
 ```
