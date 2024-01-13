@@ -7,7 +7,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Configure
-      run: cmake -S . -B build
+      run: cmake -S . -B build -DRPP_TEST=ON
     - name: Build
       run: cmake --build build --config Release
     - name: Test

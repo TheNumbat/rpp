@@ -12,7 +12,7 @@ jobs:
        chmod +x ./llvm.sh
        sudo ./llvm.sh 17
     - name: Configure
-      run: CC=clang-17 CXX=clang++-17 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      run: CC=clang-17 CXX=clang++-17 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
     - name: Build
       run: cmake --build build -- -j
     - name: Test
