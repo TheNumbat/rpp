@@ -45,11 +45,18 @@ struct Rc {
     }
 
     template<typename... Args>
-        requires Constructable<T, Args...>
     [[nodiscard]] static Rc make(Args&&... args) noexcept {
         Rc ret;
         ret.data_ = A::template make<Data>(static_cast<u64>(1));
-        ret.data->value.construct(forward<Args>(args)...);
+        new(ret.data_->value.data()) T{forward<Args>(args)...};
+        return ret;
+    }
+
+    static Rc from_this(T* value) noexcept {
+        Rc ret;
+        ret.data_ =
+            reinterpret_cast<Data*>(reinterpret_cast<u8*>(value) - RPP_OFFSETOF(Data, value));
+        ret.data_->references++;
         return ret;
     }
 
@@ -136,11 +143,18 @@ struct Arc {
     }
 
     template<typename... Args>
-        requires Constructable<T, Args...>
     [[nodiscard]] static Arc make(Args&&... args) noexcept {
         Arc ret;
         ret.data_ = A::template make<Data>(Thread::Atomic{1});
-        ret.data_->value.construct(forward<Args>(args)...);
+        new(ret.data_->value.data()) T{forward<Args>(args)...};
+        return ret;
+    }
+
+    static Arc from_this(T* value) noexcept {
+        Arc ret;
+        ret.data_ =
+            reinterpret_cast<Data*>(reinterpret_cast<u8*>(value) - RPP_OFFSETOF(Data, value));
+        ret.data_->references.incr();
         return ret;
     }
 

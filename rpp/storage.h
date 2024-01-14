@@ -60,6 +60,13 @@ struct Storage {
         return reinterpret_cast<const T*>(value_);
     }
 
+    [[nodiscard]] const u8* data() const noexcept {
+        return value_;
+    }
+    [[nodiscard]] u8* data() noexcept {
+        return value_;
+    }
+
 protected:
     alignas(alignof(T)) u8 value_[sizeof(T)];
 
