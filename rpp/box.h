@@ -53,6 +53,15 @@ struct Box {
         }
     }
 
+    template<typename... Args>
+    [[nodiscard]] static Box make(Args&&... args) noexcept {
+        Box ret;
+        auto data = A::template make<Storage<T>>();
+        new(data->data()) T{forward<Args>(args)...};
+        ret.data_ = reinterpret_cast<T*>(data);
+        return ret;
+    }
+
     template<Scalar_Allocator R = P>
     [[nodiscard]] Box<T, R> clone() const noexcept
         requires(Clone<T> || Copy_Constructable<T>)
