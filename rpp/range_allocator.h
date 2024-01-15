@@ -55,7 +55,7 @@ struct Range_Allocator {
     private:
         explicit Block(u64 start, u64 offset, u64 size, Block* next_block,
                        Block* prev_block) noexcept
-            : start(start), offset(offset), size(size), next_block(next_block),
+            : offset(offset), size(size), start(start), next_block(next_block),
               prev_block(prev_block){};
 
         u64 size;
