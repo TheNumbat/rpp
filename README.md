@@ -33,38 +33,6 @@ To use rpp with another build system, add `rpp` to your include path, add `rpp/r
 
 Alternatively, to start an rpp project from scratch, you can fork [rpp_example_project](https://github.com/TheNumbat/rpp_example_project).
 
-## Build and Run Tests
-
-To build rpp and run the tests, run the following commands:
-
-### Windows
-
-Assure MSVC 19.37 and cmake 3.17 (or newer) are installed and in your PATH.
-
-```bash
-mkdir build
-cd build
-cmake ..
-cmake --build . -DRPP_TEST=ON
-ctest -C Debug
-```
-
-For faster parallel builds, you can instead generate [ninja](https://ninja-build.org/) build files with `cmake -G Ninja ..`.
-
-### Linux
-
-Assure clang-17 and cmake 3.17 (or newer) are installed.
-
-```bash
-mkdir build
-cd build
-CXX=clang++-17 cmake .. -DRPP_TEST=ON
-make -j
-ctest -C Debug
-```
-
-For faster parallel builds, you can instead generate [ninja](https://ninja-build.org/) build files with `cmake -G Ninja ..`.
-
 ## Platform Support
 
 Only the following configurations are supported:
@@ -264,6 +232,38 @@ i32 main() {
     info("Dot product: %", SIMD::F32x8::dp(simd, simd));
 }
 ```
+
+## Build and Run Tests
+
+To build rpp and run the tests, run the following commands:
+
+### Windows
+
+Assure MSVC 19.37 and cmake 3.17 (or newer) are installed and in your PATH.
+
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build . -DRPP_TEST=ON
+ctest -C Debug
+```
+
+For faster parallel builds, you can instead generate [ninja](https://ninja-build.org/) build files with `cmake -G Ninja ..`.
+
+### Linux
+
+Assure clang-17 and cmake 3.17 (or newer) are installed.
+
+```bash
+mkdir build
+cd build
+CXX=clang++-17 cmake .. -DRPP_TEST=ON
+make -j
+ctest -C Debug
+```
+
+For faster parallel builds, you can instead generate [ninja](https://ninja-build.org/) build files with `cmake -G Ninja ..`.
 
 ## To-Dos
 
