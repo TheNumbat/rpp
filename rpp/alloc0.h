@@ -108,7 +108,7 @@ struct Mregion {
 #define RPP_REGION2(COUNTER) __region_##COUNTER
 #define RPP_REGION1(R, BRAND, COUNTER)                                                             \
     if constexpr(constexpr u64 R = BRAND)                                                          \
-        if(::rpp::Region_Allocator::Scope<BRAND> RPP_REGION2(COUNTER){})
+        if(::rpp::Region_Allocator::Scope<R> RPP_REGION2(COUNTER){})
 
 #define Region(R) RPP_REGION1(R, RPP_LOCATION_HASH, __COUNTER__)
 
