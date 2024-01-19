@@ -70,6 +70,12 @@ target_compile_definitions(rpp PUBLIC
     $<$<CONFIG:MinSizeRel>:RPP_RELEASE_BUILD>
 )
 
+set_property(TARGET rpp PROPERTY INTERPROCEDURAL_OPTIMIZATION
+    $<$<CONFIG:Debug>:FALSE>
+    $<$<CONFIG:RelWithDebInfo>:FALSE>
+    $<$<CONFIG:Release>:TRUE>
+    $<$<CONFIG:MinSizeRel>:TRUE>)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CLANG TRUE)
 endif()
