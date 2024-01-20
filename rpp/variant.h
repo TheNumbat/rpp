@@ -33,7 +33,7 @@ struct Variant {
 
     template<typename V>
         requires One_Is<V, Ts...>
-    explicit Variant(V&& value) noexcept {
+    Variant(V&& value) noexcept {
         construct(forward<V>(value));
     }
     ~Variant() noexcept {
