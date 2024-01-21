@@ -12,8 +12,7 @@ struct F32x {
     using floatT = f32 __attribute__((ext_vector_type(T)));
     alignas(4 * T) floatT data;
 
-    F32x<T>() = default;
-    F32x<T>(floatT in) : data(in){};
+    constexpr F32x<T>(floatT in = {}) : data(in){};
 
     [[nodiscard]] static F32x<T> set1(f32 v) noexcept;
     [[nodiscard]] static F32x<T> zero() noexcept;
