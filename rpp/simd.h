@@ -3,7 +3,7 @@
 
 #include "base.h"
 
-// The implementation of these functions are compiled assuming AVX2 support.
+// The implementation of these functions are compiled with gcc/clang vector intrinsics.
 
 namespace rpp::SIMD {
 

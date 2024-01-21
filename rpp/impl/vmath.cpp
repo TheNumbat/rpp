@@ -1,85 +1,86 @@
 
 #include "../vmath.h"
 
-#include <smmintrin.h>
-
 namespace rpp::Math {
 
 namespace detail {
 
+using SIMD::float4;
 using SIMD::of;
 using SIMD::to;
 
-#define MakeShuffleMask(x, y, z, w) (x | (y << 2) | (z << 4) | (w << 6))
-#define VecSwizzleMask(vec, mask) _mm_castsi128_ps(_mm_shuffle_epi32(_mm_castps_si128(vec), mask))
-#define VecSwizzle(vec, x, y, z, w) VecSwizzleMask(vec, MakeShuffleMask(x, y, z, w))
-#define VecSwizzle1(vec, x) VecSwizzleMask(vec, MakeShuffleMask(x, x, x, x))
-#define VecSwizzle_0022(vec) _mm_moveldup_ps(vec)
-#define VecSwizzle_1133(vec) _mm_movehdup_ps(vec)
-#define VecShuffle(vec1, vec2, x, y, z, w) _mm_shuffle_ps(vec1, vec2, MakeShuffleMask(x, y, z, w))
-#define VecShuffle_0101(vec1, vec2) _mm_movelh_ps(vec1, vec2)
-#define VecShuffle_2323(vec1, vec2) _mm_movehl_ps(vec2, vec1)
-
-static __m128 Mat2Mul(__m128 vec1, __m128 vec2) noexcept {
-    return _mm_add_ps(_mm_mul_ps(vec1, VecSwizzle(vec2, 0, 3, 0, 3)),
-                      _mm_mul_ps(VecSwizzle(vec1, 1, 0, 3, 2), VecSwizzle(vec2, 2, 1, 2, 1)));
+static float4 Mat2Mul(float4 vec1, float4 vec2) noexcept {
+    return (vec1 * vec2.xzxz) + (vec1.yxwz * vec2.zyzy);
 }
 
-static __m128 Mat2AdjMul(__m128 vec1, __m128 vec2) noexcept {
-    return _mm_sub_ps(_mm_mul_ps(VecSwizzle(vec1, 3, 3, 0, 0), vec2),
-                      _mm_mul_ps(VecSwizzle(vec1, 1, 1, 2, 2), VecSwizzle(vec2, 2, 3, 0, 1)));
+static float4 Mat2AdjMul(float4 vec1, float4 vec2) noexcept {
+    return (vec1.zzxx * vec2) - (vec1.yyzz * vec2.zwxy);
 }
 
-static __m128 Mat2MulAdj(__m128 vec1, __m128 vec2) noexcept {
-    return _mm_sub_ps(_mm_mul_ps(vec1, VecSwizzle(vec2, 3, 0, 3, 0)),
-                      _mm_mul_ps(VecSwizzle(vec1, 1, 0, 3, 2), VecSwizzle(vec2, 2, 1, 2, 1)));
+static float4 Mat2MulAdj(float4 vec1, float4 vec2) noexcept {
+    return (vec1 * vec2.zxzx) - (vec1.yxwz * vec2.zyzy);
+}
+
+static float4 hadd(float4 v) noexcept {
+    // folllowing Intel's _mm_hadd_ps
+    const float v0 = v.z + v.w;
+    const float v1 = v.x + v.y;
+    return {v1, v0, v1, v0};
 }
 
 static Mat4 inverse(Mat4 m) noexcept {
-    __m128 A = VecShuffle_0101(of(m.pack[0]), of(m.pack[1]));
-    __m128 B = VecShuffle_2323(of(m.pack[0]), of(m.pack[1]));
-    __m128 C = VecShuffle_0101(of(m.pack[2]), of(m.pack[3]));
-    __m128 D = VecShuffle_2323(of(m.pack[2]), of(m.pack[3]));
+    const auto m_pack0 = of(m.pack[0]);
+    const auto m_pack1 = of(m.pack[1]);
+    const auto m_pack2 = of(m.pack[2]);
+    const auto m_pack3 = of(m.pack[3]);
 
-    __m128 detSub = _mm_sub_ps(_mm_mul_ps(VecShuffle(of(m.pack[0]), of(m.pack[2]), 0, 2, 0, 2),
-                                          VecShuffle(of(m.pack[1]), of(m.pack[3]), 1, 3, 1, 3)),
-                               _mm_mul_ps(VecShuffle(of(m.pack[0]), of(m.pack[2]), 1, 3, 1, 3),
-                                          VecShuffle(of(m.pack[1]), of(m.pack[3]), 0, 2, 0, 2)));
-    __m128 detA = VecSwizzle1(detSub, 0);
-    __m128 detB = VecSwizzle1(detSub, 1);
-    __m128 detC = VecSwizzle1(detSub, 2);
-    __m128 detD = VecSwizzle1(detSub, 3);
-    __m128 D_C = Mat2AdjMul(D, C);
-    __m128 A_B = Mat2AdjMul(A, B);
-    __m128 X_ = _mm_sub_ps(_mm_mul_ps(detD, A), Mat2Mul(B, D_C));
-    __m128 W_ = _mm_sub_ps(_mm_mul_ps(detA, D), Mat2Mul(C, A_B));
+    const auto A = __builtin_shufflevector(m_pack0, m_pack1, 0, 1, 0, 1);
+    const auto B = __builtin_shufflevector(m_pack0, m_pack1, 2, 3, 2, 3);
+    const auto C = __builtin_shufflevector(m_pack2, m_pack3, 0, 1, 0, 1);
+    const auto D = __builtin_shufflevector(m_pack2, m_pack3, 2, 3, 2, 3);
 
-    __m128 detM = _mm_mul_ps(detA, detD);
-    __m128 Y_ = _mm_sub_ps(_mm_mul_ps(detB, C), Mat2MulAdj(D, A_B));
-    __m128 Z_ = _mm_sub_ps(_mm_mul_ps(detC, B), Mat2MulAdj(A, D_C));
-    detM = _mm_add_ps(detM, _mm_mul_ps(detB, detC));
+    const auto E = __builtin_shufflevector(m_pack0, m_pack2, 0, 2, 0, 2);
+    const auto F = __builtin_shufflevector(m_pack1, m_pack3, 1, 3, 1, 3);
+    const auto G = __builtin_shufflevector(m_pack0, m_pack2, 1, 3, 1, 3);
+    const auto H = __builtin_shufflevector(m_pack1, m_pack3, 0, 2, 0, 2);
 
-    __m128 tr = _mm_mul_ps(A_B, VecSwizzle(D_C, 0, 2, 1, 3));
-    tr = _mm_hadd_ps(tr, tr);
-    tr = _mm_hadd_ps(tr, tr);
-    detM = _mm_sub_ps(detM, tr);
+    const auto detSub = (E * F) - (G * H);
 
-    const __m128 adjSignMask = _mm_setr_ps(1.f, -1.f, -1.f, 1.f);
-    __m128 rDetM = _mm_div_ps(adjSignMask, detM);
+    const auto detA = detSub.xxxx;
+    const auto detB = detSub.yyyy;
+    const auto detC = detSub.zzzz;
+    const auto detD = detSub.wwww;
 
-    X_ = _mm_mul_ps(X_, rDetM);
-    Y_ = _mm_mul_ps(Y_, rDetM);
-    Z_ = _mm_mul_ps(Z_, rDetM);
-    W_ = _mm_mul_ps(W_, rDetM);
+    const auto D_C = Mat2AdjMul(D, C);
+    const auto A_B = Mat2AdjMul(A, B);
+    auto X_ = detD * A - Mat2Mul(B, D_C);
+    auto W_ = detA * D - Mat2Mul(C, A_B);
+
+    auto detM = detA * detD;
+    auto Y_ = detB * C - Mat2MulAdj(D, A_B);
+    auto Z_ = detC * B - Mat2MulAdj(A, D_C);
+    detM += detB * detC;
+
+    auto tr = A_B * D_C.xzyw;
+    tr = hadd(tr);
+    tr = hadd(tr);
+    detM -= tr;
+
+    const auto adjSignMask = float4{1.f, -1.f, -1.f, 1.f};
+    const auto rDetM = adjSignMask / detM;
+
+    X_ *= rDetM;
+    Y_ *= rDetM;
+    Z_ *= rDetM;
+    W_ *= rDetM;
 
     Mat4 r;
-    r.pack[0] = to(VecShuffle(X_, Y_, 3, 1, 3, 1));
-    r.pack[1] = to(VecShuffle(X_, Y_, 2, 0, 2, 0));
-    r.pack[2] = to(VecShuffle(Z_, W_, 3, 1, 3, 1));
-    r.pack[3] = to(VecShuffle(Z_, W_, 2, 0, 2, 0));
+    r.pack[0] = to(__builtin_shufflevector(X_, Y_, 3, 1, 3, 1));
+    r.pack[1] = to(__builtin_shufflevector(X_, Y_, 2, 0, 2, 0));
+    r.pack[2] = to(__builtin_shufflevector(Z_, W_, 3, 1, 3, 1));
+    r.pack[3] = to(__builtin_shufflevector(Z_, W_, 2, 0, 2, 0));
     return r;
 }
-
 } // namespace detail
 
 Mat4 Mat4::I = Mat4{1.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
