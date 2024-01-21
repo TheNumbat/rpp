@@ -13,9 +13,6 @@ struct F32x {
     typedef f32 floatT __attribute__((ext_vector_type(T)));
 
     [[nodiscard]] static F32x<T> set1(f32 v) noexcept;
-    [[nodiscard]] static F32x<T> set(f32 x, f32 y, f32 z, f32 w) noexcept;
-    [[nodiscard]] static F32x<T> set(f32 a, f32 b, f32 c, f32 d, f32 e, f32 f, f32 g,
-                                     f32 h) noexcept;
     [[nodiscard]] static F32x<T> zero() noexcept;
     [[nodiscard]] static F32x<T> one() noexcept;
     [[nodiscard]] static F32x<T> add(F32x<T> a, F32x<T> b) noexcept;
@@ -30,6 +27,11 @@ struct F32x {
     [[nodiscard]] static f32 dp(F32x<T> a, F32x<T> b) noexcept;
     [[nodiscard]] static F32x<T> cmpeq(F32x<T> a, F32x<T> b) noexcept;
     [[nodiscard]] static i32 movemask(F32x<T> a) noexcept;
+
+    template<typename... Args> // Variadic function for setting the parameters
+    [[nodiscard]] static F32x<T> set(Args... args) noexcept {
+        return to((floatT){args...});
+    }
 };
 
 typedef F32x<4> F32x4;

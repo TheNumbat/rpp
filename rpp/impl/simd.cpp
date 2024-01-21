@@ -32,16 +32,6 @@ template<i32 T>
     return to(floatT(v));
 }
 
-template<>
-[[nodiscard]] F32x4 F32x4::set(f32 x, f32 y, f32 z, f32 w) noexcept {
-    return to((float4){x, y, z, w});
-}
-
-template<>
-[[nodiscard]] F32x8 F32x8::set(f32 a, f32 b, f32 c, f32 d, f32 e, f32 f, f32 g, f32 h) noexcept {
-    return to((float8){a, b, c, d, e, f, g, h});
-}
-
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::zero() noexcept {
     return to(floatT(0));
