@@ -55,12 +55,6 @@
 #error "Unsupported OS: only Windows and Linux are supported."
 #endif
 
-#if defined __x86_64__ || defined _M_X64
-#define RPP_ARCH_X64
-#else
-#error "Unsupported architecture: only x86_64 is supported."
-#endif
-
 #define null nullptr
 
 namespace rpp {

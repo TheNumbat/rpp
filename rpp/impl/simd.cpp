@@ -1,12 +1,6 @@
 
 #include "../simd.h"
 
-#include <immintrin.h>
-
-#ifndef __AVX2__
-#error "Unsupported architecture: AVX2 is required".
-#endif
-
 namespace rpp::SIMD {
 
 static_assert(sizeof(F32x4) == 16);
