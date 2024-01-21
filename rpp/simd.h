@@ -27,8 +27,7 @@ struct F32x {
     [[nodiscard]] static F32x<T> ceil(F32x<T> a) noexcept;
     [[nodiscard]] static F32x<T> abs(F32x<T> a) noexcept;
     [[nodiscard]] static f32 dp(F32x<T> a, F32x<T> b) noexcept;
-    [[nodiscard]] static F32x<T> cmpeq(F32x<T> a, F32x<T> b) noexcept;
-    [[nodiscard]] static i32 movemask(F32x<T> a) noexcept;
+    [[nodiscard]] static i32 cmpeq(F32x<T> a, F32x<T> b) noexcept;
 
     template<typename... Args> // Variadic function for setting the parameters
     [[nodiscard]] static F32x<T> set(Args... args) noexcept {

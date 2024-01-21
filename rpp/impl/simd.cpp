@@ -27,18 +27,6 @@ template<i32 T>
 }
 
 template<i32 T>
-[[nodiscard]] i32 F32x<T>::movemask(F32x<T> a) noexcept {
-    // Set each bit of mask dst based on the most significant bit of the corresponding packed
-    // single-precision (32-bit) floating-point element in a.
-    // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm_movemask_ps
-    i32 ret = 0;
-    for(i32 i = 0; i < T; i++) {
-        ret |= (a.data[i] > 0) << i;
-    }
-    return ret;
-}
-
-template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::add(F32x<T> a, F32x<T> b) noexcept {
     return {a.data + b.data};
 }
@@ -95,18 +83,10 @@ template<i32 T>
 }
 
 template<i32 T>
-[[nodiscard]] F32x<T> F32x<T>::cmpeq(F32x<T> a, F32x<T> b) noexcept {
-    /// NOTE: Implemented following
-    /// https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm_cmpeq_ps
-    return {a.data - b.data};
-    // const auto cmp_res = (a.data == b.data);
-    // F32x<T> ret(0);
-    // for(i32 i = 0; i < T; i++) {
-    //     i32 result = cmp_res[i] ? 0xFFFFFFFF : 0;
-    //     // directly assign the bits of the float
-    //     memcpy(&ret.data[0], &result, sizeof(result));
-    // }
-    // return ret;
+[[nodiscard]] i32 F32x<T>::cmpeq(F32x<T> a, F32x<T> b) noexcept {
+    // element-wise comparison produces -1 (all 1's) when equal, 0 otherwise
+    // reducing via & to get equality of all members
+    return __builtin_reduce_and(a.data == b.data);
 }
 
 // explicit template instantiation
