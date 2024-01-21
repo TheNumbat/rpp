@@ -6,8 +6,6 @@ namespace rpp::Math {
 namespace detail {
 
 using SIMD::float4;
-using SIMD::of;
-using SIMD::to;
 
 static float4 Mat2Mul(float4 vec1, float4 vec2) noexcept {
     return (vec1 * vec2.xzxz) + (vec1.yxwz * vec2.zyzy);
@@ -29,10 +27,10 @@ static float4 hadd(float4 v) noexcept {
 }
 
 static Mat4 inverse(Mat4 m) noexcept {
-    const auto m_pack0 = of(m.pack[0]);
-    const auto m_pack1 = of(m.pack[1]);
-    const auto m_pack2 = of(m.pack[2]);
-    const auto m_pack3 = of(m.pack[3]);
+    const auto m_pack0 = m.pack[0].data;
+    const auto m_pack1 = m.pack[1].data;
+    const auto m_pack2 = m.pack[2].data;
+    const auto m_pack3 = m.pack[3].data;
 
     const auto A = __builtin_shufflevector(m_pack0, m_pack1, 0, 1, 0, 1);
     const auto B = __builtin_shufflevector(m_pack0, m_pack1, 2, 3, 2, 3);
@@ -75,10 +73,10 @@ static Mat4 inverse(Mat4 m) noexcept {
     W_ *= rDetM;
 
     Mat4 r;
-    r.pack[0] = to(__builtin_shufflevector(X_, Y_, 3, 1, 3, 1));
-    r.pack[1] = to(__builtin_shufflevector(X_, Y_, 2, 0, 2, 0));
-    r.pack[2] = to(__builtin_shufflevector(Z_, W_, 3, 1, 3, 1));
-    r.pack[3] = to(__builtin_shufflevector(Z_, W_, 2, 0, 2, 0));
+    r.pack[0].data = __builtin_shufflevector(X_, Y_, 3, 1, 3, 1);
+    r.pack[1].data = __builtin_shufflevector(X_, Y_, 2, 0, 2, 0);
+    r.pack[2].data = __builtin_shufflevector(Z_, W_, 3, 1, 3, 1);
+    r.pack[3].data = __builtin_shufflevector(Z_, W_, 2, 0, 2, 0);
     return r;
 }
 } // namespace detail

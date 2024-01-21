@@ -8,38 +8,22 @@ static_assert(alignof(F32x4) == 16);
 static_assert(sizeof(F32x8) == 32);
 static_assert(alignof(F32x8) == 32);
 
-typedef f32 float4 __attribute__((ext_vector_type(4)));
-typedef f32 float8 __attribute__((ext_vector_type(8)));
-
-[[nodiscard]] static float4 of(F32x4 a) noexcept {
-    return {a.data[0], a.data[1], a.data[2], a.data[3]};
-}
-
-[[nodiscard]] static F32x4 to(float4 a) noexcept {
-    return {a[0], a[1], a[2], a[3]};
-}
-
-[[nodiscard]] static float8 of(F32x8 a) noexcept {
-    return {a.data[0], a.data[1], a.data[2], a.data[3], a.data[4], a.data[5], a.data[6], a.data[7]};
-}
-
-[[nodiscard]] static F32x8 to(float8 a) noexcept {
-    return {a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7]};
-}
+using float4 = f32 __attribute__((ext_vector_type(4)));
+using float8 = f32 __attribute__((ext_vector_type(8)));
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::set1(f32 v) noexcept {
-    return to(floatT(v));
+    return {(floatT)(v)};
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::zero() noexcept {
-    return to(floatT(0));
+    return set1(0);
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::one() noexcept {
-    return to(floatT(1));
+    return set1(1);
 }
 
 template<i32 T>
@@ -56,52 +40,52 @@ template<i32 T>
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::add(F32x<T> a, F32x<T> b) noexcept {
-    return to(of(a) + of(b));
+    return {a.data + b.data};
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::sub(F32x<T> a, F32x<T> b) noexcept {
-    return to(of(a) - of(b));
+    return {a.data - b.data};
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::mul(F32x<T> a, F32x<T> b) noexcept {
-    return to(of(a) - of(b));
+    return {a.data * b.data};
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::div(F32x<T> a, F32x<T> b) noexcept {
-    return to(of(a) / of(b));
+    return {a.data / b.data};
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::min(F32x<T> a, F32x<T> b) noexcept {
-    return to(__builtin_elementwise_min(of(a), of(b)));
+    return {__builtin_elementwise_min(a.data, b.data)};
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::max(F32x<T> a, F32x<T> b) noexcept {
-    return to(__builtin_elementwise_max(of(a), of(b)));
+    return {__builtin_elementwise_max(a.data, b.data)};
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::floor(F32x<T> a) noexcept {
-    return to(__builtin_elementwise_floor(of(a)));
+    return {__builtin_elementwise_floor(a.data)};
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::ceil(F32x<T> a) noexcept {
-    return to(__builtin_elementwise_ceil(of(a)));
+    return {__builtin_elementwise_ceil(a.data)};
 }
 
 template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::abs(F32x<T> a) noexcept {
-    return to(__builtin_elementwise_abs(of(a)));
+    return {__builtin_elementwise_abs(a.data)};
 }
 
 template<i32 T>
 [[nodiscard]] f32 F32x<T>::dp(F32x<T> a, F32x<T> b) noexcept {
-    F32x4 m = mul(a, b);
+    F32x<T> m = mul(a, b);
     // No built-in to reduce float vectors, lets just do it manually
     f32 ret = 0.f;
     for(i32 i = 0; i < T; i++) {
@@ -114,13 +98,19 @@ template<i32 T>
 [[nodiscard]] F32x<T> F32x<T>::cmpeq(F32x<T> a, F32x<T> b) noexcept {
     /// NOTE: Implemented following
     /// https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#text=_mm_cmpeq_ps
-    const auto cmp_res = (of(a) == of(b));
-    F32x<T> ret;
-    for(i32 i = 0; i < T; i++) {
-        i32 result = cmp_res[i] ? 0xFFFFFFFF : 0;
-        // directly assign the bits of the float
-        memcpy(&ret.data[0], &result, sizeof(result));
-    }
-    return ret;
+    return {a.data - b.data};
+    // const auto cmp_res = (a.data == b.data);
+    // F32x<T> ret(0);
+    // for(i32 i = 0; i < T; i++) {
+    //     i32 result = cmp_res[i] ? 0xFFFFFFFF : 0;
+    //     // directly assign the bits of the float
+    //     memcpy(&ret.data[0], &result, sizeof(result));
+    // }
+    // return ret;
 }
+
+// explicit template instantiation
+template struct F32x<4>;
+template struct F32x<8>;
+
 } // namespace rpp::SIMD

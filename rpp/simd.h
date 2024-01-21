@@ -9,8 +9,11 @@ namespace rpp::SIMD {
 
 template<i32 T>
 struct F32x {
-    alignas(4 * T) f32 data[T];
-    typedef f32 floatT __attribute__((ext_vector_type(T)));
+    using floatT = f32 __attribute__((ext_vector_type(T)));
+    alignas(4 * T) floatT data;
+
+    F32x<T>() = default;
+    F32x<T>(floatT in) : data(in){};
 
     [[nodiscard]] static F32x<T> set1(f32 v) noexcept;
     [[nodiscard]] static F32x<T> zero() noexcept;
@@ -30,7 +33,7 @@ struct F32x {
 
     template<typename... Args> // Variadic function for setting the parameters
     [[nodiscard]] static F32x<T> set(Args... args) noexcept {
-        return to((floatT){args...});
+        return {(floatT){args...}};
     }
 };
 
