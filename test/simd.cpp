@@ -10,38 +10,38 @@ using namespace rpp::SIMD;
 i32 main() {
     Trace("SetZero4") {
         F32x4 f = F32x4::zero();
-        assert(f.data[0] == 0.f);
-        assert(f.data[1] == 0.f);
-        assert(f.data[2] == 0.f);
-        assert(f.data[3] == 0.f);
+        assert_near(f.data[0], 0.f);
+        assert_near(f.data[1], 0.f);
+        assert_near(f.data[2], 0.f);
+        assert_near(f.data[3], 0.f);
     }
 
     Trace("SetOne4") {
         F32x4 f = F32x4::one();
-        assert(f.data[0] == 1.0);
-        assert(f.data[1] == 1.0);
-        assert(f.data[2] == 1.0);
-        assert(f.data[3] == 1.0);
+        assert_near(f.data[0], 1.0);
+        assert_near(f.data[1], 1.0);
+        assert_near(f.data[2], 1.0);
+        assert_near(f.data[3], 1.0);
     }
 
     Trace("SetXYZW") {
         F32x4 f = F32x4::set(4.5f, 3.2f, 55.f, -1000.f);
-        assert(f.data[0] == 4.5f);
-        assert(f.data[1] == 3.2f);
-        assert(f.data[2] == 55.f);
-        assert(f.data[3] == -1000.f);
+        assert_near(f.data[0], 4.5f);
+        assert_near(f.data[1], 3.2f);
+        assert_near(f.data[2], 55.f);
+        assert_near(f.data[3], -1000.f);
     }
 
     Trace("SetABCDEFGH") {
         F32x8 f = F32x8::set(4.5f, 3.2f, 55.f, -1000.f, 45.3f, 55.7f, -200.4f, 0.f);
-        assert(f.data[0] == 4.5f);
-        assert(f.data[1] == 3.2f);
-        assert(f.data[2] == 55.f);
-        assert(f.data[3] == -1000.f);
-        assert(f.data[4] == 45.3f);
-        assert(f.data[5] == 55.7f);
-        assert(f.data[6] == -200.4f);
-        assert(f.data[7] == 0.f);
+        assert_near(f.data[0], 4.5f);
+        assert_near(f.data[1], 3.2f);
+        assert_near(f.data[2], 55.f);
+        assert_near(f.data[3], -1000.f);
+        assert_near(f.data[4], 45.3f);
+        assert_near(f.data[5], 55.7f);
+        assert_near(f.data[6], -200.4f);
+        assert_near(f.data[7], 0.f);
     }
 
     Trace("Operations4") {
