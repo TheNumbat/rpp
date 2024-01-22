@@ -5,21 +5,21 @@ namespace rpp::Math {
 
 namespace detail {
 
-using SIMD::float4;
+using SIMD::f32_4;
 
-static float4 Mat2Mul(float4 vec1, float4 vec2) noexcept {
+static f32_4 Mat2Mul(f32_4 vec1, f32_4 vec2) noexcept {
     return (vec1 * vec2.xwxw) + (vec1.yxwz * vec2.zyzy);
 }
 
-static float4 Mat2AdjMul(float4 vec1, float4 vec2) noexcept {
+static f32_4 Mat2AdjMul(f32_4 vec1, f32_4 vec2) noexcept {
     return (vec1.wwxx * vec2) - (vec1.yyzz * vec2.zwxy);
 }
 
-static float4 Mat2MulAdj(float4 vec1, float4 vec2) noexcept {
+static f32_4 Mat2MulAdj(f32_4 vec1, f32_4 vec2) noexcept {
     return (vec1 * vec2.wxwx) - (vec1.yxwz * vec2.zyzy);
 }
 
-static float4 hadd(float4 v) noexcept {
+static f32_4 hadd(f32_4 v) noexcept {
     // folllowing Intel's _mm_hadd_ps
     const float v0 = v.z + v.w;
     const float v1 = v.x + v.y;
@@ -63,7 +63,7 @@ static Mat4 inverse(Mat4 m) noexcept {
     tr = hadd(tr);
     detM -= tr;
 
-    const auto adjSignMask = float4{1.f, -1.f, -1.f, 1.f};
+    const auto adjSignMask = f32_4{1.f, -1.f, -1.f, 1.f};
     const auto rDetM = adjSignMask / detM;
 
     X_ *= rDetM;

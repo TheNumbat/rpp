@@ -7,31 +7,32 @@
 
 namespace rpp::SIMD {
 
-template<i32 T>
+template<i32 N>
 struct F32x {
-    using floatT = f32 __attribute__((ext_vector_type(T)));
-    alignas(4 * T) floatT data;
+    using f32_N = f32 __attribute__((ext_vector_type(N)));
+    alignas(4 * N) f32_N data;
 
-    constexpr F32x<T>(floatT in = {}) : data(in){};
+    constexpr F32x<N>(f32_N in = {}) : data(in){};
 
-    [[nodiscard]] static F32x<T> set1(f32 v) noexcept;
-    [[nodiscard]] static F32x<T> zero() noexcept;
-    [[nodiscard]] static F32x<T> one() noexcept;
-    [[nodiscard]] static F32x<T> add(F32x<T> a, F32x<T> b) noexcept;
-    [[nodiscard]] static F32x<T> sub(F32x<T> a, F32x<T> b) noexcept;
-    [[nodiscard]] static F32x<T> mul(F32x<T> a, F32x<T> b) noexcept;
-    [[nodiscard]] static F32x<T> div(F32x<T> a, F32x<T> b) noexcept;
-    [[nodiscard]] static F32x<T> min(F32x<T> a, F32x<T> b) noexcept;
-    [[nodiscard]] static F32x<T> max(F32x<T> a, F32x<T> b) noexcept;
-    [[nodiscard]] static F32x<T> floor(F32x<T> a) noexcept;
-    [[nodiscard]] static F32x<T> ceil(F32x<T> a) noexcept;
-    [[nodiscard]] static F32x<T> abs(F32x<T> a) noexcept;
-    [[nodiscard]] static f32 dp(F32x<T> a, F32x<T> b) noexcept;
-    [[nodiscard]] static i32 cmpeq(F32x<T> a, F32x<T> b) noexcept;
+    [[nodiscard]] static F32x<N> set1(f32 v) noexcept;
+    [[nodiscard]] static F32x<N> zero() noexcept;
+    [[nodiscard]] static F32x<N> one() noexcept;
+    [[nodiscard]] static F32x<N> add(F32x<N> a, F32x<N> b) noexcept;
+    [[nodiscard]] static F32x<N> sub(F32x<N> a, F32x<N> b) noexcept;
+    [[nodiscard]] static F32x<N> mul(F32x<N> a, F32x<N> b) noexcept;
+    [[nodiscard]] static F32x<N> div(F32x<N> a, F32x<N> b) noexcept;
+    [[nodiscard]] static F32x<N> min(F32x<N> a, F32x<N> b) noexcept;
+    [[nodiscard]] static F32x<N> max(F32x<N> a, F32x<N> b) noexcept;
+    [[nodiscard]] static F32x<N> floor(F32x<N> a) noexcept;
+    [[nodiscard]] static F32x<N> ceil(F32x<N> a) noexcept;
+    [[nodiscard]] static F32x<N> abs(F32x<N> a) noexcept;
+    [[nodiscard]] static f32 dp(F32x<N> a, F32x<N> b) noexcept;
+    [[nodiscard]] static i32 cmpeq(F32x<N> a, F32x<N> b) noexcept;
 
-    template<typename... Args> // Variadic function for setting the parameters
-    [[nodiscard]] static F32x<T> set(Args... args) noexcept {
-        return {(floatT){args...}};
+    template<typename... Args>
+        requires All_Are<f32, Args...>
+    [[nodiscard]] static F32x<N> set(Args... args) noexcept {
+        return {(f32_N){args...}};
     }
 };
 
