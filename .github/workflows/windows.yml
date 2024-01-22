@@ -1,5 +1,11 @@
 name: Windows
-on: [push]
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
 jobs:
   build-windows:
     runs-on: windows-latest
