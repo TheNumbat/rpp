@@ -30,14 +30,7 @@ void sleep(u64 ms) noexcept {
 }
 
 void pause() noexcept {
-    /// NOTE: from https://stackoverflow.com/questions/70069855/is-there-a-yield-intrinsic-on-arm
-#if defined __x86_64__ || defined _M_X64
-    _mm_pause();
-#elif defined __arm__
-    __yield();
-#elif defined __aarch64__
-    asm volatile("yield");
-#endif
+    sched_yield();
 }
 
 [[nodiscard]] u64 perf_counter() noexcept {
