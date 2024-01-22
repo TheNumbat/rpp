@@ -11,4 +11,8 @@ foreach(test ${TEST_SOURCES})
     set_target_properties(${testname} PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS OFF LINKER_LANGUAGE CXX)
     target_link_libraries(${testname} PRIVATE rpp)
     target_include_directories(${testname} PRIVATE ${RPP_INCLUDE_DIRS})
+
+    if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+        target_compile_options(${testname} PRIVATE -mavx2)
+    endif()
 endforeach(test ${TEST_SOURCES})
