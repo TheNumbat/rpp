@@ -32,6 +32,18 @@ i32 main() {
         assert(f.data[3] == -1000.f);
     }
 
+    Trace("SetABCDEFGH") {
+        F32x8 f = F32x8::set(4.5f, 3.2f, 55.f, -1000.f, 45.3f, 55.7f, -200.4f, 0.f);
+        assert(f.data[0] == 4.5f);
+        assert(f.data[1] == 3.2f);
+        assert(f.data[2] == 55.f);
+        assert(f.data[3] == -1000.f);
+        assert(f.data[4] == 45.3f);
+        assert(f.data[5] == 55.7f);
+        assert(f.data[6] == -200.4f);
+        assert(f.data[7] == 0.f);
+    }
+
     Trace("Operations4") {
         F32x4 f = F32x4::set(99.4f, -12.4f, 44.232f, 408.f);
         F32x4 g = F32x4::set(384.4f, -45.3f, -99.3f, 408.f);
