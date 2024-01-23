@@ -225,6 +225,9 @@ struct Promise<void, A> : Promise_Base<void, A> {
         return Task<void, A>{*this};
     }
     void return_void() noexcept {
+#ifdef RPP_COMPILER_MSVC
+        Libc::keep_alive();
+#endif
         this->flag.signal();
     }
 };

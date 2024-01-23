@@ -8,6 +8,9 @@
 
 namespace rpp::Libc {
 
+void keep_alive() noexcept {
+}
+
 void exit(i32 code) noexcept {
     ::exit(code);
 }
