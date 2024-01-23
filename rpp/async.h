@@ -162,6 +162,7 @@ struct Task {
         if(handle && handle.promise().state.exchange(TASK_ABANDONED) == TASK_DONE) {
             handle.destroy();
         }
+        handle = null;
     }
 
     Task(const Task&) noexcept = delete;
@@ -179,13 +180,16 @@ struct Task {
     }
 
     [[nodiscard]] bool await_ready() noexcept {
+        assert(handle);
         return handle.promise().state.load() == TASK_DONE;
     }
     [[nodiscard]] bool await_suspend(std::coroutine_handle<> continuation) noexcept {
+        assert(handle);
         i64 cont = reinterpret_cast<i64>(continuation.address());
         return handle.promise().state.compare_and_swap(TASK_START, cont) == TASK_START;
     }
     [[nodiscard]] R await_resume() noexcept {
+        assert(handle);
         if constexpr(Same<R, void>) {
             return;
         } else {
@@ -194,14 +198,21 @@ struct Task {
     }
 
     void resume() noexcept {
+        assert(handle);
         handle.resume();
     }
     [[nodiscard]] bool done() noexcept {
+        assert(handle);
         return await_ready();
     }
     [[nodiscard]] R block() noexcept {
+        assert(handle);
         handle.promise().block();
         return await_resume();
+    }
+
+    [[nodiscard]] bool ok() const noexcept {
+        return handle != null;
     }
 
 private:
