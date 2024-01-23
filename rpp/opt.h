@@ -118,7 +118,7 @@ struct Opt {
         return &*value_;
     }
 
-    [[nodiscard]] operator bool() const noexcept {
+    [[nodiscard]] bool ok() const noexcept {
         return ok_;
     }
 
@@ -137,14 +137,14 @@ namespace Format {
 template<Reflectable T>
 struct Measure<Opt<T>> {
     [[nodiscard]] static u64 measure(const Opt<T>& opt) noexcept {
-        if(opt) return 5 + Measure<T>::measure(*opt);
+        if(opt.ok()) return 5 + Measure<T>::measure(*opt);
         return 9;
     }
 };
 template<Allocator O, Reflectable T>
 struct Write<O, Opt<T>> {
     [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Opt<T>& opt) noexcept {
-        if(!opt) return output.write(idx, "Opt{None}"_v);
+        if(!opt.ok()) return output.write(idx, "Opt{None}"_v);
         idx = output.write(idx, "Opt{"_v);
         idx = Write<O, T>::write(output, idx, *opt);
         return output.write(idx, '}');

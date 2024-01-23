@@ -20,7 +20,7 @@ struct Write_Watcher {
 
     explicit Write_Watcher(String_View path) noexcept : path_(move(path)) {
         Opt<File_Time> time = last_write_time(path_);
-        if(time) last_write_time_ = *time;
+        if(time.ok()) last_write_time_ = *time;
     }
 
     [[nodiscard]] String_View path() const noexcept {
@@ -33,7 +33,7 @@ struct Write_Watcher {
 
     [[nodiscard]] bool poll() noexcept {
         Opt<File_Time> time = last_write_time(path_);
-        if(!time) return false;
+        if(!time.ok()) return false;
         bool ret = before(last_write_time_, *time);
         last_write_time_ = *time;
         return ret;

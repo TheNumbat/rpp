@@ -10,32 +10,32 @@ namespace rpp {
 template<typename T>
 struct Ref {
 
-    constexpr Ref() = default;
-    constexpr explicit Ref(T& value) : value_(&value) {
+    constexpr Ref() noexcept = default;
+    constexpr explicit Ref(T& value) noexcept : value_(&value) {
     }
-    constexpr ~Ref() {
+    constexpr ~Ref() noexcept {
         value_ = null;
     }
 
-    constexpr Ref(const Ref& src) = default;
-    constexpr Ref& operator=(const Ref&) = default;
+    constexpr Ref(const Ref& src) noexcept = default;
+    constexpr Ref& operator=(const Ref&) noexcept = default;
 
-    constexpr Ref(Ref&& src) : value_(src.value_) {
+    constexpr Ref(Ref&& src) noexcept : value_(src.value_) {
         src.value_ = null;
     }
-    constexpr Ref& operator=(Ref&& src) {
+    constexpr Ref& operator=(Ref&& src) noexcept {
         value_ = src.value_;
         src.value_ = null;
         return *this;
     }
 
-    constexpr T& operator*();
-    constexpr const T& operator*() const;
+    [[nodiscard]] constexpr T& operator*() noexcept;
+    [[nodiscard]] constexpr const T& operator*() const noexcept;
 
-    constexpr T* operator->();
-    constexpr const T* operator->() const;
+    [[nodiscard]] constexpr T* operator->() noexcept;
+    [[nodiscard]] constexpr const T* operator->() const noexcept;
 
-    constexpr operator bool() const {
+    [[nodiscard]] constexpr bool ok() const noexcept {
         return value_ != null;
     }
 

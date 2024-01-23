@@ -228,7 +228,7 @@ struct Map {
 
     [[nodiscard]] Opt<Ref<V>> try_get(const K& key) noexcept {
         if(empty()) return {};
-        if(auto idx = try_get_<K>(key)) {
+        if(auto idx = try_get_<K>(key); idx.ok()) {
             return Opt{Ref{data_[*idx].data->second}};
         }
         return {};
@@ -236,7 +236,7 @@ struct Map {
 
     [[nodiscard]] Opt<Ref<const V>> try_get(const K& key) const noexcept {
         if(empty()) return {};
-        if(auto idx = try_get_<K>(key)) {
+        if(auto idx = try_get_<K>(key); idx.ok()) {
             return Opt{Ref<const V>{data_[*idx].data->second}};
         }
         return {};
@@ -290,18 +290,18 @@ struct Map {
     }
 
     [[nodiscard]] bool contains(const K& key) const noexcept {
-        return try_get(key);
+        return try_get(key).ok();
     }
 
     [[nodiscard]] V& get(const K& key) noexcept {
         Opt<Ref<V>> value = try_get(key);
-        if(!value) die("Failed to find key %!", key);
+        if(!value.ok()) die("Failed to find key %!", key);
         return **value;
     }
 
     [[nodiscard]] const V& get(const K& key) const noexcept {
         Opt<Ref<const V>> value = try_get(key);
-        if(!value) die("Failed to find key %!", key);
+        if(!value.ok()) die("Failed to find key %!", key);
         return **value;
     }
 
@@ -313,7 +313,7 @@ struct Map {
         requires Copy_Constructable<K> && Default_Constructable<V>
     {
         Opt<Ref<V>> entry = try_get(key);
-        if(entry) {
+        if(entry.ok()) {
             return **entry;
         }
         return insert(K{key}, V{});

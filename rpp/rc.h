@@ -98,12 +98,11 @@ struct Rc {
         return *data_->value;
     }
 
-    [[nodiscard]] operator bool() const noexcept {
-        return data_ != null;
-    }
-
     [[nodiscard]] u64 references() const noexcept {
         return data_ ? data_->references : 0;
+    }
+    [[nodiscard]] bool ok() const noexcept {
+        return data_ != null;
     }
     void clear() noexcept {
         drop();
@@ -196,12 +195,11 @@ struct Arc {
         return *data_->value;
     }
 
-    [[nodiscard]] operator bool() const noexcept {
-        return data_ != null;
-    }
-
     [[nodiscard]] u64 references() const noexcept {
         return data_ ? data_->references.load() : 0;
+    }
+    [[nodiscard]] bool ok() const noexcept {
+        return data_ != null;
     }
     void clear() {
         drop();
@@ -241,7 +239,7 @@ namespace Format {
 template<Reflectable T, Allocator A>
 struct Measure<Rc<T, A>> {
     [[nodiscard]] static u64 measure(const Rc<T, A>& rc) noexcept {
-        if(rc)
+        if(rc.ok())
             return 6 + Measure<T>::measure(*rc) +
                    Measure<decltype(rc.references())>::measure(rc.references());
         return 8;
@@ -250,7 +248,7 @@ struct Measure<Rc<T, A>> {
 template<Reflectable T, Allocator A>
 struct Measure<Arc<T, A>> {
     [[nodiscard]] static u64 measure(const Arc<T, A>& arc) noexcept {
-        if(arc)
+        if(arc.ok())
             return 7 + Measure<T>::measure(*arc) +
                    Measure<decltype(arc.references())>::measure(arc.references());
         return 9;
@@ -260,7 +258,7 @@ struct Measure<Arc<T, A>> {
 template<Allocator O, Reflectable T, Allocator A>
 struct Write<O, Rc<T, A>> {
     [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Rc<T, A>& rc) noexcept {
-        if(!rc) return output.write(idx, "Rc{null}"_v);
+        if(!rc.ok()) return output.write(idx, "Rc{null}"_v);
         idx = output.write(idx, "Rc["_v);
         idx = Write<O, decltype(rc.references())>::write(output, idx, rc.references());
         idx = output.write(idx, "]{"_v);
@@ -271,7 +269,7 @@ struct Write<O, Rc<T, A>> {
 template<Allocator O, Reflectable T, Allocator A>
 struct Write<O, Arc<T, A>> {
     [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Arc<T, A>& arc) noexcept {
-        if(!arc) return output.write(idx, "Arc{null}"_v);
+        if(!arc.ok()) return output.write(idx, "Arc{null}"_v);
         idx = output.write(idx, "Arc["_v);
         idx = Write<O, decltype(arc.references())>::write(output, idx, arc.references());
         idx = output.write(idx, "]{"_v);

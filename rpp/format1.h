@@ -66,7 +66,7 @@ template<Enum E>
 template<Enum E>
 [[nodiscard]] inline Opt<Pair<E, String_View>> parse_enum(String_View s) noexcept {
     Opt<Pair<E, String_View>> ret = {};
-    if(auto n = parse_string(s)) {
+    if(auto n = parse_string(s); n.ok()) {
         auto [name, rest] = move(*n);
         iterate_enum<E>([&](const Literal& check, const E& check_value) {
             if(name == String_View{check}) {

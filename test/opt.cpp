@@ -24,9 +24,9 @@ i32 main() {
     }
     Trace("Opt") {
         Opt<i32> o;
-        assert(!o);
+        assert(!o.ok());
         o = 5;
-        assert(o);
+        assert(o.ok());
 
         Opt<i32> o2 = o;
         Opt<i32> o3 = move(o2);

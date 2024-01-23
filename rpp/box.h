@@ -81,9 +81,6 @@ struct Box {
         data_ = A::template make<T>(forward<Args>(args)...);
     }
 
-    [[nodiscard]] operator bool() const noexcept {
-        return data_ != null;
-    }
     [[nodiscard]] T* operator->() noexcept {
         assert(data_);
         return data_;
@@ -102,6 +99,10 @@ struct Box {
         return *data_;
     }
 
+    [[nodiscard]] bool ok() const noexcept {
+        return data_ != null;
+    }
+
 private:
     T* data_ = null;
 
@@ -118,14 +119,14 @@ namespace Format {
 template<Reflectable T, typename A>
 struct Measure<Box<T, A>> {
     [[nodiscard]] static u64 measure(const Box<T, A>& box) noexcept {
-        if(box) return 5 + Measure<T>::measure(*box);
+        if(box.ok()) return 5 + Measure<T>::measure(*box);
         return 9;
     }
 };
 template<Allocator O, Reflectable T, typename A>
 struct Write<O, Box<T, A>> {
     [[nodiscard]] static u64 write(String<O>& output, u64 idx, const Box<T, A>& box) noexcept {
-        if(!box) return output.write(idx, "Box{null}"_v);
+        if(!box.ok()) return output.write(idx, "Box{null}"_v);
         idx = output.write(idx, "Box{"_v);
         idx = Write<O, T>::write(output, idx, *box);
         return output.write(idx, '}');

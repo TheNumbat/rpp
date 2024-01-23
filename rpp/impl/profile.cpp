@@ -178,7 +178,7 @@ void Profile::alloc(Alloc a) noexcept {
             } else {
 
                 Opt<Ref<u64>> sz = prof.current_set.try_get(a.address);
-                if(!sz) {
+                if(!sz.ok()) {
                     warn("Profile: % freed % with no entry!", a.name, a.address);
                 } else {
                     i64 size = **sz;

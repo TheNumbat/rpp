@@ -18,7 +18,7 @@ i32 main() {
         static_cast<void>(udp.send(addr, packet, 5));
 
         auto data = udp.recv(packet);
-        assert(data);
+        assert(data.ok());
         assert(data->length == 5);
         info("%", String_View{packet.data(), data->length});
     }

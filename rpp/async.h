@@ -203,9 +203,6 @@ struct Task {
         handle.promise().block();
         return await_resume();
     }
-    [[nodiscard]] operator bool() const noexcept {
-        return handle != null;
-    }
 
 private:
     std::coroutine_handle<Promise<R, A>> handle;

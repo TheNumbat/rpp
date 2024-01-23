@@ -79,7 +79,7 @@ struct Lock {
         mutex_->lock();
     }
     ~Lock() noexcept {
-        if(mutex_) mutex_->unlock();
+        if(mutex_.ok()) mutex_->unlock();
     }
 
     Lock(const Lock&) noexcept = delete;
