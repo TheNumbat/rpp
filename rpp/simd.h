@@ -14,6 +14,7 @@ struct F32x4 {
     alignas(16) f32 data[4];
 
     [[nodiscard]] static F32x4 set1(f32 v) noexcept;
+    [[nodiscard]] static F32x4 set(f32 x, f32 y, f32 z, f32 w) noexcept;
     [[nodiscard]] static F32x4 zero() noexcept;
     [[nodiscard]] static F32x4 one() noexcept;
     [[nodiscard]] static F32x4 add(F32x4 a, F32x4 b) noexcept;
@@ -27,8 +28,6 @@ struct F32x4 {
     [[nodiscard]] static F32x4 abs(F32x4 a) noexcept;
     [[nodiscard]] static f32 dp(F32x4 a, F32x4 b) noexcept;
     [[nodiscard]] static i32 cmpeq(F32x4 a, F32x4 b) noexcept;
-
-    [[nodiscard]] static F32x4 set(f32 a, f32 b, f32 c, f32 d) noexcept;
 };
 
 #else

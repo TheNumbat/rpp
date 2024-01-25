@@ -1,15 +1,15 @@
 
 #include "../thread.h"
 
+#if defined __x86_64__ || defined _M_X64
+#include <immintrin.h>
+#endif
+
 #include <errno.h>
 #include <linux/futex.h>
 #include <string.h>
 #include <sys/syscall.h>
 #include <unistd.h>
-
-#if defined __x86_64__ || defined _M_X64
-#include <immintrin.h>
-#endif
 
 namespace rpp::Thread {
 
