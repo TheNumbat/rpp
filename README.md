@@ -228,8 +228,8 @@ i32 main() {
     Mat4 m = Mat4::translate(v);
     info("Translated: %", m * v);
 
-    auto simd = SIMD::F32x8::set1(1.0f);
-    info("Dot product: %", SIMD::F32x8::dp(simd, simd));
+    auto simd = SIMD::F32x4::set1(1.0f);
+    info("Dot product: %", SIMD::F32x4::dp(simd, simd));
 }
 ```
 
