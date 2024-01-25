@@ -4,10 +4,6 @@
 #ifdef RPP_COMPILER_MSVC
 #include <immintrin.h>
 
-#ifndef __AVX2__
-#error "Unsupported architecture for MSVC: AVX2 is required".
-#endif
-
 #endif // RPP_COMPILER_MSVC
 
 namespace rpp::SIMD {
