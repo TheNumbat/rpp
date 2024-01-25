@@ -33,16 +33,17 @@ To use rpp with another build system, add `rpp` to your include path, add `rpp/r
 
 ## Platform Support
 
-Only the following configurations are supported:
+The following configurations are supported:
 
-| OS      | Compiler    | Arch |
-|---------|-------------|------|
-| Windows | MSVC 19.37+ | x64  |
-| Linux   | Clang 17+   | Any  |
+| OS      | Compiler    | Arch         |
+|---------|-------------|--------------|
+| Windows | MSVC 19.37+ | x64          |
+| Linux   | Clang 17+   | Any          |
+| macOS   | Clang 17+   | x64, aarch64 |
 
 Note that aside from MSVC on Windows, the [gcc vector extensions](https://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html) (which are [implemented by clang](https://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors)) are used to implement the SIMD operations. See `rpp/rpp/impl/simd.cpp`.
 
-Other configurations (macOS, GCC, etc.) may be added in the future.
+Other configurations (GCC, etc.) may be added in the future.
 
 ## Examples
 
