@@ -12,7 +12,5 @@ foreach(test ${TEST_SOURCES})
     target_link_libraries(${testname} PRIVATE rpp)
     target_include_directories(${testname} PRIVATE ${RPP_INCLUDE_DIRS})
 
-    if (CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
-        target_compile_options(${testname} PRIVATE -mavx2)
-    endif()
+    target_compile_options(${testname} PRIVATE -march=native )
 endforeach(test ${TEST_SOURCES})

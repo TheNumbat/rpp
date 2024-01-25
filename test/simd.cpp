@@ -32,6 +32,7 @@ i32 main() {
         assert_near(f.data[3], -1000.f);
     }
 
+#ifndef RPP_COMPILER_MSVC
     Trace("SetABCDEFGH") {
         F32x8 f = F32x8::set(4.5f, 3.2f, 55.f, -1000.f, 45.3f, 55.7f, -200.4f, 0.f);
         assert_near(f.data[0], 4.5f);
@@ -43,6 +44,7 @@ i32 main() {
         assert_near(f.data[6], -200.4f);
         assert_near(f.data[7], 0.f);
     }
+#endif
 
     Trace("Operations4") {
         F32x4 f = F32x4::set(99.4f, -12.4f, 44.232f, 408.f);

@@ -3,9 +3,35 @@
 
 #include "base.h"
 
-// The implementation of these functions are compiled with gcc/clang vector intrinsics.
+// The implementation of these functions are compiled with SSE on MSVC x86-64 and gcc/clang vector
+// intrinsics on everything else.
 
 namespace rpp::SIMD {
+
+#ifdef RPP_COMPILER_MSVC
+
+struct F32x4 {
+    alignas(16) f32 data[4];
+
+    [[nodiscard]] static F32x4 set1(f32 v) noexcept;
+    [[nodiscard]] static F32x4 zero() noexcept;
+    [[nodiscard]] static F32x4 one() noexcept;
+    [[nodiscard]] static F32x4 add(F32x4 a, F32x4 b) noexcept;
+    [[nodiscard]] static F32x4 sub(F32x4 a, F32x4 b) noexcept;
+    [[nodiscard]] static F32x4 mul(F32x4 a, F32x4 b) noexcept;
+    [[nodiscard]] static F32x4 div(F32x4 a, F32x4 b) noexcept;
+    [[nodiscard]] static F32x4 min(F32x4 a, F32x4 b) noexcept;
+    [[nodiscard]] static F32x4 max(F32x4 a, F32x4 b) noexcept;
+    [[nodiscard]] static F32x4 floor(F32x4 a) noexcept;
+    [[nodiscard]] static F32x4 ceil(F32x4 a) noexcept;
+    [[nodiscard]] static F32x4 abs(F32x4 a) noexcept;
+    [[nodiscard]] static f32 dp(F32x4 a, F32x4 b) noexcept;
+    [[nodiscard]] static i32 cmpeq(F32x4 a, F32x4 b) noexcept;
+
+    [[nodiscard]] static F32x4 set(f32 a, f32 b, f32 c, f32 d) noexcept;
+};
+
+#else
 
 template<i32 N>
 struct F32x {
@@ -36,7 +62,10 @@ struct F32x {
     }
 };
 
+// by being templated, the F32x<N> class can easily extend to more sizes!
 typedef F32x<4> F32x4;
 typedef F32x<8> F32x8;
+
+#endif
 
 } // namespace rpp::SIMD
