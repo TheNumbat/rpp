@@ -7,7 +7,7 @@ on:
       - '*'
   pull_request:
 jobs:
-  build-windows:
+  windows:
     runs-on: windows-latest
     steps:
     - name: Checkout
@@ -18,7 +18,7 @@ jobs:
       run: cmake --build build --config Release
     - name: Test
       run: ctest --test-dir build -C Release --output-on-failure
-  build-linux:
+  linux:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -34,7 +34,7 @@ jobs:
       run: cmake --build build -- -j
     - name: Test
       run: ctest --test-dir build --output-on-failure
-  build-macos:
+  macos:
     runs-on: macos-latest
     steps:
     - name: Checkout
@@ -42,20 +42,7 @@ jobs:
     - name: Install Clang 17
       run: brew install llvm@17
     - name: Configure
-      run: CXX=clang++ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
-    - name: Build
-      run: cmake --build build -- -j
-    - name: Test
-      run: ctest --test-dir build --output-on-failure
-  build-macos-arm64:
-    runs-on: macos-latest-xlarge
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Install Clang 17
-      run: brew install llvm@17
-    - name: Configure
-      run: CXX=clang++ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
+      run: CXX=/opt/homebrew/opt/llvm/bin/clang cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
     - name: Build
       run: cmake --build build -- -j
     - name: Test
