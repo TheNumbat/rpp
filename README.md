@@ -278,6 +278,7 @@ For faster parallel builds, you can instead generate [ninja](https://ninja-build
     - [ ] scheduler work stealing
     - [ ] io_uring for Linux file IO
     - [ ] sockets
+    - [ ] use relaxed atomics on aarch64
 - Types
     - [ ] Result<T,E>
     - [ ] Map: don't store hashes of integer keys
