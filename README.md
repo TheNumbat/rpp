@@ -2,6 +2,7 @@
 
 [![Windows](https://github.com/TheNumbat/rpp/actions/workflows/windows.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/windows.yml)
 [![Linux](https://github.com/TheNumbat/rpp/actions/workflows/linux.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/linux.yml)
+[![Linux (aarch64)](https://github.com/TheNumbat/rpp/actions/workflows/linux-arm64.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/linux-arm64.yml)
 [![macOS](https://github.com/TheNumbat/rpp/actions/workflows/macos.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/macos.yml)
 
 Minimal Rust-inspired C++20 STL replacement.
