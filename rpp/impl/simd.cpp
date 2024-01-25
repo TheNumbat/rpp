@@ -3,7 +3,12 @@
 
 #ifdef RPP_COMPILER_MSVC
 #include <immintrin.h>
+
+#ifndef __AVX2__
+#error "Unsupported architecture for MSVC: AVX2 is required".
 #endif
+
+#endif // RPP_COMPILER_MSVC
 
 namespace rpp::SIMD {
 
@@ -11,10 +16,6 @@ namespace rpp::SIMD {
 
 static_assert(sizeof(F32x4) == 16);
 static_assert(alignof(F32x4) == 16);
-
-#ifndef __AVX2__
-#error "Unsupported architecture for MSVC: AVX2 is required".
-#endif
 
 [[nodiscard]] static __m128 of(F32x4 a) noexcept {
     return *reinterpret_cast<__m128*>(a.data);
