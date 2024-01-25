@@ -1,7 +1,8 @@
 # rpp
 
-[![Windows](https://github.com/TheNumbat/rpp/actions/workflows/windows.yml/badge.svg?branch=main)](https://github.com/TheNumbat/rpp/actions/workflows/windows.yml)
-[![Linux](https://github.com/TheNumbat/rpp/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/ubuntu.yml)
+[![Windows](https://github.com/TheNumbat/rpp/actions/workflows/windows.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/windows.yml)
+[![Linux](https://github.com/TheNumbat/rpp/actions/workflows/linux.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/linux.yml)
+[![macOS](https://github.com/TheNumbat/rpp/actions/workflows/macos.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/macos.yml)
 
 Minimal Rust-inspired C++20 STL replacement.
 Refer to the [blog post](https://thenumb.at/rpp/) for details.
