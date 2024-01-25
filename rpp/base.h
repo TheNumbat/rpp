@@ -57,8 +57,10 @@
 
 #if defined __x86_64__ || defined _M_X64
 #define RPP_ARCH_X64
+#elif defined __aarch64__ || defined _M_ARM64
+#define RPP_ARCH_ARM64
 #else
-#error "Unsupported architecture: only x86_64 is supported."
+#define RPP_ARCH_OTHER
 #endif
 
 #define null nullptr

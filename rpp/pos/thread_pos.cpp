@@ -1,7 +1,9 @@
 
 #include "../thread.h"
 
+#ifdef RPP_ARCH_X64
 #include <immintrin.h>
+#endif
 
 #include <errno.h>
 #include <linux/futex.h>
@@ -32,7 +34,11 @@ void sleep(u64 ms) noexcept {
 }
 
 void pause() noexcept {
+#ifdef RPP_ARCH_X64
     _mm_pause();
+#elif defined RPP_ARCH_ARM64
+    asm volatile("yield");
+#endif
 }
 
 [[nodiscard]] u64 perf_counter() noexcept {
