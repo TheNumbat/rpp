@@ -7,6 +7,10 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
+#if defined __x86_64__ || defined _M_X64
+#include <immintrin.h>
+#endif
+
 namespace rpp::Thread {
 
 [[nodiscard]] static String_View error(int code) noexcept {
@@ -30,7 +34,13 @@ void sleep(u64 ms) noexcept {
 }
 
 void pause() noexcept {
-    sched_yield();
+#if defined __x86_64__ || defined _M_X64
+    _mm_pause();
+#elif defined __arm__
+    __yield();
+#elif defined __aarch64__
+    asm volatile("yield");
+#endif
 }
 
 [[nodiscard]] u64 perf_counter() noexcept {
