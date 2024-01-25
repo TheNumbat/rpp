@@ -72,8 +72,8 @@ void Udp::bind(Address address) noexcept {
 
 [[nodiscard]] u64 Udp::send(Address address, const Packet& out, u64 length) noexcept {
 
-    i64 ret = sendto(fd, out.data(), length, MSG_CONFIRM,
-                     reinterpret_cast<const sockaddr*>(&address.sockaddr_), sizeof(sockaddr_in));
+    i64 ret = ::sendto(fd, out.data(), length, 0,
+                       reinterpret_cast<const sockaddr*>(&address.sockaddr_), sizeof(sockaddr_in));
     if(ret == -1) {
         die("Failed send packet: %", Log::sys_error());
     }

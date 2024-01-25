@@ -252,7 +252,7 @@ struct Event {
 #ifdef RPP_OS_WINDOWS
     [[nodiscard]] static Event of_sys(void* event) noexcept;
 #else
-    [[nodiscard]] static Event of_sys(i32 fd, i32 mask) noexcept;
+    [[nodiscard]] static Event of_sys(i32 fd, i16 mask) noexcept;
 #endif
 
 private:
@@ -261,10 +261,13 @@ private:
     }
     void* event_ = null;
 #else
-    Event(i32 fd, i32 mask) noexcept : fd{fd}, mask{mask} {
+    Event(i32 fd, i16 mask) noexcept : fd{fd}, mask{mask} {
     }
     i32 fd = -1;
-    i32 mask = 0;
+#ifdef RPP_OS_MACOS
+    i32 signal_fd = -1;
+#endif
+    i16 mask = 0;
 #endif
 };
 

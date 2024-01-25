@@ -1,0 +1,22 @@
+name: macOS-arm64
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - '*'
+  pull_request:
+jobs:
+  build-ubuntu:
+    runs-on: macos-13-arm64
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Install Clang 17
+      run: brew install llvm@17
+    - name: Configure
+      run: CC=clang CXX=clang++ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
+    - name: Build
+      run: cmake --build build -- -j
+    - name: Test
+      run: ctest --test-dir build --output-on-failure

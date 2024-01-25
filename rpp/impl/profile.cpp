@@ -212,8 +212,7 @@ void Profile::finalize() noexcept {
         }
         finalizers.~Vec();
     }
-    unregister_thread();
-    this_thread.~Thread_Profile();
+    this_thread.finalize();
     {
         Thread::Lock lock(allocs_lock);
         for(auto& prof : allocs) {

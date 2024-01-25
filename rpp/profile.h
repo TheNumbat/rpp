@@ -137,11 +137,16 @@ private:
         Thread_Profile() noexcept : during_frame(false) {
         }
         ~Thread_Profile() noexcept {
+            finalize();
+        }
+        
+        void finalize() noexcept {
+            frames = {};
             if(during_frame) Profile::end_frame();
             if(registered) Profile::unregister_thread();
         }
 
-        bool ready() {
+        bool ready() noexcept {
             if(!registered) Profile::register_thread();
             return during_frame;
         }
