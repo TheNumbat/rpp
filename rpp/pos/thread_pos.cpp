@@ -134,7 +134,7 @@ void set_priority(Priority p) noexcept {
     if(int ret = pthread_setschedprio(id, prio)) {
         die("Failed set scheduler priority: %", error(ret));
     }
-    if(pthread_attr_destroy(&attr)) {
+    if(int ret = pthread_attr_destroy(&attr)) {
         die("Failed to destroy pthread attribute: %", error(ret));
     }
 #endif
