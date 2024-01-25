@@ -159,7 +159,8 @@ static Mat4 inverse(Mat4 m) noexcept {
     r.pack[3].data = __builtin_shufflevector(Z_, W_, 2, 0, 6, 4);
     return r;
 }
-#endif  // RPP_COMPILER_MSVC
+
+#endif // RPP_COMPILER_MSVC
 
 } // namespace detail
 
