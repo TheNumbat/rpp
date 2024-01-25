@@ -40,10 +40,11 @@ The following configurations are supported:
 | OS      | Compiler    | Arch         |
 |---------|-------------|--------------|
 | Windows | MSVC 19.37+ | x64          |
-| Linux   | Clang 17+   | Any          |
+| Linux   | Clang 17+   | x64, aarch64 |
 | macOS   | Clang 17+   | x64, aarch64 |
 
-Note that aside from MSVC on Windows, the [gcc vector extensions](https://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html) (which are [implemented by clang](https://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors)) are used to implement the SIMD operations. See `rpp/rpp/impl/simd.cpp`.
+Except for MSVC on Windows, the [gcc vector extensions](https://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html) (also [implemented by clang](https://clang.llvm.org/docs/LanguageExtensions.html#vectors-and-extended-vectors)) are used to emit SIMD operations.
+On Linux, other architectures should therefore work, but they have not been tested.
 
 Other configurations (GCC, etc.) may be added in the future.
 
