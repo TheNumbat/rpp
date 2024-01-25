@@ -1,4 +1,4 @@
-name: Linux
+name: Linux (aarch64)
 on:
   push:
     branches:
@@ -12,15 +12,22 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Install aarch64 Toolchain
+      run: sudo apt install g++-aarch64-linux-gnu qemu qemu-user qemu-user-static
     - name: Install Clang 17
       run: |
        wget https://apt.llvm.org/llvm.sh
        chmod +x ./llvm.sh
        sudo ./llvm.sh 17
     - name: Configure
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON -DRPP_QEMU=ON
       env:
-        CXX: clang++-17
+        CXX: clang++-17 --target=aarch64-linux-gnu
+        CXXFLAGS: -march=armv8-a
+        AR: aarch64-linux-gnu-ar
+        AS: aarch64-linux-gnu-as
+        LD: aarch64-linux-gnu-ld
+        STRIP: aarch64-linux-gnu-strip
     - name: Build
       run: cmake --build build -- -j
     - name: Test

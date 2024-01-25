@@ -15,7 +15,9 @@ jobs:
     - name: Install Clang 17
       run: brew install llvm@17
     - name: Configure
-      run: CXX=/usr/local/opt/llvm/bin/clang++ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
+      env:
+        CXX: /usr/local/opt/llvm/bin/clang++
     - name: Build
       run: cmake --build build -- -j
     - name: Test
