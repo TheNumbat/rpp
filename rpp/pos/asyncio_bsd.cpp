@@ -3,12 +3,10 @@
 #include "../files.h"
 
 #include <fcntl.h>
-#include <sys/epoll.h>
 #include <sys/stat.h>
-#include <sys/timerfd.h>
 #include <unistd.h>
 
-// The file IO operations are not actually async.
+// These are not actually async.
 
 namespace rpp::Async {
 
@@ -64,22 +62,9 @@ namespace rpp::Async {
     co_return true;
 }
 
-[[nodiscard]] Task<void> wait(Pool<>& pool, u64 ms) noexcept {
-
-    int fd = timerfd_create(CLOCK_MONOTONIC, TFD_CLOEXEC);
-    if(fd == -1) {
-        die("Failed to create timerfd: %", Log::sys_error());
-    }
-
-    itimerspec spec = {};
-    spec.it_value.tv_sec = ms / 1000;
-    spec.it_value.tv_nsec = (ms % 1000) * 1000000;
-
-    if(timerfd_settime(fd, 0, &spec, null) == -1) {
-        die("Failed to set timerfd: %", Log::sys_error());
-    }
-
-    co_await pool.event(Async::Event::of_sys(fd, EPOLLIN));
+[[nodiscard]] Task<void> wait(Pool<>&, u64 ms) noexcept {
+    Thread::sleep(ms);
+    co_return;
 }
 
 } // namespace rpp::Async

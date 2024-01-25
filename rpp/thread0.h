@@ -25,28 +25,6 @@ void pause() noexcept;
 [[nodiscard]] u64 perf_frequency() noexcept;
 [[nodiscard]] u64 hardware_threads() noexcept;
 
-struct Flag {
-    Flag() noexcept = default;
-    ~Flag() noexcept = default;
-
-    Flag(const Flag&) noexcept = delete;
-    Flag(Flag&&) noexcept = delete;
-
-    Flag& operator=(const Flag&) noexcept = delete;
-    Flag& operator=(Flag&&) noexcept = delete;
-
-    void block() noexcept;
-    void signal() noexcept;
-    [[nodiscard]] bool ready() noexcept;
-
-private:
-#ifdef RPP_OS_WINDOWS
-    i16 value_ = 0;
-#else
-    i32 value_ = 0;
-#endif
-};
-
 struct Mutex {
 
     Mutex() noexcept;
@@ -147,6 +125,32 @@ private:
 #endif
 
     friend struct Reflect::Refl<Cond>;
+};
+
+struct Flag {
+    Flag() noexcept = default;
+    ~Flag() noexcept = default;
+
+    Flag(const Flag&) noexcept = delete;
+    Flag(Flag&&) noexcept = delete;
+
+    Flag& operator=(const Flag&) noexcept = delete;
+    Flag& operator=(Flag&&) noexcept = delete;
+
+    void block() noexcept;
+    void signal() noexcept;
+    [[nodiscard]] bool ready() noexcept;
+
+private:
+#ifdef RPP_OS_WINDOWS
+    i16 value_ = 0;
+#elif defined RPP_OS_LINUX
+    i32 value_ = 0;
+#else 
+    Cond cond;
+    Mutex mutex;
+    bool signaled = false;
+#endif
 };
 
 } // namespace Thread

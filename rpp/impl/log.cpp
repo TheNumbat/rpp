@@ -11,7 +11,7 @@
 #include <windows.h>
 #endif
 
-#ifdef RPP_OS_LINUX
+#if defined RPP_OS_LINUX || defined RPP_OS_MACOS
 #include <errno.h>
 #include <signal.h>
 #endif
@@ -82,7 +82,12 @@ void debug_break() noexcept {
 [[nodiscard]] String_View sys_error() noexcept {
     constexpr int buffer_size = 256;
     static thread_local char buffer[buffer_size];
+#ifdef RPP_OS_MACOS
+    assert(strerror_r(errno, buffer, buffer_size) == 0);
+    return String_View{buffer};
+#else
     return String_View{strerror_r(errno, buffer, buffer_size)};
+#endif
 }
 
 void debug_break() noexcept {

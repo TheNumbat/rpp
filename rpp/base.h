@@ -51,8 +51,13 @@
 #define RPP_OS_LINUX
 #include <pthread.h>
 
+#elif defined __APPLE__
+
+#define RPP_OS_MACOS
+#include <pthread.h>
+
 #else
-#error "Unsupported OS: only Windows and Linux are supported."
+#error "Unsupported OS: only Windows, Linux, and macOS are supported."
 #endif
 
 #if defined __x86_64__ || defined _M_X64

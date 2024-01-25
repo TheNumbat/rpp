@@ -54,10 +54,10 @@ endif()
 
 if(WIN32)
     set(SOURCES_RPP ${SOURCES_RPP} "w32/w32_util.h" "w32/unify.cpp")
-elseif(LINUX)
+elseif(LINUX OR APPLE)
     set(SOURCES_RPP ${SOURCES_RPP} "pos/unify.cpp")
 else()
-    message(FATAL_ERROR "Unsupported platform: only Windows and Linux are supported.")
+    message(FATAL_ERROR "Unsupported OS: only Windows, Linux, and macOS are supported.")
 endif()
 
 add_library(rpp STATIC ${SOURCES_RPP})
@@ -76,7 +76,8 @@ set_property(TARGET rpp PROPERTY INTERPROCEDURAL_OPTIMIZATION
     $<$<CONFIG:Release>:TRUE>
     $<$<CONFIG:MinSizeRel>:TRUE>)
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR 
+   CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
     set(CLANG TRUE)
 endif()
 
@@ -103,7 +104,8 @@ if(MSVC)
     target_compile_options(rpp PRIVATE /MP /W4 /GR- /GS- /EHa- /wd4201)
 
 elseif(CLANG)
-    if(CLANG_VERSION_MAJOR LESS 17)
+    if((LINUX AND CLANG_VERSION_MAJOR LESS 17) OR
+       (APPLE AND CMAKE_CXX_COMPILER_VERSION LESS 17))
         message(FATAL_ERROR "Unsupported Clang version: only 17+ is supported.")
     endif()
 

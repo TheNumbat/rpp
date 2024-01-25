@@ -27,13 +27,13 @@ namespace std {
 using nullptr_t = decltype(nullptr);
 
 template<class... _Types>
-using void_t = void;
+using void_t_ = void;
 
 template<class _Ret, class = void>
 struct _Coroutine_traits {};
 
 template<class _Ret>
-struct _Coroutine_traits<_Ret, void_t<typename _Ret::promise_type>> {
+struct _Coroutine_traits<_Ret, void_t_<typename _Ret::promise_type>> {
     using promise_type = typename _Ret::promise_type;
 };
 
