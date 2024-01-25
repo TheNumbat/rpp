@@ -1,7 +1,7 @@
 
 #include "../thread.h"
 
-#if defined __x86_64__ || defined _M_X64
+#ifdef RPP_ARCH_X64
 #include <immintrin.h>
 #endif
 
@@ -34,11 +34,9 @@ void sleep(u64 ms) noexcept {
 }
 
 void pause() noexcept {
-#if defined __x86_64__ || defined _M_X64
+#ifdef RPP_ARCH_X64
     _mm_pause();
-#elif defined __arm__
-    __yield();
-#elif defined __aarch64__
+#elif defined RPP_ARCH_ARM64
     asm volatile("yield");
 #endif
 }

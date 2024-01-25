@@ -86,22 +86,22 @@ static Mat4 inverse(Mat4 m) noexcept {
 
 #else
 
-using SIMD::f32_4;
+using f32x4 = SIMD::F32x4::f32x4;
 
-static f32_4 Mat2Mul(f32_4 vec1, f32_4 vec2) noexcept {
+static f32x4 Mat2Mul(f32x4 vec1, f32x4 vec2) noexcept {
     return (vec1 * vec2.xwxw) + (vec1.yxwz * vec2.zyzy);
 }
 
-static f32_4 Mat2AdjMul(f32_4 vec1, f32_4 vec2) noexcept {
+static f32x4 Mat2AdjMul(f32x4 vec1, f32x4 vec2) noexcept {
     return (vec1.wwxx * vec2) - (vec1.yyzz * vec2.zwxy);
 }
 
-static f32_4 Mat2MulAdj(f32_4 vec1, f32_4 vec2) noexcept {
+static f32x4 Mat2MulAdj(f32x4 vec1, f32x4 vec2) noexcept {
     return (vec1 * vec2.wxwx) - (vec1.yxwz * vec2.zyzy);
 }
 
-static f32_4 hadd(f32_4 v) noexcept {
-    // folllowing Intel's _mm_hadd_ps
+static f32x4 hadd(f32x4 v) noexcept {
+    // Folllowing Intel's _mm_hadd_ps
     const float v0 = v.z + v.w;
     const float v1 = v.x + v.y;
     return {v1, v0, v1, v0};
@@ -144,7 +144,7 @@ static Mat4 inverse(Mat4 m) noexcept {
     tr = hadd(tr);
     detM -= tr;
 
-    const auto adjSignMask = f32_4{1.f, -1.f, -1.f, 1.f};
+    const auto adjSignMask = f32x4{1.f, -1.f, -1.f, 1.f};
     const auto rDetM = adjSignMask / detM;
 
     X_ *= rDetM;

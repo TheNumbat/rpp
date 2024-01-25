@@ -215,7 +215,7 @@ struct Vect : Vect_Base<T, N> {
 
     constexpr bool operator==(Vect o) const noexcept {
         if constexpr(is_simd)
-            return static_cast<bool>(F32x4::cmpeq(this->pack, o.pack));
+            return F32x4::cmpeq_all(this->pack, o.pack);
         else {
             for(u64 i = 0; i < N; i++)
                 if(this->data[i] != o.data[i]) return false;
@@ -224,7 +224,7 @@ struct Vect : Vect_Base<T, N> {
     }
     constexpr bool operator!=(Vect o) const noexcept {
         if constexpr(is_simd)
-            return !static_cast<bool>(F32x4::cmpeq(this->pack, o.pack));
+            return !F32x4::cmpeq_all(this->pack, o.pack);
         else {
             for(u64 i = 0; i < N; i++)
                 if(this->data[i] != o.data[i]) return true;

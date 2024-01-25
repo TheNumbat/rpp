@@ -11,6 +11,4 @@ foreach(test ${TEST_SOURCES})
     set_target_properties(${testname} PROPERTIES CXX_STANDARD 20 CXX_EXTENSIONS OFF LINKER_LANGUAGE CXX)
     target_link_libraries(${testname} PRIVATE rpp)
     target_include_directories(${testname} PRIVATE ${RPP_INCLUDE_DIRS})
-
-    target_compile_options(${testname} PRIVATE -march=native )
 endforeach(test ${TEST_SOURCES})
