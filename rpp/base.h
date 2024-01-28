@@ -116,6 +116,7 @@ void* memcpy(void* dest, const void* src, u64 bytes) noexcept;
 [[nodiscard]] i32 snprintf(u8* buffer, u64 buffer_size, const char* fmt, ...) noexcept;
 [[nodiscard]] i64 strtoll(const char* str, char** endptr, i32 base) noexcept;
 [[nodiscard]] f32 strtof(const char* str, char** endptr) noexcept;
+void free(void* ptr) noexcept;
 void keep_alive() noexcept;
 
 } // namespace Libc

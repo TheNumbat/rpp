@@ -11,6 +11,10 @@ namespace rpp::Libc {
 void keep_alive() noexcept {
 }
 
+void free(void* ptr) noexcept {
+    ::free(ptr);
+}
+
 void exit(i32 code) noexcept {
     ::exit(code);
 }
