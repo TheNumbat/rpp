@@ -42,10 +42,10 @@ struct Variant {
 
     Variant(const Variant& src) noexcept
         requires(Copy_Constructable<Ts> && ...)
-    = default;
+    = delete;
     Variant& operator=(const Variant& src) noexcept
         requires(Copy_Constructable<Ts> && ...)
-    = default;
+    = delete;
 
     Variant(Variant&& src) noexcept
         requires(Move_Constructable<Ts> && ...)
@@ -74,26 +74,33 @@ struct Variant {
     }
 
     [[nodiscard]] Variant clone() const noexcept
-        requires((Clone<Ts> || Trivial<Ts>) && ...)
+        requires((Clone<Ts> || Copy_Constructable<Ts>) && ...)
     {
-        return match([](const auto& v) {
-            using T = Decay<decltype(v)>;
-            if constexpr(Clone<T>) {
-                return Variant{v.clone()};
-            } else {
-                static_assert(Trivial<T>);
-                return Variant{T{v}};
-            }
-        });
+        if constexpr((Trivially_Copyable<Ts> && ...)) {
+            Variant result;
+            result.index_ = index_;
+            Libc::memcpy(result.data_, data_, size);
+            return result;
+        } else {
+            return match([](const auto& v) {
+                using T = Decay<decltype(v)>;
+                if constexpr(Clone<T>) {
+                    return Variant{v.clone()};
+                } else {
+                    static_assert(Copy_Constructable<T>);
+                    return Variant{T{v}};
+                }
+            });
+        }
     }
 
     template<typename F>
-        requires(Invocable<F, Ts&> && ...) && All_Same<Invoke_Result<F, Ts&>...>
+        requires((Invocable<F, Ts&> && ...) && All_Same<Invoke_Result<F, Ts&>...>)
     [[nodiscard]] auto match(F&& f) noexcept {
         return Accessors<false>::apply(forward<F>(f), data_, index_);
     }
     template<typename F>
-        requires(Invocable<F, const Ts&> && ...) && All_Same<Invoke_Result<F, const Ts&>...>
+        requires((Invocable<F, const Ts&> && ...) && All_Same<Invoke_Result<F, const Ts&>...>)
     [[nodiscard]] auto match(F&& f) const noexcept {
         return Accessors<true>::apply(forward<F>(f), data_, index_);
     }
@@ -104,6 +111,8 @@ struct Variant {
     }
 
 private:
+    Variant() = default;
+
     constexpr static u8 INVALID = 255;
 
     template<typename V>
@@ -133,7 +142,7 @@ private:
     constexpr static u64 align = Math::max({alignof(Ts)...});
 
     alignas(align) u8 data_[size] = {};
-    u8 index_ = 0;
+    u8 index_ = INVALID;
 
     template<bool is_const>
     struct Accessors {
