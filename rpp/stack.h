@@ -14,7 +14,7 @@ struct Stack {
 
     template<typename... S>
         requires All_Are<T, S...> && Move_Constructable<T>
-    explicit Stack(S&&... init) noexcept : data_(forward<S>(init)...) {
+    explicit Stack(S&&... init) noexcept : data_(rpp::forward<S>(init)...) {
     }
 
     Stack(const Stack& src) noexcept = delete;
@@ -53,13 +53,13 @@ struct Stack {
     T& push(T&& value) noexcept
         requires Move_Constructable<T>
     {
-        return data_.push(move(value));
+        return data_.push(rpp::move(value));
     }
 
     template<typename... Args>
         requires Constructable<T, Args...>
     T& emplace(Args&&... args) noexcept {
-        return data_.emplace(forward<Args>(args)...);
+        return data_.emplace(rpp::forward<Args>(args)...);
     }
 
     void pop() noexcept {

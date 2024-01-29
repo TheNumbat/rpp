@@ -67,7 +67,7 @@ void Udp::bind(Address address) noexcept {
         return Opt<Data>{};
     }
 
-    return Opt{Data{static_cast<u64>(ret), move(src)}};
+    return Opt{Data{static_cast<u64>(ret), rpp::move(src)}};
 }
 
 [[nodiscard]] u64 Udp::send(Address address, const Packet& out, u64 length) noexcept {

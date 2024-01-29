@@ -81,17 +81,17 @@ concept Hashable = requires(K k) {
 
 template<Hashable T>
 [[nodiscard]] constexpr u64 hash(T&& value) noexcept {
-    return Hash::Hash<Decay<T>>::hash(forward<T>(value));
+    return Hash::Hash<Decay<T>>::hash(rpp::forward<T>(value));
 }
 
 template<Hashable T>
 [[nodiscard]] constexpr u64 hash_nonzero(T&& value) noexcept {
-    return Hash::Hash<Decay<T>>::hash(forward<T>(value)) | 1;
+    return Hash::Hash<Decay<T>>::hash(rpp::forward<T>(value)) | 1;
 }
 
 template<Hashable... Ts>
 [[nodiscard]] constexpr u64 hash(Ts&&... values) noexcept {
-    return Hash::squirrel5((hash(forward<Ts>(values)) + ...));
+    return Hash::squirrel5((hash(rpp::forward<Ts>(values)) + ...));
 }
 
 template<size_t N>

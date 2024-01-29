@@ -180,7 +180,7 @@ Scope::~Scope() noexcept {
 subscribe(Function<void(Level, Thread::Id, Time, Location, String_View)> f) noexcept {
     Thread::Lock lock(g_log_data.lock);
     Token t = g_log_data.next++;
-    g_log_data.callbacks.insert(t, move(f));
+    g_log_data.callbacks.insert(t, rpp::move(f));
     return t;
 }
 

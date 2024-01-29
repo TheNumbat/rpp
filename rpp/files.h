@@ -18,7 +18,7 @@ using File_Time = u64;
 
 struct Write_Watcher {
 
-    explicit Write_Watcher(String_View path) noexcept : path_(move(path)) {
+    explicit Write_Watcher(String_View path) noexcept : path_(rpp::move(path)) {
         Opt<File_Time> time = last_write_time(path_);
         if(time.ok()) last_write_time_ = *time;
     }

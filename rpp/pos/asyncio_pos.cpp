@@ -39,7 +39,7 @@ namespace rpp::Async {
     }
 
     close(fd);
-    co_return Opt{move(data)};
+    co_return Opt{rpp::move(data)};
 }
 
 [[nodiscard]] Task<bool> write(Pool<>& pool, String_View path_, Slice<u8> data) noexcept {

@@ -271,7 +271,6 @@ For faster parallel builds, you can instead generate [ninja](https://ninja-build
 
 ## To-Dos
 
-- Fix ADL conflict with std::
 - Modules
 - Async
     - [ ] scheduler priorities

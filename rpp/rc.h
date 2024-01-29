@@ -41,14 +41,14 @@ struct Rc {
         requires Constructable<T, Args...>
     explicit Rc(Args&&... args) noexcept {
         data_ = A::template make<Data>(static_cast<u64>(1));
-        data_->value.construct(forward<Args>(args)...);
+        data_->value.construct(rpp::forward<Args>(args)...);
     }
 
     template<typename... Args>
     [[nodiscard]] static Rc make(Args&&... args) noexcept {
         Rc ret;
         ret.data_ = A::template make<Data>(static_cast<u64>(1));
-        new(ret.data_->value.data()) T{forward<Args>(args)...};
+        new(ret.data_->value.data()) T{rpp::forward<Args>(args)...};
         return ret;
     }
 
@@ -138,14 +138,14 @@ struct Arc {
         requires Constructable<T, Args...>
     explicit Arc(Args&&... args) noexcept {
         data_ = A::template make<Data>(Thread::Atomic{1});
-        data_->value.construct(forward<Args>(args)...);
+        data_->value.construct(rpp::forward<Args>(args)...);
     }
 
     template<typename... Args>
     [[nodiscard]] static Arc make(Args&&... args) noexcept {
         Arc ret;
         ret.data_ = A::template make<Data>(Thread::Atomic{1});
-        new(ret.data_->value.data()) T{forward<Args>(args)...};
+        new(ret.data_->value.data()) T{rpp::forward<Args>(args)...};
         return ret;
     }
 

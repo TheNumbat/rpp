@@ -14,13 +14,13 @@ struct Opt {
 
     explicit Opt(T&& value) noexcept
         requires Move_Constructable<T>
-        : ok_(true), value_(move(value)) {
+        : ok_(true), value_(rpp::move(value)) {
     }
 
     template<typename... Args>
     explicit Opt(Args&&... args) noexcept
         requires Constructable<T, Args...>
-        : ok_(true), value_(forward<Args>(args)...) {
+        : ok_(true), value_(rpp::forward<Args>(args)...) {
     }
 
     ~Opt() noexcept {
@@ -43,7 +43,7 @@ struct Opt {
         ok_ = src.ok_;
         src.ok_ = false;
         if(ok_) {
-            value_.construct(move(*src.value_));
+            value_.construct(rpp::move(*src.value_));
         }
     }
 
@@ -54,7 +54,7 @@ struct Opt {
         ok_ = src.ok_;
         src.ok_ = false;
         if(ok_) {
-            value_.construct(move(*src.value_));
+            value_.construct(rpp::move(*src.value_));
         }
         return *this;
     }
@@ -63,7 +63,7 @@ struct Opt {
         requires Move_Constructable<T>
     {
         this->~Opt();
-        value_.construct(move(value));
+        value_.construct(rpp::move(value));
         ok_ = true;
         return *this;
     }
@@ -73,7 +73,7 @@ struct Opt {
         requires Constructable<T, Args...>
     {
         ok_ = true;
-        value_.construct(forward<Args>(args)...);
+        value_.construct(rpp::forward<Args>(args)...);
     }
 
     void clear() noexcept {

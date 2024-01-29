@@ -103,7 +103,7 @@ void Profile::end_frame() noexcept {
 void Profile::enter(String_View name) noexcept {
     if constexpr(DO_PROFILE) {
         if(!this_thread.ready()) return;
-        enter(Log::Location{move(name), ""_v, 0});
+        enter(Log::Location{rpp::move(name), ""_v, 0});
     }
 }
 
@@ -111,7 +111,7 @@ void Profile::enter(Log::Location loc) noexcept {
     if constexpr(DO_PROFILE) {
         if(!this_thread.ready()) return;
         Thread::Lock lock(this_thread.frames_lock);
-        this_thread.frames.back().enter(move(loc));
+        this_thread.frames.back().enter(rpp::move(loc));
     }
 }
 
@@ -131,7 +131,7 @@ void Profile::Frame_Profile::enter(Log::Location loc) noexcept {
     if(!repeat) {
         u64 child_idx = nodes.length();
         node.children.push(child_idx);
-        nodes.push(Timing_Node::make(move(loc), current_node));
+        nodes.push(Timing_Node::make(rpp::move(loc), current_node));
         current_node = child_idx;
     } else {
         node.begin = timestamp();
@@ -192,7 +192,7 @@ void Profile::alloc(Alloc a) noexcept {
         {
             Thread::Lock lock(this_thread.frames_lock);
             if(this_thread.during_frame) {
-                this_thread.frames.back().allocations.push(move(a));
+                this_thread.frames.back().allocations.push(rpp::move(a));
             }
         }
     }
@@ -200,7 +200,7 @@ void Profile::alloc(Alloc a) noexcept {
 
 void Profile::finalizer(Function<void()> f) noexcept {
     Thread::Lock lock(finalizers_lock);
-    finalizers.push(move(f));
+    finalizers.push(rpp::move(f));
 }
 
 void Profile::finalize() noexcept {

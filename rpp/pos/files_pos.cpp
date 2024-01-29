@@ -34,7 +34,7 @@ namespace rpp::Files {
     }
 
     close(fd);
-    return Opt{move(data)};
+    return Opt{rpp::move(data)};
 }
 
 [[nodiscard]] bool write(String_View path_, Slice<u8> data) noexcept {

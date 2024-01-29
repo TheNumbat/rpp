@@ -129,7 +129,7 @@ void Udp::bind(Address address) noexcept {
     Address retaddr;
     *reinterpret_cast<sockaddr_in*>(retaddr.sockaddr_storage) = src;
 
-    return Opt{Data{static_cast<u64>(ret), move(retaddr)}};
+    return Opt{Data{static_cast<u64>(ret), rpp::move(retaddr)}};
 }
 
 [[nodiscard]] u64 Udp::send(Address address, const Packet& out, u64 length) noexcept {

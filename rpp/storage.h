@@ -15,7 +15,7 @@ struct Storage {
     template<typename... Args>
         requires Constructable<T, Args...>
     explicit Storage(Args&&... args) noexcept {
-        new(value_) T{forward<Args>(args)...};
+        new(value_) T{rpp::forward<Args>(args)...};
     }
 
     ~Storage() noexcept = default;
@@ -37,7 +37,7 @@ struct Storage {
     template<typename... Args>
         requires Constructable<T, Args...>
     void construct(Args&&... args) noexcept {
-        new(value_) T{forward<Args>(args)...};
+        new(value_) T{rpp::forward<Args>(args)...};
     }
 
     void destruct() noexcept {

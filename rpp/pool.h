@@ -31,10 +31,11 @@ private:
 template<Allocator A = Alloc>
 struct Schedule_Event {
 
-    explicit Schedule_Event(Event event, Pool<A>& pool) noexcept : event{move(event)}, pool{pool} {
+    explicit Schedule_Event(Event event, Pool<A>& pool) noexcept
+        : event{rpp::move(event)}, pool{pool} {
     }
     void await_suspend(std::coroutine_handle<> task) noexcept {
-        pool.enqueue_event(move(event), Handle{task});
+        pool.enqueue_event(rpp::move(event), Handle{task});
     }
     void await_resume() noexcept {
     }
@@ -103,7 +104,7 @@ struct Pool {
         return Schedule<A>{*this};
     }
     [[nodiscard]] Schedule_Event<A> event(Event event) noexcept {
-        return Schedule_Event<A>{move(event), *this};
+        return Schedule_Event<A>{rpp::move(event), *this};
     }
 
     [[nodiscard]] u64 n_threads() const noexcept {
@@ -128,13 +129,13 @@ private:
         Thread_State& state = thread_states[i];
 
         Thread::Lock lock(state.mut);
-        state.jobs.push(move(job));
+        state.jobs.push(rpp::move(job));
         state.cond.signal();
     }
 
     void enqueue_event(Event event, Handle<> job) noexcept {
         Thread::Lock lock(events_mut);
-        events_to_enqueue.emplace(move(event), move(job));
+        events_to_enqueue.emplace(rpp::move(event), rpp::move(job));
         pending_events[0].signal();
     }
 
@@ -150,7 +151,7 @@ private:
                 }
                 if(shutdown.load()) return;
 
-                job = move(state.jobs.front());
+                job = rpp::move(state.jobs.front());
                 state.jobs.pop();
             }
             job.handle.resume();
@@ -165,14 +166,14 @@ private:
                 if(shutdown.load()) return;
 
                 for(auto& [event, state] : events_to_enqueue) {
-                    pending_events.push(move(event));
-                    pending_event_jobs.push(move(state));
+                    pending_events.push(rpp::move(event));
+                    pending_event_jobs.push(rpp::move(state));
                 }
                 events_to_enqueue.clear();
 
                 pending_events[0].reset();
             } else {
-                auto job = move(pending_event_jobs[idx - 1]);
+                auto job = rpp::move(pending_event_jobs[idx - 1]);
 
                 if(pending_events.length() > 2) {
                     swap(pending_events[idx], pending_events.back());

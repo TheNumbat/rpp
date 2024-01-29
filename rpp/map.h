@@ -17,7 +17,7 @@ struct Map_Slot {
     constexpr Map_Slot() = default;
 
     constexpr explicit Map_Slot(K&& key, V&& value) noexcept : hash(hash_nonzero(key)) {
-        data.construct(move(key), move(value));
+        data.construct(rpp::move(key), rpp::move(value));
     }
     constexpr ~Map_Slot() noexcept {
         if constexpr(Must_Destruct<Pair<K, V>>) {
@@ -32,13 +32,13 @@ struct Map_Slot {
     constexpr Map_Slot(Map_Slot&& src) noexcept {
         hash = src.hash;
         src.hash = EMPTY;
-        if(hash != EMPTY) data.construct(move(*src.data));
+        if(hash != EMPTY) data.construct(rpp::move(*src.data));
     }
     constexpr Map_Slot& operator=(Map_Slot&& src) noexcept {
         this->~Map_Slot();
         hash = src.hash;
         src.hash = EMPTY;
-        if(hash != EMPTY) data.construct(move(*src.data));
+        if(hash != EMPTY) data.construct(rpp::move(*src.data));
         return *this;
     }
 
@@ -83,7 +83,7 @@ struct Map {
     template<typename... Ss>
         requires All_Are<Pair<K, V>, Ss...> && Move_Constructable<Pair<K, V>>
     explicit Map(Ss&&... init) noexcept {
-        (insert(move(init.first), move(init.second)), ...);
+        (insert(rpp::move(init.first), rpp::move(init.second)), ...);
     }
 
     Map(const Map& src) noexcept = delete;
@@ -159,7 +159,8 @@ struct Map {
         shift_ = Math::ctlz(capacity_) + 1;
 
         for(u64 i = 0; i < old_capacity; i++) {
-            if(old_data[i].hash != Slot::EMPTY) static_cast<void>(insert_slot(move(old_data[i])));
+            if(old_data[i].hash != Slot::EMPTY)
+                static_cast<void>(insert_slot(rpp::move(old_data[i])));
         }
         A::free(old_data);
     }
@@ -199,19 +200,19 @@ struct Map {
     V& insert(K&& key, const V& value) noexcept
         requires Copy_Constructable<V>
     {
-        return insert(move(key), V{value});
+        return insert(rpp::move(key), V{value});
     }
 
     V& insert(const K& key, V&& value) noexcept
         requires Copy_Constructable<K>
     {
-        return insert(K{key}, move(value));
+        return insert(K{key}, rpp::move(value));
     }
 
     V& insert(K&& key, V&& value) noexcept {
         if(full()) grow();
-        Slot slot{move(key), move(value)};
-        Slot& placed = insert_slot(move(slot));
+        Slot slot{rpp::move(key), rpp::move(value)};
+        Slot& placed = insert_slot(rpp::move(slot));
         length_ += 1;
         return placed.data->second;
     }
@@ -220,8 +221,8 @@ struct Map {
         requires Constructable<V, Args...>
     V& emplace(K&& key, Args&&... args) noexcept {
         if(full()) grow();
-        Slot slot{move(key), V{forward<Args>(args)...}};
-        Slot& placed = insert_slot(move(slot));
+        Slot slot{rpp::move(key), V{rpp::forward<Args>(args)...}};
+        Slot& placed = insert_slot(rpp::move(slot));
         length_ += 1;
         return placed.data->second;
     }
@@ -326,7 +327,7 @@ struct Map {
         if(entry) {
             return **entry;
         }
-        return insert(move(key), V{});
+        return insert(rpp::move(key), V{});
     }
 
     template<bool is_const>
@@ -404,11 +405,11 @@ private:
         for(;;) {
             u64 hash = data_[idx].hash;
             if(hash == Slot::EMPTY) {
-                data_[idx] = move(slot);
+                data_[idx] = rpp::move(slot);
                 return placement ? *placement : data_[idx];
             }
             if(hash == slot.hash && data_[idx].data->first == slot.data->first) {
-                data_[idx] = move(slot);
+                data_[idx] = rpp::move(slot);
                 return data_[idx];
             }
             u64 hashidx = hash >> shift_;
@@ -430,7 +431,7 @@ private:
             if(nexthash_ == Slot::EMPTY) return;
             u64 next_ideal = nexthash_ >> shift_;
             if(next == next_ideal) return;
-            data_[idx] = move(data_[next]);
+            data_[idx] = rpp::move(data_[next]);
             idx = next;
         }
     }

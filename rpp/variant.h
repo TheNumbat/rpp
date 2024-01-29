@@ -34,7 +34,7 @@ struct Variant {
     template<typename V>
         requires One_Is<V, Ts...>
     Variant(V&& value) noexcept {
-        construct(forward<V>(value));
+        construct(rpp::forward<V>(value));
     }
     ~Variant() noexcept {
         destruct();
@@ -54,7 +54,7 @@ struct Variant {
             index_ = src.index_;
             Libc::memcpy(data_, src.data_, size);
         } else {
-            src.match(Overload{[this](Ts& v) { this->construct(move(v)); }...});
+            src.match(Overload{[this](Ts& v) { this->construct(rpp::move(v)); }...});
         };
         src.index_ = INVALID;
     }
@@ -67,7 +67,7 @@ struct Variant {
             index_ = src.index_;
             Libc::memcpy(data_, src.data_, size);
         } else {
-            src.match(Overload{[this](Ts& v) { this->construct(move(v)); }...});
+            src.match(Overload{[this](Ts& v) { this->construct(rpp::move(v)); }...});
         }
         src.index_ = INVALID;
         return *this;
@@ -82,27 +82,26 @@ struct Variant {
             Libc::memcpy(result.data_, data_, size);
             return result;
         } else {
-            return match([](const auto& v) {
-                using T = Decay<decltype(v)>;
-                if constexpr(Clone<T>) {
+            return match(Overload{[](const Ts& v) {
+                if constexpr(Clone<Ts>) {
                     return Variant{v.clone()};
                 } else {
-                    static_assert(Copy_Constructable<T>);
-                    return Variant{T{v}};
+                    static_assert(Copy_Constructable<Ts>);
+                    return Variant{Ts{v}};
                 }
-            });
+            }...});
         }
     }
 
     template<typename F>
         requires((Invocable<F, Ts&> && ...) && All_Same<Invoke_Result<F, Ts&>...>)
     [[nodiscard]] auto match(F&& f) noexcept {
-        return Accessors<false>::apply(forward<F>(f), data_, index_);
+        return Accessors<false>::apply(rpp::forward<F>(f), data_, index_);
     }
     template<typename F>
         requires((Invocable<F, const Ts&> && ...) && All_Same<Invoke_Result<F, const Ts&>...>)
     [[nodiscard]] auto match(F&& f) const noexcept {
-        return Accessors<true>::apply(forward<F>(f), data_, index_);
+        return Accessors<true>::apply(rpp::forward<F>(f), data_, index_);
     }
 
     [[nodiscard]] u8 index() const noexcept {
@@ -120,7 +119,7 @@ private:
     void construct(V&& value) noexcept {
         static_assert(alignof(Variant<Ts...>) == align);
         static_assert(sizeof(Variant<Ts...>) == Math::align(size + 1, align));
-        new(data_) V{forward<V>(value)};
+        new(data_) V{rpp::forward<V>(value)};
         index_ = Index_Of<V, Ts...>;
     }
 
@@ -156,7 +155,7 @@ private:
 
 #define INDEX(n)                                                                                   \
     if constexpr(N > n)                                                                            \
-        if(index == n) return apply_one<F, Choose<n, Ts...>>(forward<F>(f), data)
+        if(index == n) return apply_one<F, Choose<n, Ts...>>(rpp::forward<F>(f), data)
 
         template<typename F>
             requires(N <= 8)
@@ -168,20 +167,20 @@ private:
             INDEX(3);
             INDEX(2);
             INDEX(1);
-            return apply_one<F, Choose<0, Ts...>>(forward<F>(f), data);
+            return apply_one<F, Choose<0, Ts...>>(rpp::forward<F>(f), data);
         }
 
 #undef INDEX
 
         template<typename F>
         [[nodiscard]] static auto apply(F&& f, Data* data, u8 index) noexcept {
-            return apply_n(forward<F>(f), data, index, Index_Sequence_For<Ts...>{});
+            return apply_n(rpp::forward<F>(f), data, index, Index_Sequence_For<Ts...>{});
         }
 
     private:
         template<typename F, typename T>
         [[nodiscard]] static auto apply_one(F&& f, Data* data) noexcept {
-            return forward<F>(f)(reinterpret_cast<Ref<T>>(*data));
+            return rpp::forward<F>(f)(reinterpret_cast<Ref<T>>(*data));
         }
         template<typename F, u64... Is>
         [[nodiscard]] static auto apply_n(F&& f, Data* data, u8 index,
@@ -190,7 +189,7 @@ private:
             using R = Invoke_Result<F, Ref<T>>;
             using Apply = R (*)(F&&, Data*);
             constexpr static Apply table[] = {&apply_one<F, Choose<Is, Ts...>>...};
-            return table[index](forward<F>(f), data);
+            return table[index](rpp::forward<F>(f), data);
         }
     };
 

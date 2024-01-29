@@ -35,7 +35,7 @@ struct Scalar_Adaptor {
         requires Allocator<A> && Constructable<T, Args...>
     [[nodiscard]] static T* make(Args&&... args) noexcept {
         T* mem = reinterpret_cast<T*>(A::alloc(sizeof(T)));
-        new(mem) T{forward<Args>(args)...};
+        new(mem) T{rpp::forward<Args>(args)...};
         return mem;
     }
 
@@ -139,7 +139,7 @@ struct Free_List {
     template<typename... Args>
         requires Constructable<T, Args...>
     [[nodiscard]] T* make(Args&&... args) noexcept {
-        return new(alloc()) T{forward<Args>(args)...};
+        return new(alloc()) T{rpp::forward<Args>(args)...};
     }
 
     void destroy(T* value) noexcept {

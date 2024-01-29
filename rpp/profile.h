@@ -46,10 +46,10 @@ struct Profile {
 
     struct Scope {
         Scope(Log::Location loc) noexcept {
-            Profile::enter(move(loc));
+            Profile::enter(rpp::move(loc));
         }
         Scope(String_View name) noexcept {
-            Profile::enter(move(name));
+            Profile::enter(rpp::move(name));
         }
         ~Scope() noexcept {
             Profile::exit();
@@ -70,7 +70,7 @@ struct Profile {
 
         [[nodiscard]] static Timing_Node make(Log::Location loc, u64 parent) noexcept {
             Timing_Node ret;
-            ret.loc = move(loc);
+            ret.loc = rpp::move(loc);
             ret.parent = parent;
             ret.begin = timestamp();
             ret.calls = 1;
@@ -139,7 +139,7 @@ private:
         ~Thread_Profile() noexcept {
             finalize();
         }
-        
+
         void finalize() noexcept {
             frames = {};
             if(during_frame) Profile::end_frame();

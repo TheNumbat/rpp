@@ -405,7 +405,7 @@ forward(typename Remove_Reference<T>::type&& value) noexcept {
 template<typename F, typename... Args>
 struct Is_Invocable {
     constexpr static bool value = requires(F&& f, Args&&... args) {
-        { forward<F>(f)(forward<Args>(args)...) };
+        { rpp::detail::forward<F>(f)(rpp::detail::forward<Args>(args)...) };
     };
 };
 
@@ -598,9 +598,9 @@ constexpr void swap(T& a, T& b) noexcept {
         Libc::memcpy(&a, &b, sizeof(T));
         Libc::memcpy(&b, tmp, sizeof(T));
     } else {
-        T tmp = move(a);
-        a = move(b);
-        b = move(tmp);
+        T tmp = rpp::move(a);
+        a = rpp::move(b);
+        b = rpp::move(tmp);
     }
 }
 

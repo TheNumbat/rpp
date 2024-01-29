@@ -15,7 +15,7 @@ void unsubscribe(Token token) noexcept;
 
 template<Invocable<Level, Thread::Id, Time, Location, String_View> F>
 [[nodiscard]] Token subscribe(F&& f) noexcept {
-    return subscribe(Function<Callback>{forward<F>(f)});
+    return subscribe(Function<Callback>{rpp::forward<F>(f)});
 }
 
 } // namespace Log

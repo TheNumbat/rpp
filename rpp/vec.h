@@ -35,7 +35,7 @@ struct Vec {
         requires All_Are<T, Ss...> && Move_Constructable<T>
     explicit Vec(Ss&&... init) noexcept {
         reserve(sizeof...(Ss));
-        (push(move(init)), ...);
+        (push(rpp::move(init)), ...);
     }
 
     Vec(const Vec& src) noexcept = delete;
@@ -118,7 +118,7 @@ struct Vec {
             } else {
                 static_assert(Move_Constructable<T>);
                 for(u64 i = 0; i < length_; i++) {
-                    new(&new_data[i]) T{move(data_[i])};
+                    new(&new_data[i]) T{rpp::move(data_[i])};
                 }
             }
         }
@@ -169,7 +169,7 @@ struct Vec {
     {
         if(full()) grow();
         assert(length_ < capacity_);
-        new(&data_[length_]) T{move(value)};
+        new(&data_[length_]) T{rpp::move(value)};
         return data_[length_++];
     }
 

@@ -30,7 +30,7 @@ struct Tuple<> {
 
     template<Invocable F>
     [[nodiscard]] constexpr auto invoke(F&& f) noexcept -> Invoke_Result<F> {
-        return forward<F>(f)();
+        return rpp::forward<F>(f)();
     }
 };
 
@@ -44,25 +44,25 @@ struct Tuple<T, Ts...> {
     template<typename... Args>
     constexpr explicit Tuple(const T& first, Args&&... rest) noexcept
         requires Copy_Constructable<T> && Constructable<Tuple<Ts...>, Args...>
-        : first(T{first}), rest(forward<Args>(rest)...) {
+        : first(T{first}), rest(rpp::forward<Args>(rest)...) {
     }
 
     template<typename... Args>
         requires Move_Constructable<T> && Move_Constructable<Tuple<Args...>>
     constexpr explicit Tuple(T&& first, Tuple<Args...>&& rest) noexcept
-        : first(move(first)), rest(move(rest)) {
+        : first(rpp::move(first)), rest(rpp::move(rest)) {
     }
 
     template<typename... Args>
         requires Copy_Constructable<T> && Move_Constructable<Tuple<Args...>>
     constexpr explicit Tuple(const T& first, Tuple<Args...>&& rest) noexcept
-        : first(T{first}), rest(move(rest)) {
+        : first(T{first}), rest(rpp::move(rest)) {
     }
 
     template<typename... Args>
     constexpr explicit Tuple(T&& first, Args&&... rest) noexcept
         requires Move_Constructable<T> && Constructable<Tuple<Ts...>, Args...>
-        : first(move(first)), rest(forward<Args>(rest)...) {
+        : first(rpp::move(first)), rest(rpp::forward<Args>(rest)...) {
     }
 
     constexpr ~Tuple() noexcept = default;
@@ -109,14 +109,14 @@ struct Tuple<T, Ts...> {
 
     template<Invocable<T, Ts...> F>
     [[nodiscard]] constexpr auto invoke(F&& f) noexcept -> Invoke_Result<F, T, Ts...> {
-        return invoke_(forward<F>(f), Make_Index_Sequence<1 + sizeof...(Ts)>{});
+        return invoke_(rpp::forward<F>(f), Make_Index_Sequence<1 + sizeof...(Ts)>{});
     }
 
 private:
     template<Invocable<T, Ts...> F, u64... Is>
     [[nodiscard]] constexpr auto invoke_(F&& f, Index_Sequence<Is...>) noexcept
         -> Invoke_Result<F, T, Ts...> {
-        return forward<F>(f)(get<Is>()...);
+        return rpp::forward<F>(f)(get<Is>()...);
     }
 
     T first;

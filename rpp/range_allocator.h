@@ -27,7 +27,7 @@ struct Range_Allocator {
     Range_Allocator& operator=(const Range_Allocator&) noexcept = delete;
 
     Range_Allocator(Range_Allocator&& src) noexcept {
-        *this = move(src);
+        *this = rpp::move(src);
     }
     Range_Allocator& operator=(Range_Allocator&& src) noexcept {
         this->~Range_Allocator();
@@ -38,7 +38,7 @@ struct Range_Allocator {
         src.stats = {};
         free_blocks = src.free_blocks;
         for(u64 i = 0; i < Buckets; i++) src.free_blocks[i] = null;
-        blocks = move(src.blocks);
+        blocks = rpp::move(src.blocks);
 
         return *this;
     }

@@ -18,7 +18,7 @@ struct Array {
 
     template<typename... S>
         requires Length<N, S...> && All_Are<T, S...>
-    constexpr explicit Array(S&&... init) noexcept : data_{forward<S>(init)...} {
+    constexpr explicit Array(S&&... init) noexcept : data_{rpp::forward<S>(init)...} {
     }
 
     template<typename... S>

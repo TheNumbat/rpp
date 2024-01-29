@@ -159,7 +159,7 @@ struct Iter<F, Nil> {
 
 template<typename F, typename X>
 concept Apply = requires(F&& f) {
-    { forward<F>(f).template apply<X>() } -> Same<void>;
+    { rpp::forward<F>(f).template apply<X>() } -> Same<void>;
 };
 
 template<typename F, typename Head, typename Tail>
@@ -168,8 +168,8 @@ struct Iter<F, Cons<Head, Tail>> {
     template<typename G>
         requires Same<Decay<F>, Decay<G>>
     constexpr static void apply(G&& f) noexcept {
-        forward<G>(f).template apply<Head>();
-        Iter<F, Tail>::apply(forward<F>(f));
+        rpp::forward<G>(f).template apply<Head>();
+        Iter<F, Tail>::apply(rpp::forward<F>(f));
     }
 };
 
@@ -302,14 +302,14 @@ template<typename F>
 struct Iter_Case {
     template<typename Case>
     constexpr void apply() noexcept {
-        forward<F>(f)(Case::name, Case::value);
+        rpp::forward<F>(f)(Case::name, Case::value);
     }
     F&& f;
 };
 
 template<Enum E, typename F>
 constexpr void iterate_enum(F&& f) noexcept {
-    Iter<Iter_Case<F>, typename Refl<E>::members>::apply(Iter_Case<F>{forward<F>(f)});
+    Iter<Iter_Case<F>, typename Refl<E>::members>::apply(Iter_Case<F>{rpp::forward<F>(f)});
 }
 
 template<typename F, typename T>
@@ -340,14 +340,14 @@ template<Record R, typename F>
 constexpr void iterate_record(F&& f, R& record) noexcept {
     u8* address = reinterpret_cast<u8*>(&record);
     Iter<Iter_Field<F, false>, typename Refl<R>::members>::apply(
-        Iter_Field<F, false>{forward<F>(f), address});
+        Iter_Field<F, false>{rpp::forward<F>(f), address});
 }
 
 template<Record R, typename F>
 constexpr void iterate_record(F&& f, const R& record) noexcept {
     const u8* address = reinterpret_cast<const u8*>(&record);
     Iter<Iter_Field<F, true>, typename Refl<R>::members>::apply(
-        Iter_Field<F, true>{forward<F>(f), address});
+        Iter_Field<F, true>{rpp::forward<F>(f), address});
 }
 
 template<typename T>

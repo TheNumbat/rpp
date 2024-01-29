@@ -28,7 +28,7 @@ template<Enum E>
             return {};
         }
         String_View rest = input.sub(end - start, input.length());
-        return Opt<Pair<i64, String_View>>{Pair{ret, move(rest)}};
+        return Opt<Pair<i64, String_View>>{Pair{ret, rpp::move(rest)}};
     }
 }
 
@@ -42,7 +42,7 @@ template<Enum E>
             return {};
         }
         String_View rest = input.sub(end - start, input.length());
-        return Opt<Pair<f32, String_View>>{Pair{ret, move(rest)}};
+        return Opt<Pair<f32, String_View>>{Pair{ret, rpp::move(rest)}};
     }
 }
 
@@ -67,10 +67,10 @@ template<Enum E>
 [[nodiscard]] inline Opt<Pair<E, String_View>> parse_enum(String_View s) noexcept {
     Opt<Pair<E, String_View>> ret = {};
     if(auto n = parse_string(s); n.ok()) {
-        auto [name, rest] = move(*n);
+        auto [name, rest] = rpp::move(*n);
         iterate_enum<E>([&](const Literal& check, const E& check_value) {
             if(name == String_View{check}) {
-                ret = Opt<Pair<E, String_View>>{Pair<E, String_View>{check_value, move(rest)}};
+                ret = Opt<Pair<E, String_View>>{Pair<E, String_View>{check_value, rpp::move(rest)}};
             }
         });
     }

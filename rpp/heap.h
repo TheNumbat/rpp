@@ -20,7 +20,7 @@ struct Heap {
         requires All_Are<T, S...> && Move_Constructable<T>
     explicit Heap(S&&... init) noexcept {
         reserve(sizeof...(S));
-        (push(forward<S>(init)), ...);
+        (push(rpp::forward<S>(init)), ...);
     }
 
     explicit Heap(const Heap& src) noexcept = delete;
@@ -91,7 +91,7 @@ struct Heap {
         } else {
             static_assert(Move_Constructable<T>);
             for(u64 i = 0; i < length_; i++) {
-                new(&new_data[i]) T{move(data_[i])};
+                new(&new_data[i]) T{rpp::move(data_[i])};
             }
         }
         A::free(data_);
@@ -130,7 +130,7 @@ struct Heap {
         requires Move_Constructable<T>
     {
         if(full()) grow();
-        new(&data_[length_++]) T{move(value)};
+        new(&data_[length_++]) T{rpp::move(value)};
         reheap_up(length_ - 1);
     }
 
@@ -139,7 +139,7 @@ struct Heap {
         requires Constructable<T, Args...>
     {
         if(full()) grow();
-        new(&data_[length_++]) T{forward<Args>(args)...};
+        new(&data_[length_++]) T{rpp::forward<Args>(args)...};
         reheap_up(length_ - 1);
     }
 
@@ -158,7 +158,7 @@ struct Heap {
                 Libc::memcpy(data_, data_ + length_, sizeof(T));
             } else {
                 static_assert(Move_Constructable<T>);
-                new(data_) T{move(data_[length_])};
+                new(data_) T{rpp::move(data_[length_])};
             }
             reheap_down(0);
         }
@@ -188,9 +188,9 @@ private:
     void swap(u64 a, u64 b) noexcept
         requires Move_Constructable<T>
     {
-        T temp{move(data_[a])};
-        new(&data_[a]) T{move(data_[b])};
-        new(&data_[b]) T{move(temp)};
+        T temp{rpp::move(data_[a])};
+        new(&data_[a]) T{rpp::move(data_[b])};
+        new(&data_[b]) T{rpp::move(temp)};
     }
 
     void reheap_up(u64 idx) noexcept

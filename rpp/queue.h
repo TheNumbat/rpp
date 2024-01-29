@@ -22,7 +22,7 @@ struct Queue {
         requires All_Are<T, Ss...> && Move_Constructable<T>
     explicit Queue(Ss&&... init) noexcept {
         reserve(sizeof...(Ss));
-        (push(move(init)), ...);
+        (push(rpp::move(init)), ...);
     }
 
     Queue(const Queue& src) noexcept = delete;
@@ -110,15 +110,15 @@ struct Queue {
             static_assert(Move_Constructable<T>);
             if(length_ <= last_) {
                 for(u64 i = 0; i < length_; i++) {
-                    new(&new_data[i]) T{move(start[i])};
+                    new(&new_data[i]) T{rpp::move(start[i])};
                 }
             } else {
                 u64 first = length_ - last_;
                 for(u64 i = 0; i < first; i++) {
-                    new(&new_data[i]) T{move(start[i + capacity_])};
+                    new(&new_data[i]) T{rpp::move(start[i + capacity_])};
                 }
                 for(u64 i = 0; i < last_; i++) {
-                    new(&new_data[first + i]) T{move(data_[i])};
+                    new(&new_data[first + i]) T{rpp::move(data_[i])};
                 }
             }
         }
@@ -140,7 +140,7 @@ struct Queue {
     {
         if(full()) grow();
 
-        new(&data_[last_]) T{move(value)};
+        new(&data_[last_]) T{rpp::move(value)};
         T& ret = data_[last_];
 
         length_++;
@@ -154,7 +154,7 @@ struct Queue {
     {
         if(full()) grow();
 
-        new(&data_[last_]) T{forward<Args>(args)...};
+        new(&data_[last_]) T{rpp::forward<Args>(args)...};
         T& ret = data_[last_];
 
         length_++;
@@ -244,7 +244,7 @@ struct Queue {
                     Libc::memcpy(&data_[next], &data_[idx], sizeof(T));
                 } else {
                     static_assert(Move_Constructable<T>);
-                    new(&data_[next]) T{move(data_[idx])};
+                    new(&data_[next]) T{rpp::move(data_[idx])};
                 }
             } else if(data_[idx] == value) {
                 if constexpr(Must_Destruct<T>) {

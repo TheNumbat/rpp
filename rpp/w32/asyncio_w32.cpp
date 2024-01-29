@@ -61,7 +61,7 @@ constexpr u64 SECTOR_SIZE = 4096;
 
     CloseHandle(handle);
     data.resize(size);
-    co_return Opt{move(data)};
+    co_return Opt{rpp::move(data)};
 }
 
 [[nodiscard]] Task<bool> write(Pool<>& pool, String_View path, Slice<u8> data) noexcept {

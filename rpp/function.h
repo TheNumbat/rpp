@@ -22,7 +22,7 @@ struct Function<Words, R(Args...)> {
     template<typename F>
         requires Same<Invoke_Result<F, Args...>, R>
     Function(F&& f) noexcept {
-        construct(forward<F>(f));
+        construct(rpp::forward<F>(f));
     }
     ~Function() noexcept {
         destruct();
@@ -46,7 +46,7 @@ struct Function<Words, R(Args...)> {
 
     [[nodiscard]] R operator()(Args... args) noexcept {
         assert(vtable);
-        return invoke(forward<Args>(args)...);
+        return invoke(rpp::forward<Args>(args)...);
     }
 
 private:
@@ -61,23 +61,23 @@ private:
         static VoidFn f_vtable[] = {reinterpret_cast<VoidFn>(&f_destruct<F>),
                                     reinterpret_cast<VoidFn>(&f_move<F>),
                                     reinterpret_cast<VoidFn>(&f_invoke<F>)};
-        new(storage) F{forward<F>(f)};
+        new(storage) F{rpp::forward<F>(f)};
         vtable = static_cast<VoidFn*>(f_vtable);
     }
     void destruct() noexcept {
         if(vtable) {
-            void (*destruct)(void*) = reinterpret_cast<void (*)(void*)>(vtable[0]);
-            destruct(storage);
+            void (*do_destruct)(void*) = reinterpret_cast<void (*)(void*)>(vtable[0]);
+            do_destruct(storage);
         }
         vtable = null;
     }
     void move(void* dst) noexcept {
-        void (*move)(void*, void*) = reinterpret_cast<void (*)(void*, void*)>(vtable[1]);
-        move(dst, storage);
+        void (*do_move)(void*, void*) = reinterpret_cast<void (*)(void*, void*)>(vtable[1]);
+        do_move(dst, storage);
     }
     [[nodiscard]] R invoke(Args... args) noexcept {
-        R (*invoke)(void*, Args...) = reinterpret_cast<R (*)(void*, Args...)>(vtable[2]);
-        return invoke(storage, forward<Args>(args)...);
+        R (*do_invoke)(void*, Args...) = reinterpret_cast<R (*)(void*, Args...)>(vtable[2]);
+        return do_invoke(storage, rpp::forward<Args>(args)...);
     }
 
     template<typename F>
@@ -96,7 +96,7 @@ private:
     }
     template<typename F>
     [[nodiscard]] static R f_invoke(F* src, Args... args) noexcept {
-        return src->operator()(forward<Args>(args)...);
+        return src->operator()(rpp::forward<Args>(args)...);
     }
 
     alignas(MAX_ALIGN) u8 storage[Words * 8] = {};

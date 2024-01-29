@@ -36,13 +36,13 @@ struct Promise {
     Promise& operator=(Promise&&) noexcept = delete;
 
     void fill(T&& val) noexcept {
-        value = move(val);
+        value = rpp::move(val);
         flag.signal();
     }
 
     [[nodiscard]] T block() noexcept {
         flag.block();
-        return move(value);
+        return rpp::move(value);
     }
 
     [[nodiscard]] bool ready() noexcept {
@@ -96,7 +96,7 @@ struct Thread {
     template<Invocable F>
     explicit Thread(F&& f) noexcept {
         F* data = reinterpret_cast<F*>(A::alloc(sizeof(F)));
-        new(data) F{forward<F>(f)};
+        new(data) F{rpp::forward<F>(f)};
         thread = sys_start(&invoke<F>, data);
     }
     ~Thread() noexcept {
@@ -154,15 +154,15 @@ template<Allocator A = Alloc, typename F, typename... Args>
     using Result = Invoke_Result<F, Args...>;
     auto future = Future<Result, A>::make();
 
-    Thread thread{
-        [future = future.dup(), f = forward<F>(f), ... args = forward<Args>(args)]() mutable {
-            if constexpr(Same<Result, void>) {
-                f(forward<Args>(args)...);
-                future->fill();
-            } else {
-                future->fill(f(forward<Args>(args)...));
-            }
-        }};
+    Thread thread{[future = future.dup(), f = rpp::forward<F>(f),
+                   ... args = rpp::forward<Args>(args)]() mutable {
+        if constexpr(Same<Result, void>) {
+            f(rpp::forward<Args>(args)...);
+            future->fill();
+        } else {
+            future->fill(f(rpp::forward<Args>(args)...));
+        }
+    }};
     thread.detach();
 
     return future;

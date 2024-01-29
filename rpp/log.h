@@ -89,7 +89,7 @@ void output(Level level, const Location& loc, String_View msg) noexcept;
 
 template<typename... Ts>
 void log(Level level, const Location& loc, String_View fmt, const Ts&... args) noexcept {
-    Region(R) output(level, move(loc), format<Mregion<R>>(fmt, args...).view());
+    Region(R) output(level, loc, format<Mregion<R>>(fmt, args...).view());
 }
 
 } // namespace Log

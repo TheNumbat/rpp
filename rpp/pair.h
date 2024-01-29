@@ -21,17 +21,17 @@ struct Pair {
 
     constexpr explicit Pair(A&& first, B&& second) noexcept
         requires Move_Constructable<A> && Move_Constructable<B>
-        : first(move(first)), second(move(second)) {
+        : first(rpp::move(first)), second(rpp::move(second)) {
     }
 
     constexpr explicit Pair(const A& first, B&& second) noexcept
         requires Copy_Constructable<A> && Move_Constructable<B>
-        : first(A{first}), second(move(second)) {
+        : first(A{first}), second(rpp::move(second)) {
     }
 
     constexpr explicit Pair(A&& first, const B& second) noexcept
         requires Move_Constructable<A> && Copy_Constructable<B>
-        : first(move(first)), second(B{second}) {
+        : first(rpp::move(first)), second(B{second}) {
     }
 
     constexpr ~Pair() noexcept = default;

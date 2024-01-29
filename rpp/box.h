@@ -14,13 +14,13 @@ struct Box {
     explicit Box(T&& value) noexcept
         requires Move_Constructable<T>
     {
-        data_ = A::template make<T>(move(value));
+        data_ = A::template make<T>(rpp::move(value));
     }
 
     template<typename... Args>
         requires Constructable<T, Args...>
     explicit Box(Args&&... args) noexcept {
-        data_ = A::template make<T>(forward<Args>(args)...);
+        data_ = A::template make<T>(rpp::forward<Args>(args)...);
     }
 
     template<Base_Of<T> D>
@@ -57,7 +57,7 @@ struct Box {
     [[nodiscard]] static Box make(Args&&... args) noexcept {
         Box ret;
         auto data = A::template make<Storage<T>>();
-        new(data->data()) T{forward<Args>(args)...};
+        new(data->data()) T{rpp::forward<Args>(args)...};
         ret.data_ = reinterpret_cast<T*>(data);
         return ret;
     }
@@ -78,7 +78,7 @@ struct Box {
     template<typename... Args>
     void emplace(Args&&... args) noexcept {
         this->~Box();
-        data_ = A::template make<T>(forward<Args>(args)...);
+        data_ = A::template make<T>(rpp::forward<Args>(args)...);
     }
 
     [[nodiscard]] T* operator->() noexcept {

@@ -36,7 +36,7 @@ struct Pool {
             Thread::Lock lock(mutex);
             block = list.make();
         }
-        new(block->data) T{forward<Args>(args)...};
+        new(block->data) T{rpp::forward<Args>(args)...};
         return reinterpret_cast<T*>(block);
     }
 
@@ -79,7 +79,7 @@ struct Mpool {
     template<typename T, typename... Args>
         requires Constructable<T, Args...>
     [[nodiscard]] constexpr static T* make(Args&&... args) noexcept {
-        return detail::Pool<sizeof(T)>::template make<T, Args...>(forward<Args>(args)...);
+        return detail::Pool<sizeof(T)>::template make<T, Args...>(rpp::forward<Args>(args)...);
     }
 
     template<typename T>
