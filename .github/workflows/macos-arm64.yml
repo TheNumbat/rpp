@@ -17,7 +17,7 @@ jobs:
     - name: Configure
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
       env:
-        CXX: clang++
+        CXX: /opt/homebrew/opt/llvm/bin/clang++
     - name: Build
       run: cmake --build build -- -j
     - name: Test
