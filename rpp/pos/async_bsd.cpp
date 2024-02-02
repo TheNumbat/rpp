@@ -81,6 +81,8 @@ void Event::reset() const noexcept {
     if((count < 0) || (signaled.flags == EV_ERROR)) {
         die("Failed to wait on kevents: %", Log::sys_error());
     }
+    close(kq);
+
     if(count == 0) {
         return wait_any(events);
     }
