@@ -53,22 +53,6 @@ struct Final_Suspend {
     void await_resume() noexcept {
     }
 
-#ifdef RPP_COMPILER_MSVC
-    // Compiler bug: remove this when fix released
-    // https://developercommunity.visualstudio.com/t/destroy-coroutine-from-final_suspend-r/10096047
-    template<typename R, Allocator A>
-    void await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
-
-        i64 state = handle.promise().state.exchange(TASK_DONE);
-
-        if(state == TASK_ABANDONED) {
-            handle.destroy();
-        } else if(state != TASK_START) {
-            // Can stack overflow
-            std::coroutine_handle<>::from_address(reinterpret_cast<void*>(state)).resume();
-        }
-    }
-#else
     template<typename R, Allocator A>
     [[nodiscard]] std::coroutine_handle<>
     await_suspend(std::coroutine_handle<Promise<R, A>> handle) noexcept {
@@ -83,7 +67,6 @@ struct Final_Suspend {
 
         return std::noop_coroutine();
     }
-#endif
 };
 
 template<typename R, Allocator A>

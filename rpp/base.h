@@ -12,8 +12,7 @@
 #define RPP_MSVC_INTRINSIC [[msvc::intrinsic]]
 #include <vcruntime_new.h>
 
-// TODO(max): bump when they fix the coroutine bug
-#if _MSC_VER < 1937
+#if _MSC_VER < 1939
 #error "Unsupported MSVC version: only 19.37 or newer is supported."
 #endif
 
