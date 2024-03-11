@@ -260,6 +260,15 @@ private:
 };
 
 template<typename T>
+Slice(Vec<T>) -> Slice<T>;
+
+template<typename T, u64 N>
+Slice(Array<T, N>) -> Slice<T>;
+
+template<typename T>
+Slice(std::initializer_list<T>) -> Slice<T>;
+
+template<typename T>
 struct Slice {
 
     constexpr Slice() noexcept = default;

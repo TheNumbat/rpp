@@ -6,6 +6,8 @@
 [![macOS](https://github.com/TheNumbat/rpp/actions/workflows/macos.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/macos.yml)
 [![macOS (aarch64)](https://github.com/TheNumbat/rpp/actions/workflows/macos-arm64.yml/badge.svg)](https://github.com/TheNumbat/rpp/actions/workflows/macos-arm64.yml)
 
+_Windows CI build pending GitHub actions `windows-latest` update..._
+
 Minimal Rust-inspired C++20 STL replacement.
 Refer to the [blog post](https://thenumb.at/rpp/) for details.
 
@@ -40,7 +42,7 @@ The following configurations are supported:
 
 | OS      | Compiler    | Arch         |
 |---------|-------------|--------------|
-| Windows | MSVC 19.37+ | x64          |
+| Windows | MSVC 19.39+ | x64          |
 | Linux   | Clang 17+   | x64, aarch64 |
 | macOS   | Clang 17+   | x64, aarch64 |
 
