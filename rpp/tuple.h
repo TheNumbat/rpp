@@ -8,6 +8,9 @@ namespace rpp {
 template<typename... Ts>
 struct Tuple;
 
+template<typename... Ts>
+Tuple(Ts...) -> Tuple<Ts...>;
+
 template<>
 struct Tuple<> {
 
