@@ -13,7 +13,8 @@
 #include <vcruntime_new.h>
 
 #if _MSC_VER < 1939
-#error "Unsupported MSVC version: only 19.37 or newer is supported."
+// See https://developercommunity.visualstudio.com/t/destroy-coroutine-from-final_suspend-r/10096047
+#error "Unsupported MSVC version: only 19.39 or newer is supported."
 #endif
 
 #elif defined __clang__
