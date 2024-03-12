@@ -572,7 +572,7 @@ struct Constant {
 };
 
 struct Literal {
-    constexpr static u64 max_len = 24;
+    constexpr static u64 max_len = 32;
 
     constexpr Literal() = default;
 
