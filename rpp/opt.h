@@ -8,6 +8,12 @@
 namespace rpp {
 
 template<typename T>
+struct Opt;
+
+template<typename T>
+Opt(T) -> Opt<T>;
+
+template<typename T>
 struct Opt {
 
     Opt() noexcept = default;
