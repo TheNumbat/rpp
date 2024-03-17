@@ -129,6 +129,15 @@ private:
     friend struct Task<R, A>;
 };
 
+template<typename T>
+concept Is_Task = requires(T t) {
+    typename T::promise_type;
+    typename T::return_type;
+    { t.await_ready() } -> Same<bool>;
+    { t.await_suspend(std::coroutine_handle<>()) } -> Same<bool>;
+    { t.await_resume() } -> Same<typename T::return_type>;
+};
+
 template<typename R, Allocator A>
 struct Task {
 
@@ -142,8 +151,13 @@ struct Task {
     }
 
     ~Task() noexcept {
-        if(handle && handle.promise().state.exchange(TASK_ABANDONED) == TASK_DONE) {
-            handle.destroy();
+        if(handle) {
+            auto state = handle.promise().state.exchange(TASK_ABANDONED);
+            if(state == TASK_DONE) {
+                handle.destroy();
+            } else if(state != TASK_START) {
+                die("Task abandoned while being waited upon.");
+            }
         }
         handle = null;
     }
@@ -196,6 +210,17 @@ struct Task {
 
     [[nodiscard]] bool ok() const noexcept {
         return handle != null;
+    }
+
+    template<typename F>
+        requires Invocable<F, R> && Is_Task<Invoke_Result<F, R>>
+    [[nodiscard]] auto then(F&& f) noexcept -> Invoke_Result<F, R> {
+        if constexpr(Same<R, void>) {
+            co_await *this;
+            co_return (co_await f());
+        } else {
+            co_return (co_await f(co_await *this));
+        }
     }
 
 private:
