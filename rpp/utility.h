@@ -584,6 +584,15 @@ struct Literal {
         }
     }
 
+    constexpr bool operator==(const Literal& other) const noexcept {
+        for(u64 i = 0; i < max_len; i++) {
+            if(c_string[i] != other.c_string[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     [[nodiscard]] constexpr operator const char*() const noexcept {
         return c_string;
     }
