@@ -269,6 +269,9 @@ template<typename T>
 Slice(std::initializer_list<T>) -> Slice<T>;
 
 template<typename T>
+Slice(const T*, u64) -> Slice<T>;
+
+template<typename T>
 struct Slice {
 
     constexpr Slice() noexcept = default;
