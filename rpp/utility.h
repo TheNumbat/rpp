@@ -572,7 +572,7 @@ struct Constant {
 };
 
 struct Literal {
-    constexpr static u64 max_len = 24;
+    constexpr static u64 max_len = 32;
 
     constexpr Literal() = default;
 
@@ -582,6 +582,15 @@ struct Literal {
         for(u64 i = 0; i < N; i++) {
             c_string[i] = literal[i];
         }
+    }
+
+    constexpr bool operator==(const Literal& other) const noexcept {
+        for(u64 i = 0; i < max_len; i++) {
+            if(c_string[i] != other.c_string[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 
     [[nodiscard]] constexpr operator const char*() const noexcept {
