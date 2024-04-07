@@ -246,7 +246,7 @@ To build rpp and run the tests, run the following commands:
 
 ### Windows
 
-Assure MSVC 19.37 and cmake 3.17 (or newer) are installed and in your PATH.
+Assure MSVC 19.39 and cmake 3.17 (or newer) are installed and in your PATH.
 
 ```bash
 mkdir build
