@@ -13,7 +13,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
     - name: Install aarch64 Toolchain
-      run: sudo apt install g++-aarch64-linux-gnu qemu qemu-user qemu-user-static
+      run: sudo apt update && sudo apt install g++-aarch64-linux-gnu qemu qemu-user qemu-user-static
     - name: Install Clang 17
       run: |
        wget https://apt.llvm.org/llvm.sh
