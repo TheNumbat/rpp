@@ -17,9 +17,8 @@ struct InstCnt {
     InstCnt& operator=(const InstCnt&) = delete;
     InstCnt& operator=(InstCnt&&) = delete;
 
-    static i32 cnt;
+    inline static i32 cnt = 0;
 };
-i32 InstCnt::cnt = 0;
 
 i32 main() {
     Test test{"empty"_v};
@@ -87,7 +86,7 @@ i32 main() {
         assert(InstCnt::cnt == 1);
 
         // Move construct from Opt type, moves inner value.
-        c1 = rpp::move(c2);
+        c1 = move(c2);
         assert(InstCnt::cnt == 2);
         c2.clear();
         assert(InstCnt::cnt == 1);
@@ -96,7 +95,7 @@ i32 main() {
 
         // Move construct from Opt type.
         c1.emplace();
-        Opt<InstCnt> c3(rpp::move(c1));
+        Opt<InstCnt> c3(move(c1));
         assert(InstCnt::cnt == 2);
 
         c1.clear();

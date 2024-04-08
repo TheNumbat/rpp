@@ -64,7 +64,6 @@ public:
         } else {
             src.match(Overload{[this](Ts& v) { this->construct(rpp::move(v)); }...});
         };
-        src.index_ = INVALID;
     }
 
     Variant& operator=(Variant&& src) noexcept
@@ -77,7 +76,6 @@ public:
         } else {
             src.match(Overload{[this](Ts& v) { this->construct(rpp::move(v)); }...});
         }
-        src.index_ = INVALID;
         return *this;
     }
 
@@ -137,15 +135,15 @@ private:
     }
 
     void destruct() noexcept {
-        if(index_ == INVALID) return;
         if constexpr((Must_Destruct<Ts> || ...)) {
-            Accessors<Lvalue_Ref, u8>::apply(Overload{[](Ts& v) {
-                                                 if constexpr(Must_Destruct<Ts>) {
-                                                     v.~Ts();
-                                                 }
-                                                 static_cast<void>(v);
-                                             }...},
-                                             data_, index_);
+            if(index_ != INVALID)
+                Accessors<Lvalue_Ref, u8>::apply(Overload{[](Ts& v) {
+                                                     if constexpr(Must_Destruct<Ts>) {
+                                                         v.~Ts();
+                                                     }
+                                                     static_cast<void>(v);
+                                                 }...},
+                                                 data_, index_);
         }
         index_ = INVALID;
     }

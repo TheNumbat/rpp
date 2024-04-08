@@ -3,6 +3,25 @@
 
 #include <rpp/variant.h>
 
+struct InstCnt {
+    InstCnt() {
+        ++cnt;
+    }
+    ~InstCnt() {
+        --cnt;
+    }
+    InstCnt(const InstCnt&) {
+        ++cnt;
+    }
+    InstCnt(InstCnt&&) {
+        ++cnt;
+    }
+    InstCnt& operator=(const InstCnt&) = delete;
+    InstCnt& operator=(InstCnt&&) = delete;
+
+    inline static i32 cnt = 0;
+};
+
 i32 main() {
     Test test{"variant"_v};
     {
@@ -59,6 +78,54 @@ i32 main() {
             info("variant has %: %", String_View{Decay<decltype(i)>::name}, i);
         });
     }
+    {
+        {
+            Variant<InstCnt> c1{InstCnt{}};
+            assert(InstCnt::cnt == 1);
 
+            // Move assign value type.
+            c1 = InstCnt{};
+            assert(InstCnt::cnt == 1);
+        }
+        assert(InstCnt::cnt == 0);
+
+        { // Move construct from value type.
+            Variant<InstCnt> c1(InstCnt{});
+            {
+                Variant<InstCnt> c2(InstCnt{});
+                assert(InstCnt::cnt == 2);
+
+                // Move construct from Variant type, moves inner value.
+                c1 = move(c2);
+                assert(InstCnt::cnt == 2);
+            }
+            assert(InstCnt::cnt == 1);
+        }
+        assert(InstCnt::cnt == 0);
+
+        // Move construct from Variant type.
+        {
+            Variant<InstCnt> c1(InstCnt{});
+            assert(InstCnt::cnt == 1);
+            {
+                Variant<InstCnt> c2(move(c1));
+                assert(InstCnt::cnt == 2);
+            }
+            assert(InstCnt::cnt == 1);
+        }
+        assert(InstCnt::cnt == 0);
+
+        // Clone and move assign Variant type.
+        {
+            Variant<InstCnt> c1(InstCnt{});
+            assert(InstCnt::cnt == 1);
+            {
+                Variant<InstCnt> c2 = c1.clone();
+                assert(InstCnt::cnt == 2);
+            }
+            assert(InstCnt::cnt == 1);
+        }
+        assert(InstCnt::cnt == 0);
+    }
     return 0;
 }
