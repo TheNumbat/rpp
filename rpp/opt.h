@@ -30,10 +30,7 @@ struct Opt {
     }
 
     ~Opt() noexcept {
-        if constexpr(Must_Destruct<T>) {
-            if(ok_) value_.destruct();
-        }
-        ok_ = false;
+        clear();
     }
 
     Opt(const Opt& src) noexcept
@@ -46,21 +43,19 @@ struct Opt {
     Opt(Opt&& src) noexcept
         requires Move_Constructable<T>
     {
-        ok_ = src.ok_;
-        src.ok_ = false;
-        if(ok_) {
+        if(src.ok_) {
             value_.construct(rpp::move(*src.value_));
+            ok_ = true;
         }
     }
 
     Opt& operator=(Opt&& src) noexcept
         requires Move_Constructable<T>
     {
-        this->~Opt();
-        ok_ = src.ok_;
-        src.ok_ = false;
-        if(ok_) {
+        clear();
+        if(src.ok_) {
             value_.construct(rpp::move(*src.value_));
+            ok_ = true;
         }
         return *this;
     }
@@ -68,7 +63,7 @@ struct Opt {
     Opt& operator=(T&& value) noexcept
         requires Move_Constructable<T>
     {
-        this->~Opt();
+        clear();
         value_.construct(rpp::move(value));
         ok_ = true;
         return *this;
@@ -78,15 +73,16 @@ struct Opt {
     void emplace(Args&&... args) noexcept
         requires Constructable<T, Args...>
     {
-        ok_ = true;
+        clear();
         value_.construct(rpp::forward<Args>(args)...);
+        ok_ = true;
     }
 
     void clear() noexcept {
-        if(ok_) {
-            value_.destruct();
-            ok_ = false;
+        if constexpr(Must_Destruct<T>) {
+            if(ok_) value_.destruct();
         }
+        ok_ = false;
     }
 
     Opt clone() const noexcept
