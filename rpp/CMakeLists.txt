@@ -32,6 +32,7 @@ set(SOURCES_RPP
     "reflect.h"
     "rng.h"
     "simd.h"
+    "slice.h"
     "stack.h"
     "storage.h"
     "string0.h"
@@ -76,7 +77,7 @@ set_property(TARGET rpp PROPERTY INTERPROCEDURAL_OPTIMIZATION
     $<$<CONFIG:Release>:TRUE>
     $<$<CONFIG:MinSizeRel>:TRUE>)
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR 
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR
    CMAKE_CXX_COMPILER_ID MATCHES "AppleClang")
     set(CLANG TRUE)
 endif()

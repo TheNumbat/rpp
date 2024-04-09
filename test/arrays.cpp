@@ -52,7 +52,15 @@ i32 main() {
 
         Array<X, 2> xes{X{1}, X{2}};
 
-        (void)f;
+        Slice<i32> sl1{c};
+        assert(sl1.length() == 4);
+        assert(sl1[0] == 1);
+
+        Slice<i32> sl2 = c.slice();
+        assert(sl2.length() == 4);
+        assert(sl2[0] == 1);
+
+        static_cast<void>(f);
     }
     Trace("Vec") {
         Vec<i32> v;
@@ -90,6 +98,9 @@ i32 main() {
         Slice<i32> sl2 = v3.slice();
         assert(sl2.length() == 2);
 
+        Slice<i32> sl3{v3};
+        assert(sl3.length() == 2);
+
         assert(v3.length() == 2);
 
         Vec<String_View> sv{"Hello"_v, "World"_v};
@@ -115,7 +126,7 @@ i32 main() {
         assert(s7.length() == 2);
 
         Slice<Thread::Mutex> smm;
-        (void)smm;
+        static_cast<void>(smm);
         Slice<Thread::Mutex> sm{Thread::Mutex{}};
 
         Slice<Thread::Mutex> m2{};
@@ -125,9 +136,9 @@ i32 main() {
             vf.push([]() { info("Hello"); });
         }
 
-        (void)m2;
-        (void)s3;
-        (void)s5;
+        static_cast<void>(m2);
+        static_cast<void>(s3);
+        static_cast<void>(s5);
     }
     Trace("Stack") {
         Stack<i32> v;

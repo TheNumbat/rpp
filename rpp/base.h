@@ -157,6 +157,8 @@ void keep_alive() noexcept;
 
 #include "opt.h"
 
+#include "slice.h"
+
 #include "array.h"
 
 #include "vec.h"

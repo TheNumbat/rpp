@@ -90,6 +90,10 @@ struct Array {
         return data_ + N;
     }
 
+    [[nodiscard]] Slice<T> slice() const noexcept {
+        return Slice<T>{data_, N};
+    }
+
 private:
     T data_[N] = {};
     friend struct Reflect::Refl<Array>;
