@@ -8,6 +8,12 @@
 namespace rpp {
 
 template<typename T>
+struct Storage;
+
+template<typename T>
+Storage(T) -> Storage<T>;
+
+template<typename T>
 struct Storage {
 
     Storage() noexcept = default;

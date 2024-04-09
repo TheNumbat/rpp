@@ -4,6 +4,9 @@
 i32 main() {
     Test test{"map"_v};
     Trace("Map") {
+        auto deduct = Map{Pair{"foo"_v, 0}, Pair{"bar"_v, 1}};
+        static_assert(Same<decltype(deduct), Map<String_View, i32>>);
+
         {
             Map<String_View, i32> int_map{Pair{"foo"_v, 0}, Pair{"bar"_v, 1}};
 

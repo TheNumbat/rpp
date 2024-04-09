@@ -24,7 +24,7 @@ template<typename T, u64 N>
 Slice(Array<T, N>) -> Slice<T>;
 
 template<typename T>
-Slice(std::initializer_list<T>) -> Slice<T>;
+Slice(std::initializer_list<T>) -> Slice<const T>;
 
 template<typename T>
 Slice(const T*, u64) -> Slice<T>;

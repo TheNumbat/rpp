@@ -5,6 +5,12 @@
 
 namespace rpp {
 
+template<Ordered T, Allocator A>
+struct Heap;
+
+template<Ordered T, Allocator A = Mdefault>
+Heap(T...) -> Heap<T, A>;
+
 template<Ordered T, Allocator A = Mdefault>
 struct Heap {
 

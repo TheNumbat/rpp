@@ -13,6 +13,9 @@ struct X {
 i32 main() {
     Test test{"empty"_v};
     Trace("Array") {
+        auto deduct = Array{1, 2, 3};
+        static_assert(Same<decltype(deduct), Array<i32, 3>>);
+
         Array<i32, 1> a;
         a[0] = 5;
 
@@ -63,6 +66,12 @@ i32 main() {
         static_cast<void>(f);
     }
     Trace("Vec") {
+        auto deduct = Vec{1, 2, 3};
+        static_assert(Same<decltype(deduct), Vec<i32>>);
+
+        auto deduct2 = Slice{1, 2, 3};
+        static_assert(Same<decltype(deduct2), Slice<const i32>>);
+
         Vec<i32> v;
         v.push(1);
         v.push(2);
@@ -141,6 +150,9 @@ i32 main() {
         static_cast<void>(s5);
     }
     Trace("Stack") {
+        auto deduct = Stack{1, 2, 3};
+        static_assert(Same<decltype(deduct), Stack<i32>>);
+
         Stack<i32> v;
         v.push(1);
         v.push(2);
@@ -193,6 +205,9 @@ i32 main() {
         }
     }
     Trace("Queue") {
+        auto deduct = Queue{1, 2, 3};
+        static_assert(Same<decltype(deduct), Queue<i32>>);
+
         {
             Queue<String<>> sv{"Hello"_v.string(), "World"_v.string()};
             sv.pop();
@@ -250,6 +265,9 @@ i32 main() {
         }
     }
     Trace("Heap") {
+        auto deduct = Heap{1, 2, 3};
+        static_assert(Same<decltype(deduct), Heap<i32>>);
+
         {
             Heap<String<>> sv{"Hello"_v.string(), "World"_v.string()};
             sv.pop();

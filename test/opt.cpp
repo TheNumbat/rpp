@@ -23,6 +23,9 @@ struct InstCnt {
 i32 main() {
     Test test{"empty"_v};
     Trace("Storage") {
+        auto deduct = Storage{5};
+        static_assert(Same<decltype(deduct), Storage<i32>>);
+
         Storage<String<>> s;
         s.construct("Hello"_v.string());
         s.destruct();
@@ -42,6 +45,9 @@ i32 main() {
         m.destruct();
     }
     Trace("Opt") {
+        auto deduct = Opt{5};
+        static_assert(Same<decltype(deduct), Opt<i32>>);
+
         Opt<i32> o;
         assert(!o.ok());
         o = 5;

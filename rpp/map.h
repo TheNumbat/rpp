@@ -65,6 +65,12 @@ struct Map_Slot {
 
 } // namespace detail
 
+template<Key K, Movable V, Allocator A>
+struct Map;
+
+template<Key K, Movable V, Allocator A = Mdefault>
+Map(Pair<K, V>...) -> Map<K, V, A>;
+
 template<Key K, Movable V, Allocator A = Mdefault>
 struct Map {
     using Slot = detail::Map_Slot<K, V>;

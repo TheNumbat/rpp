@@ -9,6 +9,14 @@ namespace rpp {
 
 template<typename T, u64 N>
     requires(N > 0)
+struct Array;
+
+template<typename S, typename... Ss>
+    requires All_Same<S, Ss...>
+Array(S, Ss...) -> Array<S, 1 + sizeof...(Ss)>;
+
+template<typename T, u64 N>
+    requires(N > 0)
 struct Array {
     constexpr static u64 capacity = N;
 

@@ -6,6 +6,9 @@
 i32 main() {
     Test test{"empty"_v};
     Trace("Pair") {
+        auto deduct = Pair{5, 6.0f};
+        static_assert(Same<decltype(deduct), Pair<i32, f32>>);
+
         Pair<i32, i32> p{1, 2};
         assert(p.first == 1 && p.second == 2);
 
@@ -34,6 +37,9 @@ i32 main() {
         assert(e_ == 1 && f == 2);
     }
     Trace("Tuple") {
+        auto deduct = Tuple{5, 6.0f, "Hello"_v};
+        static_assert(Same<decltype(deduct), Tuple<i32, f32, String_View>>);
+
         Tuple<> t0;
         Tuple<i32> t1{1};
         Tuple<i32, i32> t2{1, 2};

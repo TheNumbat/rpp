@@ -7,6 +7,12 @@
 
 namespace rpp {
 
+template<Movable T, Allocator A>
+struct Queue;
+
+template<Movable T, Allocator A = Mdefault>
+Queue(T...) -> Queue<T, A>;
+
 template<Movable T, Allocator A = Mdefault>
 struct Queue {
 

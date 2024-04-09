@@ -7,6 +7,12 @@
 
 namespace rpp {
 
+template<typename T, Allocator A>
+struct Vec;
+
+template<typename T, Allocator A = Mdefault>
+Vec(T...) -> Vec<T, A>;
+
 template<typename T, Allocator A = Mdefault>
 struct Vec {
 

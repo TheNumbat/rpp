@@ -5,6 +5,12 @@
 
 namespace rpp {
 
+template<Movable T, Allocator A>
+struct Stack;
+
+template<Movable T, Allocator A = Mdefault>
+Stack(T...) -> Stack<T, A>;
+
 template<Movable T, Allocator A = Mdefault>
 struct Stack {
 

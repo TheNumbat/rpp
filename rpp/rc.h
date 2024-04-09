@@ -27,6 +27,12 @@ struct Arc_Data {
 
 } // namespace detail
 
+template<typename T, Scalar_Allocator P>
+struct Rc;
+
+template<typename T, Scalar_Allocator P = Mdefault>
+Rc(T) -> Rc<T, P>;
+
 template<typename T, Scalar_Allocator P = Mdefault>
 struct Rc {
     using A = Pool_Adaptor<P>;
@@ -123,6 +129,12 @@ private:
 
     friend struct Reflect::Refl<Rc<T>>;
 };
+
+template<typename T, Scalar_Allocator P>
+struct Arc;
+
+template<typename T, Scalar_Allocator P = Mdefault>
+Arc(T) -> Arc<T, P>;
 
 template<typename T, Scalar_Allocator P = Mdefault>
 struct Arc {

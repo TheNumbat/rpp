@@ -6,6 +6,10 @@ i32 main() {
     Test test{"empty"_v};
     Trace("Ref0/1") {
         i32 i = 5;
+
+        auto deduct = Ref{i};
+        static_assert(Same<decltype(deduct), Ref<i32>>);
+
         Ref<i32> r{i};
 
         assert(*r == 5);
@@ -15,6 +19,9 @@ i32 main() {
         assert(**rr == 10);
     }
     Trace("Box") {
+        auto deduct = Box{5};
+        static_assert(Same<decltype(deduct), Box<i32>>);
+
         Box<i32> b{5};
         assert(b.ok() && *b == 5);
 
@@ -35,6 +42,9 @@ i32 main() {
         m.emplace();
     }
     Trace("Rc") {
+        auto deduct = Rc{5};
+        static_assert(Same<decltype(deduct), Rc<i32>>);
+
         Rc<i32> r0;
         assert(!r0.ok());
 
@@ -52,6 +62,9 @@ i32 main() {
         assert(!r2.ok() && r2.references() == 0);
     }
     Trace("Arc") {
+        auto deduct = Arc{5};
+        static_assert(Same<decltype(deduct), Arc<i32>>);
+
         Arc<i32> r0;
         assert(!r0.ok());
 
