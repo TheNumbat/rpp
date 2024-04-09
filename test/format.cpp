@@ -114,6 +114,19 @@ i32 main() {
         info("% %", format_typename<Array<Vec<i32>, 2>>(),
              Array<Vec<i32>, 2>{Vec<i32>{1, 2}, Vec<i32>{3, 4}});
 
+        info("%", format_typename<i32&>());
+        info("%", format_typename<i32&&>());
+        info("%", format_typename<const i32>());
+        info("%", format_typename<const i32&>());
+        info("%", format_typename<const i32&&>());
+        info("%", format_typename<volatile i32>());
+        info("%", format_typename<volatile i32&>());
+        info("%", format_typename<volatile i32&&>());
+        info("%", format_typename<const volatile i32>());
+        info("%", format_typename<const volatile i32&>());
+        info("%", format_typename<const volatile i32&&>());
+        info("%", format_typename<Array<const Slice<volatile Tuple<>>&, 1>>());
+
         {
             Rc<i32> r{5};
             Rc<i32> r2 = r.dup();

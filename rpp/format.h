@@ -312,6 +312,46 @@ struct Typename {
 };
 
 template<Reflectable T>
+struct Typename<const T> {
+    template<Allocator A>
+    [[nodiscard]] static String<A> name() noexcept {
+        return format<A>("const %"_v, Typename<T>::template name<A>());
+    }
+};
+
+template<Reflectable T>
+struct Typename<volatile T> {
+    template<Allocator A>
+    [[nodiscard]] static String<A> name() noexcept {
+        return format<A>("volatile %"_v, Typename<T>::template name<A>());
+    }
+};
+
+template<Reflectable T>
+struct Typename<const volatile T> {
+    template<Allocator A>
+    [[nodiscard]] static String<A> name() noexcept {
+        return format<A>("const volatile %"_v, Typename<T>::template name<A>());
+    }
+};
+
+template<Reflectable T>
+struct Typename<T&> {
+    template<Allocator A>
+    [[nodiscard]] static String<A> name() noexcept {
+        return format<A>("%&"_v, Typename<T>::template name<A>());
+    }
+};
+
+template<Reflectable T>
+struct Typename<T&&> {
+    template<Allocator A>
+    [[nodiscard]] static String<A> name() noexcept {
+        return format<A>("%&&"_v, Typename<T>::template name<A>());
+    }
+};
+
+template<Reflectable T>
 struct Typename<T*> {
     template<Allocator A>
     [[nodiscard]] static String<A> name() noexcept {
@@ -392,7 +432,7 @@ struct Typename<T<T0, T1>> {
 
 template<Reflectable T, Allocator A = Mdefault>
 [[nodiscard]] String<A> format_typename() noexcept {
-    return Format::Typename<Decay<T>>::template name<A>();
+    return Format::Typename<T>::template name<A>();
 }
 
 } // namespace rpp

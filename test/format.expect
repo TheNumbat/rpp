@@ -1,7 +1,7 @@
 [Level::info] %
 [Level::info] true
 [Level::info] false
-[Level::info] i32[] [1, 2]
+[Level::info] i32[2] [1, 2]
 [Level::info] Ints Ints{i : 10, u : 2}
 [Level::info] Kind Kind::enum_
 [Level::info] Hello
@@ -30,7 +30,7 @@
 [Level::info] [0, 0]
 [Level::info] Vec<i32> Vec[1, 2]
 [Level::info] Vec[]
-[Level::info] Slice<i32> Slice[1, 2]
+[Level::info] Slice<const i32> Slice[1, 2]
 [Level::info] Slice[]
 [Level::info] Stack<i32> Stack[1, 2]
 [Level::info] Stack[]
@@ -47,6 +47,18 @@
 [Level::info] Atomic{value_ : 3}
 [Level::info] Vecs{i : Vec[1, 2], u : Vec[3, 4]}
 [Level::info] Array<Vec<i32>, 2> [Vec[1, 2], Vec[3, 4]]
+[Level::info] i32&
+[Level::info] i32&&
+[Level::info] const i32
+[Level::info] const i32&
+[Level::info] const i32&&
+[Level::info] volatile i32
+[Level::info] volatile i32&
+[Level::info] volatile i32&&
+[Level::info] const volatile i32
+[Level::info] const volatile i32&
+[Level::info] const volatile i32&&
+[Level::info] Array<const Slice<volatile Tuple<>>&, 1>
 [Level::info] Rc[2]{5}
 [Level::info] Arc[2]{5}
 [Level::info] Vec2{1.000000, 2.000000}

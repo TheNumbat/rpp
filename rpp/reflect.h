@@ -351,16 +351,29 @@ constexpr void iterate_record(F&& f, const R& record) noexcept {
 }
 
 template<typename T>
-struct Refl<const T> : Refl<T> {};
+struct Refl<const T> : Refl<T> {
+    using is_const = const T;
+};
 
 template<typename T>
-struct Refl<T&> : Refl<T> {};
+struct Refl<volatile T> : Refl<T> {
+    using is_volatile = volatile T;
+};
 
 template<typename T>
-struct Refl<const T&> : Refl<T> {};
+struct Refl<const volatile T> : Refl<T> {
+    using is_const_volatile = const volatile T;
+};
 
 template<typename T>
-struct Refl<T&&> : Refl<T> {};
+struct Refl<T&> : Refl<T> {
+    using is_lvalue_reference = T&;
+};
+
+template<typename T>
+struct Refl<T&&> : Refl<T> {
+    using is_rvalue_reference = T&&;
+};
 
 template<typename T>
 struct Refl<T*> {
