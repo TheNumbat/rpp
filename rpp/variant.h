@@ -94,18 +94,17 @@ struct Variant {
     template<typename F>
         requires((Invocable<F, Ts&> && ...) && All_Same<Invoke_Result<F, Ts&>...>)
     [[nodiscard]] auto match(F&& f) & noexcept {
-        return Accessors<With_Lvalue_Reference, u8>::apply(rpp::forward<F>(f), data_, index_);
+        return Accessors<With_Lvalue_Ref, false>::apply(rpp::forward<F>(f), data_, index_);
     }
     template<typename F>
         requires((Invocable<F, Ts &&> && ...) && All_Same<Invoke_Result<F, Ts &&>...>)
     [[nodiscard]] auto match(F&& f) && noexcept {
-        return Accessors<With_Rvalue_Reference, u8>::apply(rpp::forward<F>(f), data_, index_);
+        return Accessors<With_Rvalue_Ref, false>::apply(rpp::forward<F>(f), data_, index_);
     }
     template<typename F>
         requires((Invocable<F, const Ts&> && ...) && All_Same<Invoke_Result<F, const Ts&>...>)
     [[nodiscard]] auto match(F&& f) const noexcept {
-        return Accessors<With_Const_Lvalue_Reference, const u8>::apply(rpp::forward<F>(f), data_,
-                                                                       index_);
+        return Accessors<With_Lvalue_Ref, true>::apply(rpp::forward<F>(f), data_, index_);
     }
 
     [[nodiscard]] u8 index() const noexcept {
@@ -130,13 +129,13 @@ private:
     void destruct() noexcept {
         if constexpr((Must_Destruct<Ts> || ...)) {
             if(index_ != INVALID)
-                Accessors<With_Lvalue_Reference, u8>::apply(Overload{[](Ts& v) {
-                                                                if constexpr(Must_Destruct<Ts>) {
-                                                                    v.~Ts();
-                                                                }
-                                                                static_cast<void>(v);
-                                                            }...},
-                                                            data_, index_);
+                Accessors<With_Lvalue_Ref, false>::apply(Overload{[](Ts& v) {
+                                                             if constexpr(Must_Destruct<Ts>) {
+                                                                 v.~Ts();
+                                                             }
+                                                             static_cast<void>(v);
+                                                         }...},
+                                                         data_, index_);
         }
         index_ = INVALID;
     }
@@ -147,8 +146,13 @@ private:
     alignas(align) u8 data_[size] = {};
     u8 index_ = INVALID;
 
-    template<template<typename> typename Ref, typename Data>
+    template<template<typename> typename With_Ref, bool with_const>
     struct Accessors {
+
+        template<typename T>
+        using Ref = If<with_const, With_Ref<const T>, With_Ref<T>>;
+        using Data = If<with_const, const u8, u8>;
+
         constexpr static u64 N = sizeof...(Ts);
 
         // For variants with up to 8 cases, we branch on the index.
@@ -181,7 +185,8 @@ private:
     private:
         template<typename F, typename T>
         [[nodiscard]] static auto apply_one(F&& f, Data* data) noexcept {
-            return rpp::forward<F>(f)(reinterpret_cast<Ref<T>>(*data));
+            using Ptr = If<with_const, const T*, T*>;
+            return rpp::forward<F>(f)(static_cast<Ref<T>>(*launder(reinterpret_cast<Ptr>(data))));
         }
         template<typename F, u64... Is>
         [[nodiscard]] static auto apply_n(F&& f, Data* data, u8 index,

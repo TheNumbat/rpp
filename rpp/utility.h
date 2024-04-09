@@ -565,13 +565,10 @@ template<typename F, typename... Args>
 using Invoke_Result = detail::Return_Type<F, Args...>::type;
 
 template<typename T>
-using With_Lvalue_Reference = T&;
+using With_Lvalue_Ref = T&;
 
 template<typename T>
-using With_Const_Lvalue_Reference = const T&;
-
-template<typename T>
-using With_Rvalue_Reference = T&&;
+using With_Rvalue_Ref = T&&;
 
 template<typename T = void>
 struct Empty {};
