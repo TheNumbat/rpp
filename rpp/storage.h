@@ -42,22 +42,22 @@ struct Storage {
 
     void destruct() noexcept {
         if constexpr(Must_Destruct<T>) {
-            reinterpret_cast<T*>(value_)->~T();
+            ptr()->~T();
         }
     }
 
     [[nodiscard]] T& operator*() noexcept {
-        return *reinterpret_cast<T*>(value_);
+        return *ptr();
     }
     [[nodiscard]] const T& operator*() const noexcept {
-        return *reinterpret_cast<const T*>(value_);
+        return *ptr();
     }
 
     [[nodiscard]] T* operator->() noexcept {
-        return reinterpret_cast<T*>(value_);
+        return ptr();
     }
     [[nodiscard]] const T* operator->() const noexcept {
-        return reinterpret_cast<const T*>(value_);
+        return ptr();
     }
 
     [[nodiscard]] const u8* data() const noexcept {
@@ -65,6 +65,14 @@ struct Storage {
     }
     [[nodiscard]] u8* data() noexcept {
         return value_;
+    }
+
+private:
+    [[nodiscard]] T* ptr() noexcept {
+        return launder(reinterpret_cast<T*>(value_));
+    }
+    [[nodiscard]] const T* ptr() const noexcept {
+        return launder(reinterpret_cast<const T*>(value_));
     }
 
 protected:

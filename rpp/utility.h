@@ -438,6 +438,9 @@ template<typename T>
 concept Float = detail::Is_Float<T>::value;
 
 template<typename T>
+concept Not_Void = !__is_void(T);
+
+template<typename T>
 concept Const = detail::Is_Const<T>::value;
 
 template<typename T>
@@ -451,6 +454,9 @@ concept Lvalue_Reference = detail::Is_Lvalue_Reference<T>::value;
 
 template<typename T>
 concept Rvalue_Reference = detail::Is_Rvalue_Reference<T>::value;
+
+template<typename T>
+concept Not_Function = !__is_function(T);
 
 template<typename L, typename R>
 concept Same = detail::Is_Same<L, R>::value;
@@ -615,6 +621,13 @@ constexpr void swap(T& a, T& b) noexcept {
 
 [[nodiscard]] constexpr bool is_constexpr() noexcept {
     return __builtin_is_constant_evaluated();
+}
+
+template<class T>
+[[nodiscard]] RPP_FORCE_INLINE constexpr T* launder(T* p) noexcept
+    requires Not_Function<T> && Not_Void<T>
+{
+    return __builtin_launder(p);
 }
 
 } // namespace rpp
