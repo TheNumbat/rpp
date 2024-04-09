@@ -140,11 +140,6 @@ struct Is_Const<const T> {
 };
 
 template<typename T>
-struct Add_Const {
-    using type = const T;
-};
-
-template<typename T>
 struct Remove_Const {
     using type = T;
 };
@@ -220,11 +215,6 @@ struct Is_Lvalue_Reference<T&> {
 };
 
 template<typename T>
-struct Add_Lvalue_Reference {
-    using type = T&;
-};
-
-template<typename T>
 struct Is_Rvalue_Reference {
     constexpr static bool value = false;
 };
@@ -232,11 +222,6 @@ struct Is_Rvalue_Reference {
 template<typename T>
 struct Is_Rvalue_Reference<T&&> {
     constexpr static bool value = true;
-};
-
-template<typename T>
-struct Add_Rvalue_Reference {
-    using type = T&&;
 };
 
 template<typename T>
@@ -389,7 +374,7 @@ struct Distinct<> {
 };
 
 template<typename T>
-constexpr typename Add_Rvalue_Reference<T>::type declval() noexcept {
+constexpr T&& declval() noexcept {
     static_assert(False<T>, "Declval not allowed in an evaluated context.");
 }
 
@@ -578,6 +563,15 @@ constexpr u64 Index_Of = detail::Index_Of<T, Ts...>::value;
 template<typename F, typename... Args>
     requires Invocable<F, Args...>
 using Invoke_Result = detail::Return_Type<F, Args...>::type;
+
+template<typename T>
+using With_Lvalue_Reference = T&;
+
+template<typename T>
+using With_Const_Lvalue_Reference = const T&;
+
+template<typename T>
+using With_Rvalue_Reference = T&&;
 
 template<typename T = void>
 struct Empty {};

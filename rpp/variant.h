@@ -30,15 +30,7 @@ struct Named {
 template<typename... Ts>
     requires(sizeof...(Ts) > 0 && sizeof...(Ts) <= 255 && Distinct<Ts...>)
 struct Variant {
-private:
-    template<typename T>
-    using Lvalue_Ref = T&;
-    template<typename T>
-    using Const_Lvalue_Ref = const T&;
-    template<typename T>
-    using Rvalue_Ref = T&&;
 
-public:
     template<typename V>
         requires One_Is<V, Ts...>
     Variant(V&& value) noexcept {
@@ -102,17 +94,18 @@ public:
     template<typename F>
         requires((Invocable<F, Ts&> && ...) && All_Same<Invoke_Result<F, Ts&>...>)
     [[nodiscard]] auto match(F&& f) & noexcept {
-        return Accessors<Lvalue_Ref, u8>::apply(rpp::forward<F>(f), data_, index_);
+        return Accessors<With_Lvalue_Reference, u8>::apply(rpp::forward<F>(f), data_, index_);
     }
     template<typename F>
         requires((Invocable<F, Ts &&> && ...) && All_Same<Invoke_Result<F, Ts &&>...>)
     [[nodiscard]] auto match(F&& f) && noexcept {
-        return Accessors<Rvalue_Ref, u8>::apply(rpp::forward<F>(f), data_, index_);
+        return Accessors<With_Rvalue_Reference, u8>::apply(rpp::forward<F>(f), data_, index_);
     }
     template<typename F>
         requires((Invocable<F, const Ts&> && ...) && All_Same<Invoke_Result<F, const Ts&>...>)
     [[nodiscard]] auto match(F&& f) const noexcept {
-        return Accessors<Const_Lvalue_Ref, const u8>::apply(rpp::forward<F>(f), data_, index_);
+        return Accessors<With_Const_Lvalue_Reference, const u8>::apply(rpp::forward<F>(f), data_,
+                                                                       index_);
     }
 
     [[nodiscard]] u8 index() const noexcept {
@@ -137,13 +130,13 @@ private:
     void destruct() noexcept {
         if constexpr((Must_Destruct<Ts> || ...)) {
             if(index_ != INVALID)
-                Accessors<Lvalue_Ref, u8>::apply(Overload{[](Ts& v) {
-                                                     if constexpr(Must_Destruct<Ts>) {
-                                                         v.~Ts();
-                                                     }
-                                                     static_cast<void>(v);
-                                                 }...},
-                                                 data_, index_);
+                Accessors<With_Lvalue_Reference, u8>::apply(Overload{[](Ts& v) {
+                                                                if constexpr(Must_Destruct<Ts>) {
+                                                                    v.~Ts();
+                                                                }
+                                                                static_cast<void>(v);
+                                                            }...},
+                                                            data_, index_);
         }
         index_ = INVALID;
     }
