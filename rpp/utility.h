@@ -10,16 +10,6 @@ namespace rpp {
 namespace detail {
 
 template<typename T>
-struct Is_Void {
-    constexpr static bool value = false;
-};
-
-template<>
-struct Is_Void<void> {
-    constexpr static bool value = true;
-};
-
-template<typename T>
 struct Is_Int {
     constexpr static bool value = false;
 };
@@ -150,6 +140,26 @@ struct Remove_Const<const T> {
 };
 
 template<typename T>
+struct Is_Volatile {
+    constexpr static bool value = false;
+};
+
+template<typename T>
+struct Is_Volatile<volatile T> {
+    constexpr static bool value = true;
+};
+
+template<typename T>
+struct Remove_Volatile {
+    using type = T;
+};
+
+template<typename T>
+struct Remove_Volatile<volatile T> {
+    using type = T;
+};
+
+template<typename T>
 struct Is_Pointer {
     constexpr static bool value = false;
 };
@@ -231,6 +241,11 @@ struct Decay {
 
 template<typename T>
 struct Decay<const T> {
+    using type = typename Decay<T>::type;
+};
+
+template<typename T>
+struct Decay<volatile T> {
     using type = typename Decay<T>::type;
 };
 
@@ -433,10 +448,10 @@ template<typename T>
 concept Float = detail::Is_Float<T>::value;
 
 template<typename T>
-concept Not_Void = !detail::Is_Void<T>::value;
+concept Const = detail::Is_Const<T>::value;
 
 template<typename T>
-concept Const = detail::Is_Const<T>::value;
+concept Volatile = detail::Is_Volatile<T>::value;
 
 template<typename T>
 concept Pointer = detail::Is_Pointer<T>::value;
@@ -449,6 +464,9 @@ concept Lvalue_Reference = detail::Is_Lvalue_Reference<T>::value;
 
 template<typename T>
 concept Rvalue_Reference = detail::Is_Rvalue_Reference<T>::value;
+
+template<typename T>
+concept Not_Void = !detail::Is_Same<typename detail::Decay<T>::type, void>::value;
 
 template<typename T>
 concept Not_Function = detail::Is_Const<const T>::value || detail::Is_Reference<T>::value;
@@ -569,6 +587,9 @@ using With_Rvalue_Ref = T&&;
 
 template<typename T>
 using Without_Const = typename detail::Remove_Const<T>::type;
+
+template<typename T>
+using Without_Volatile = typename detail::Remove_Volatile<T>::type;
 
 template<typename T = void>
 struct Empty {};
