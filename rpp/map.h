@@ -8,11 +8,11 @@
 namespace rpp {
 
 template<typename T>
-concept Key = Equality<T> && Hashable<T> && Movable<T>;
+concept Key = Equality<T> && Hashable<T> && Move_Constructable<T>;
 
 namespace detail {
 
-template<Key K, Movable V>
+template<Key K, Move_Constructable V>
 struct Map_Slot {
     constexpr Map_Slot() = default;
 
@@ -65,13 +65,13 @@ struct Map_Slot {
 
 } // namespace detail
 
-template<Key K, Movable V, Allocator A>
+template<Key K, Move_Constructable V, Allocator A>
 struct Map;
 
-template<Key K, Movable V, Allocator A = Mdefault>
+template<Key K, Move_Constructable V, Allocator A = Mdefault>
 Map(Pair<K, V>...) -> Map<K, V, A>;
 
-template<Key K, Movable V, Allocator A = Mdefault>
+template<Key K, Move_Constructable V, Allocator A = Mdefault>
 struct Map {
     using Slot = detail::Map_Slot<K, V>;
 
@@ -472,11 +472,11 @@ private:
     friend struct Iterator;
 };
 
-template<Key K, Movable V>
+template<Key K, Move_Constructable V>
 RPP_NAMED_TEMPLATE_RECORD(::rpp::detail::Map_Slot, "Slot", RPP_PACK(K, V), RPP_FIELD(hash),
                           RPP_FIELD(data_));
 
-template<Key K, Movable V, Allocator A>
+template<Key K, Move_Constructable V, Allocator A>
 RPP_TEMPLATE_RECORD(Map, RPP_PACK(K, V, A), RPP_FIELD(data_), RPP_FIELD(capacity_),
                     RPP_FIELD(length_), RPP_FIELD(usable_), RPP_FIELD(shift_));
 

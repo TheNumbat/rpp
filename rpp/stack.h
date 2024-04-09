@@ -5,13 +5,13 @@
 
 namespace rpp {
 
-template<Movable T, Allocator A>
+template<Move_Constructable T, Allocator A>
 struct Stack;
 
-template<Movable T, Allocator A = Mdefault>
+template<Move_Constructable T, Allocator A = Mdefault>
 Stack(T...) -> Stack<T, A>;
 
-template<Movable T, Allocator A = Mdefault>
+template<Move_Constructable T, Allocator A = Mdefault>
 struct Stack {
 
     Stack() noexcept = default;

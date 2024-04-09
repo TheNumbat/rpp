@@ -7,13 +7,13 @@
 
 namespace rpp {
 
-template<Movable T, Allocator A>
+template<Move_Constructable T, Allocator A>
 struct Queue;
 
-template<Movable T, Allocator A = Mdefault>
+template<Move_Constructable T, Allocator A = Mdefault>
 Queue(T...) -> Queue<T, A>;
 
-template<Movable T, Allocator A = Mdefault>
+template<Move_Constructable T, Allocator A = Mdefault>
 struct Queue {
 
     Queue() noexcept = default;

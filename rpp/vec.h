@@ -96,7 +96,9 @@ struct Vec {
         return ret;
     }
 
-    void grow() noexcept {
+    void grow() noexcept
+        requires Move_Constructable<T>
+    {
         u64 new_capacity = capacity_ ? 2 * capacity_ : 8;
         reserve(new_capacity);
     }
@@ -110,7 +112,9 @@ struct Vec {
         length_ = 0;
     }
 
-    void reserve(u64 new_capacity) noexcept {
+    void reserve(u64 new_capacity) noexcept
+        requires Move_Constructable<T>
+    {
         if(new_capacity <= capacity_) return;
 
         T* new_data = reinterpret_cast<T*>(A::alloc(new_capacity * sizeof(T)));
@@ -132,13 +136,13 @@ struct Vec {
     }
 
     void extend(u64 additional_length) noexcept
-        requires Default_Constructable<T>
+        requires Default_Constructable<T> && Move_Constructable<T>
     {
         resize(length_ + additional_length);
     }
 
     void resize(u64 new_length) noexcept
-        requires Default_Constructable<T>
+        requires Default_Constructable<T> && Move_Constructable<T>
     {
         reserve(new_length);
         if(new_length > length_) {

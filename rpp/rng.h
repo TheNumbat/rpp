@@ -42,7 +42,7 @@ struct Stream {
         return unit<F>() < p;
     }
 
-    template<Allocator A, Movable T>
+    template<Allocator A, Move_Constructable T>
     constexpr void shuffle(Vec<T, A>& vec) noexcept {
         for(u64 i = 0; i < vec.length() - 1; i++) {
             u64 j = range(i, vec.length());

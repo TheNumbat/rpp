@@ -5,13 +5,16 @@
 
 namespace rpp {
 
-template<Ordered T, Allocator A>
+template<typename T>
+concept Heapable = Ordered<T> && Move_Constructable<T>;
+
+template<Heapable T, Allocator A>
 struct Heap;
 
-template<Ordered T, Allocator A = Mdefault>
+template<Heapable T, Allocator A = Mdefault>
 Heap(T...) -> Heap<T, A>;
 
-template<Ordered T, Allocator A = Mdefault>
+template<Heapable T, Allocator A = Mdefault>
 struct Heap {
 
     Heap() noexcept = default;

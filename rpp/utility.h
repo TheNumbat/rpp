@@ -520,9 +520,6 @@ template<u64 N>
 using Make_Index_Sequence = __make_integer_seq<detail::Index_Sequence, u64, N>;
 
 template<typename T>
-concept Movable = Move_Constructable<T> || Trivial<T>;
-
-template<typename T>
 concept Equality = requires(const T& l, const T& r) {
     { l == r } -> Same<bool>;
 };
@@ -606,7 +603,7 @@ struct Literal {
     char c_string[max_len] = {};
 };
 
-template<Movable T>
+template<Move_Constructable T>
 constexpr void swap(T& a, T& b) noexcept {
     if constexpr(Trivially_Movable<T>) {
         alignas(alignof(T)) u8 tmp[sizeof(T)];
