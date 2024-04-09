@@ -75,7 +75,6 @@ private:
         return launder(reinterpret_cast<const T*>(value_));
     }
 
-protected:
     alignas(alignof(T)) u8 value_[sizeof(T)];
 
     friend struct Reflect::Refl<Storage>;

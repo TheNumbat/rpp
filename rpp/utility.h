@@ -10,6 +10,16 @@ namespace rpp {
 namespace detail {
 
 template<typename T>
+struct Is_Void {
+    constexpr static bool value = false;
+};
+
+template<>
+struct Is_Void<void> {
+    constexpr static bool value = true;
+};
+
+template<typename T>
 struct Is_Int {
     constexpr static bool value = false;
 };
@@ -438,7 +448,7 @@ template<typename T>
 concept Float = detail::Is_Float<T>::value;
 
 template<typename T>
-concept Not_Void = !__is_void(T);
+concept Not_Void = !detail::Is_Void<T>::value;
 
 template<typename T>
 concept Const = detail::Is_Const<T>::value;
@@ -456,7 +466,7 @@ template<typename T>
 concept Rvalue_Reference = detail::Is_Rvalue_Reference<T>::value;
 
 template<typename T>
-concept Not_Function = !__is_function(T);
+concept Not_Function = detail::Is_Const<const T>::value || detail::Is_Reference<T>::value;
 
 template<typename L, typename R>
 concept Same = detail::Is_Same<L, R>::value;

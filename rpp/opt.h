@@ -124,7 +124,7 @@ struct Opt {
         return ok_;
     }
 
-protected:
+private:
     bool ok_ = false;
     Storage<T> value_;
 
