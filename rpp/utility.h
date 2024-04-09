@@ -567,6 +567,9 @@ using With_Lvalue_Ref = T&;
 template<typename T>
 using With_Rvalue_Ref = T&&;
 
+template<typename T>
+using Without_Const = typename detail::Remove_Const<T>::type;
+
 template<typename T = void>
 struct Empty {};
 

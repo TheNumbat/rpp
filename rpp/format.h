@@ -323,7 +323,7 @@ template<Reflectable T, u64 N>
 struct Typename<T[N]> {
     template<Allocator A>
     [[nodiscard]] static String<A> name() noexcept {
-        return format<A>("%[]"_v, Typename<T>::template name<A>());
+        return format<A>("%[%]"_v, Typename<T>::template name<A>(), N);
     }
 };
 

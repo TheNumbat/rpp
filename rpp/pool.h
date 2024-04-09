@@ -160,7 +160,7 @@ private:
 
     void do_events() noexcept {
         for(;;) {
-            u64 idx = Event::wait_any(Slice<Event>{pending_events});
+            u64 idx = Event::wait_any(pending_events.slice());
             Thread::Lock lock(events_mut);
             if(idx == 0) {
                 if(shutdown.load()) return;

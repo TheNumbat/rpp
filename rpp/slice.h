@@ -10,48 +10,37 @@ namespace rpp {
 template<typename T>
 struct Slice;
 
-template<typename T, Allocator A>
-struct Vec;
-
-template<typename T, u64 N>
-    requires(N > 0)
-struct Array;
-
-template<typename T, Allocator A>
-Slice(Vec<T, A>) -> Slice<T>;
-
-template<typename T, u64 N>
-Slice(Array<T, N>) -> Slice<T>;
-
 template<typename T>
 Slice(std::initializer_list<T>) -> Slice<const T>;
 
 template<typename T>
-Slice(const T*, u64) -> Slice<T>;
+Slice(T*, u64) -> Slice<T>;
+
+template<typename T>
+Slice(const T*, u64) -> Slice<const T>;
 
 template<typename T>
 struct Slice {
 
     constexpr Slice() noexcept = default;
 
-    template<Allocator A>
-    explicit Slice(const Vec<T, A>& v) noexcept {
-        data_ = v.data();
-        length_ = v.length();
-    }
-
-    template<u64 N>
-    constexpr explicit Slice(const Array<T, N>& a) noexcept {
-        data_ = a.data();
-        length_ = a.length();
-    }
-
-    constexpr explicit Slice(const T* data, u64 length) noexcept {
+    constexpr explicit Slice(const T* data, u64 length) noexcept
+        requires Const<T>
+    {
         data_ = data;
         length_ = length;
     }
 
-    constexpr explicit Slice(std::initializer_list<T> init) noexcept {
+    constexpr explicit Slice(T* data, u64 length) noexcept
+        requires !Const<T>
+    {
+        data_ = data;
+        length_ = length;
+    }
+
+    constexpr explicit Slice(std::initializer_list<Without_Const<T>> init) noexcept
+        requires Const<T>
+    {
         data_ = init.begin();
         length_ = init.size();
     }
@@ -85,8 +74,15 @@ struct Slice {
         assert(idx < length_);
         return data_[idx];
     }
+    [[nodiscard]] constexpr T& operator[](u64 idx) noexcept {
+        assert(idx < length_);
+        return data_[idx];
+    }
 
     [[nodiscard]] constexpr const T* data() const noexcept {
+        return data_;
+    }
+    [[nodiscard]] constexpr T* data() noexcept {
         return data_;
     }
 
@@ -94,6 +90,13 @@ struct Slice {
         return data_;
     }
     [[nodiscard]] constexpr const T* end() const noexcept {
+        return data_ + length_;
+    }
+
+    [[nodiscard]] constexpr T* begin() noexcept {
+        return data_;
+    }
+    [[nodiscard]] constexpr T* end() noexcept {
         return data_ + length_;
     }
 
@@ -111,13 +114,20 @@ struct Slice {
 
     [[nodiscard]] Slice<u8> to_bytes() noexcept {
         Slice<u8> ret;
-        ret.data_ = reinterpret_cast<const u8*>(data_);
+        ret.data_ = launder(reinterpret_cast<u8*>(data_));
+        ret.length_ = length_ * sizeof(T);
+        return ret;
+    }
+
+    [[nodiscard]] Slice<const u8> to_bytes() const noexcept {
+        Slice<const u8> ret;
+        ret.data_ = launder(reinterpret_cast<const u8*>(data_));
         ret.length_ = length_ * sizeof(T);
         return ret;
     }
 
 private:
-    const T* data_ = null;
+    T* data_ = null;
     u64 length_ = 0;
 
     template<typename>

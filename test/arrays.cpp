@@ -35,6 +35,11 @@ i32 main() {
 
         const Array<i32, 4>& cc = c;
 
+        auto deduct2 = c.slice();
+        static_assert(Same<decltype(deduct2), Slice<i32>>);
+        auto deduct3 = cc.slice();
+        static_assert(Same<decltype(deduct3), Slice<const i32>>);
+
         id = 0;
         for(i32 i : cc) {
             assert(i == cc[id++]);
@@ -55,13 +60,9 @@ i32 main() {
 
         Array<X, 2> xes{X{1}, X{2}};
 
-        Slice<i32> sl1{c};
+        auto sl1 = c.slice();
         assert(sl1.length() == 4);
         assert(sl1[0] == 1);
-
-        Slice<i32> sl2 = c.slice();
-        assert(sl2.length() == 4);
-        assert(sl2[0] == 1);
 
         static_cast<void>(f);
     }
@@ -71,6 +72,9 @@ i32 main() {
 
         auto deduct2 = Slice{1, 2, 3};
         static_assert(Same<decltype(deduct2), Slice<const i32>>);
+
+        auto deduct3 = Slice{{1, 2, 3}};
+        static_assert(Same<decltype(deduct3), Slice<const i32>>);
 
         Vec<i32> v;
         v.push(1);
@@ -98,6 +102,11 @@ i32 main() {
             assert(i == constv[id++]);
         }
 
+        auto deduct4 = v.slice();
+        static_assert(Same<decltype(deduct4), Slice<i32>>);
+        auto deduct5 = constv.slice();
+        static_assert(Same<decltype(deduct5), Slice<const i32>>);
+
         v.pop();
         assert(v.length() == 2);
 
@@ -107,9 +116,6 @@ i32 main() {
         Slice<i32> sl2 = v3.slice();
         assert(sl2.length() == 2);
 
-        Slice<i32> sl3{v3};
-        assert(sl3.length() == 2);
-
         assert(v3.length() == 2);
 
         Vec<String_View> sv{"Hello"_v, "World"_v};
@@ -118,25 +124,25 @@ i32 main() {
 
         assert(sv3.length() == 2);
 
-        Slice<i32> s{v3};
+        Slice<i32> s = v3.slice();
         assert(s.length() == 2);
 
         Slice<i32> s2 = s;
         Slice<i32> s3 = move(s2);
 
-        Slice<String_View> s4{sv3};
+        Slice<String_View> s4 = sv3.slice();
         assert(s4.length() == 2);
         Slice<String_View> s5 = s4;
 
-        Slice<i32> s6{1, 2, 3};
+        Slice<const i32> s6{1, 2, 3};
         assert(s6.length() == 3);
 
-        Slice<String_View> s7{"Hello"_v, "World"_v};
+        Slice<const String_View> s7{"Hello"_v, "World"_v};
         assert(s7.length() == 2);
 
         Slice<Thread::Mutex> smm;
         static_cast<void>(smm);
-        Slice<Thread::Mutex> sm{Thread::Mutex{}};
+        Slice<const Thread::Mutex> sm{Thread::Mutex{}};
 
         Slice<Thread::Mutex> m2{};
 

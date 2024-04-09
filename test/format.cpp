@@ -87,7 +87,7 @@ i32 main() {
         info("% %", format_typename<Vec<i32>>(), Vec<i32>{1, 2});
         info("%", Vec<i32>{});
 
-        info("% %", format_typename<Slice<i32>>(), Slice<i32>{1, 2});
+        info("% %", format_typename<Slice<const i32>>(), Slice<const i32>{1, 2});
         info("%", Slice<i32>{});
 
         info("% %", format_typename<Stack<i32>>(), Stack<i32>{1, 2});

@@ -254,8 +254,11 @@ struct Vec {
         return data_;
     }
 
-    [[nodiscard]] Slice<T> slice() const noexcept {
-        return Slice<T>{data_, length_};
+    [[nodiscard]] Slice<T> slice() noexcept {
+        return Slice{data_, length_};
+    }
+    [[nodiscard]] Slice<const T> slice() const noexcept {
+        return Slice{static_cast<const T*>(data_), length_};
     }
 
 private:

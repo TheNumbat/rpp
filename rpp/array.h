@@ -98,8 +98,11 @@ struct Array {
         return data_ + N;
     }
 
-    [[nodiscard]] Slice<T> slice() const noexcept {
-        return Slice<T>{data_, N};
+    [[nodiscard]] Slice<T> slice() noexcept {
+        return Slice{static_cast<T*>(data_), N};
+    }
+    [[nodiscard]] Slice<const T> slice() const noexcept {
+        return Slice{static_cast<const T*>(data_), N};
     }
 
 private:

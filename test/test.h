@@ -37,7 +37,7 @@ struct Test {
 
         if(differs) {
             auto corrected = name.append<Alloc>(".corrected"_v);
-            static_cast<void>(Files::write(corrected.view(), Slice<u8>{result}));
+            static_cast<void>(Files::write(corrected.view(), result.slice()));
             Libc::exit(1);
         }
     }
