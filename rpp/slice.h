@@ -32,7 +32,7 @@ struct Slice {
     }
 
     constexpr explicit Slice(T* data, u64 length) noexcept
-        requires !Const<T>
+        requires(!Const<T>)
     {
         data_ = data;
         length_ = length;
