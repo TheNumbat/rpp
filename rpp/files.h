@@ -10,7 +10,7 @@ using Alloc = Mallocator<"File IO">;
 using File_Time = u64;
 
 [[nodiscard]] Opt<Vec<u8, Alloc>> read(String_View path) noexcept;
-[[nodiscard]] bool write(String_View path, Slice<u8> data) noexcept;
+[[nodiscard]] bool write(String_View path, Slice<const u8> data) noexcept;
 
 [[nodiscard]] Opt<File_Time> last_write_time(String_View path) noexcept;
 

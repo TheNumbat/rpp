@@ -72,7 +72,7 @@ namespace rpp::Files {
     return Opt{rpp::move(data)};
 }
 
-[[nodiscard]] bool write(String_View path, Slice<u8> data) noexcept {
+[[nodiscard]] bool write(String_View path, Slice<const u8> data) noexcept {
 
     auto [ucs2_path, ucs2_path_len] = utf8_to_ucs2(path);
     if(ucs2_path_len == 0) {

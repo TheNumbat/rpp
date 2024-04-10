@@ -118,7 +118,9 @@ struct Slice {
         return Slice{data_ + start, length};
     }
 
-    [[nodiscard]] Slice<u8> to_bytes() noexcept {
+    [[nodiscard]] Slice<u8> to_bytes() noexcept
+        requires(!Const<T>)
+    {
         Slice<u8> ret;
         ret.data_ = launder(reinterpret_cast<u8*>(data_));
         ret.length_ = length_ * sizeof(T);
