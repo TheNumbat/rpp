@@ -285,6 +285,7 @@ For faster parallel builds, you can instead generate [ninja](https://ninja-build
 - Types
     - [ ] Result<T,E>
     - [ ] Map: don't store hashes of integer keys
+    - [ ] Opt: specializations for null representations
 - Allocators
     - [ ] Per-thread pools
 - Misc

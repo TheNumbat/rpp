@@ -106,6 +106,8 @@ i32 main() {
         static_assert(Same<decltype(deduct4), Slice<i32>>);
         auto deduct5 = constv.slice();
         static_assert(Same<decltype(deduct5), Slice<const i32>>);
+        auto deduct6 = Slice<const i32>{deduct4};
+        static_assert(Same<decltype(deduct6), Slice<const i32>>);
 
         v.pop();
         assert(v.length() == 2);

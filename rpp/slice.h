@@ -45,6 +45,12 @@ struct Slice {
         length_ = init.size();
     }
 
+    operator Slice<const T>() const noexcept
+        requires(!Const<T>)
+    {
+        return Slice<const T>{data_, length_};
+    }
+
     constexpr Slice(const Slice& src) noexcept = default;
     constexpr Slice& operator=(const Slice& src) noexcept = default;
 
