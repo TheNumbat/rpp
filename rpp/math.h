@@ -91,6 +91,8 @@ template<Int I>
 [[nodiscard]] f64 hypot(f64 x, f64 y) noexcept;
 [[nodiscard]] f32 pow(f32 x, f32 y) noexcept;
 [[nodiscard]] f64 pow(f64 x, f64 y) noexcept;
+[[nodiscard]] f32 exp(f32 x) noexcept;
+[[nodiscard]] f64 exp(f64 x) noexcept;
 [[nodiscard]] f32 floor(f32 v) noexcept;
 [[nodiscard]] f64 floor(f64 v) noexcept;
 [[nodiscard]] f32 ceil(f32 v) noexcept;

@@ -63,6 +63,12 @@ namespace rpp::Math {
 [[nodiscard]] f64 pow(f64 x, f64 y) noexcept {
     return ::pow(x, y);
 }
+[[nodiscard]] f32 exp(f32 x) noexcept {
+    return ::expf(x);
+}
+[[nodiscard]] f64 exp(f64 x) noexcept {
+    return ::exp(x);
+}
 [[nodiscard]] f32 floor(f32 v) noexcept {
     return ::floorf(v);
 }
