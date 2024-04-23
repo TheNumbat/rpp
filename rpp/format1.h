@@ -46,6 +46,14 @@ template<Enum E>
     }
 }
 
+[[nodiscard]] inline String_View skip_whitespace(String_View s) noexcept {
+    u64 start = 0;
+    while(start < s.length() && ascii::is_whitespace(s[start])) {
+        start++;
+    }
+    return s.sub(start, s.length());
+}
+
 [[nodiscard]] inline Opt<Pair<String_View, String_View>> parse_string(String_View s) noexcept {
     u64 start = 0;
     while(start < s.length() && ascii::is_whitespace(s[start])) {
