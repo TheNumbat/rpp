@@ -87,8 +87,8 @@ if(WIN32)
 endif()
 
 if(MSVC)
-    if(MSVC_VERSION LESS 1937)
-        message(FATAL_ERROR "Unsupported MSVC version: only 19.37+ is supported.")
+    if(MSVC_VERSION LESS 1939)
+        message(FATAL_ERROR "Unsupported MSVC version: only 19.39+ is supported.")
     endif()
 
     string(REPLACE "/GR" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})

@@ -8,7 +8,7 @@ on:
   pull_request:
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -17,7 +17,7 @@ jobs:
     - name: Configure
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
       env:
-        CXX: /usr/local/opt/llvm/bin/clang++
+        CXX: /usr/local/opt/llvm@17/bin/clang++
     - name: Build
       run: cmake --build build -- -j
     - name: Test
