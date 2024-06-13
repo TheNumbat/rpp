@@ -17,6 +17,7 @@ namespace rpp::Files {
     }
 
     if(GetFileAttributesExW(ucs2_path, GetFileExInfoStandard, (LPVOID)&attrib) == 0) {
+        warn("Failed to get file attributes %: %", path, Log::sys_error());
         return {};
     }
 
