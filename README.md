@@ -285,6 +285,7 @@ For faster parallel builds, you can instead generate [ninja](https://ninja-build
     - [ ] Map: don't store hashes of integer keys
     - [ ] Opt: specializations for null representations
 - Allocators
+    - [ ] Allow reallocating the topmost stack allocation
     - [ ] Per-thread pools
 - Misc
     - [ ] Range_Allocator: add second level of linear buckets
