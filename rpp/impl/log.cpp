@@ -40,8 +40,20 @@ struct Static_Data {
     }
 };
 
-static Static_Data g_log_data;
+static Storage<Static_Data> g_log_data;
 static thread_local u64 g_log_indent = 0;
+
+namespace detail {
+
+Static_Init::Static_Init() noexcept {
+    g_log_data.construct();
+}
+
+Static_Init::~Static_Init() noexcept {
+    g_log_data.destruct();
+}
+
+} // namespace detail
 
 #ifdef RPP_OS_WINDOWS
 
@@ -147,23 +159,25 @@ void output(Level level, const Location& loc, String_View msg) noexcept {
     Thread::Id thread = Thread::this_id();
     ::time_t timer = ::time(null);
 
-    Thread::Lock lock(g_log_data.lock);
+    {
+        Thread::Lock lock(g_log_data->lock);
 
-    String_View time = sys_time_string(timer);
+        String_View time = sys_time_string(timer);
 
-    printf(format_str, time.length(), time.data(), level_str, thread, loc.file.length(),
-           loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "", msg.length(), msg.data());
-    fflush(stdout);
+        printf(format_str, time.length(), time.data(), level_str, thread, loc.file.length(),
+               loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "", msg.length(), msg.data());
+        fflush(stdout);
 
-    for(auto& [_, callback] : g_log_data.callbacks) {
-        callback(level, thread, timer, loc, msg);
+        if(g_log_data->file) {
+            fprintf(g_log_data->file, format_str, time.length(), time.data(), level_str, thread,
+                    loc.file.length(), loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "",
+                    msg.length(), msg.data());
+            fflush(g_log_data->file);
+        }
     }
 
-    if(g_log_data.file) {
-        fprintf(g_log_data.file, format_str, time.length(), time.data(), level_str, thread,
-                loc.file.length(), loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "",
-                msg.length(), msg.data());
-        fflush(g_log_data.file);
+    for(auto& [_, callback] : g_log_data->callbacks) {
+        callback(level, thread, timer, loc, msg);
     }
 }
 
@@ -178,17 +192,17 @@ Scope::~Scope() noexcept {
 
 [[nodiscard]] Token
 subscribe(Function<void(Level, Thread::Id, Time, Location, String_View)> f) noexcept {
-    Thread::Lock lock(g_log_data.lock);
-    Token t = g_log_data.next++;
-    g_log_data.callbacks.insert(t, rpp::move(f));
+    Thread::Lock lock(g_log_data->lock);
+    Token t = g_log_data->next++;
+    g_log_data->callbacks.insert(t, rpp::move(f));
     return t;
 }
 
 void unsubscribe(Token token) noexcept {
-    Thread::Lock lock(g_log_data.lock);
-    g_log_data.callbacks.erase(token);
-    if(g_log_data.callbacks.empty()) {
-        g_log_data.callbacks.~Map();
+    Thread::Lock lock(g_log_data->lock);
+    g_log_data->callbacks.erase(token);
+    if(g_log_data->callbacks.empty()) {
+        g_log_data->callbacks.~Map();
     }
 }
 

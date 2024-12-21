@@ -159,6 +159,8 @@ void Profile::Frame_Profile::exit() noexcept {
 
 void Profile::alloc(Alloc a) noexcept {
     if constexpr(DO_PROFILE) {
+        bool replaced = false;
+        bool no_entry = false;
         {
             Thread::Lock lock(allocs_lock);
             Alloc_Profile& prof = allocs.get_or_insert(a.name);
@@ -166,7 +168,7 @@ void Profile::alloc(Alloc a) noexcept {
             if(a.size) {
 
                 if(prof.current_set.contains(a.address)) {
-                    warn("Profile: % reallocated %!", a.name, a.address);
+                    replaced = true;
                 }
                 prof.current_set.insert(a.address, a.size);
 
@@ -179,7 +181,7 @@ void Profile::alloc(Alloc a) noexcept {
 
                 Opt<Ref<u64>> sz = prof.current_set.try_get(a.address);
                 if(!sz.ok()) {
-                    warn("Profile: % freed % with no entry!", a.name, a.address);
+                    no_entry = true;
                 } else {
                     i64 size = **sz;
                     prof.current_set.erase(a.address);
@@ -189,10 +191,16 @@ void Profile::alloc(Alloc a) noexcept {
                 }
             }
         }
+
+        if(replaced) warn("Profile: % reallocated %!", a.name, a.address);
+        if(no_entry) warn("Profile: % freed % with no entry!", a.name, a.address);
+
         {
-            Thread::Lock lock(this_thread.frames_lock);
-            if(this_thread.during_frame) {
-                this_thread.frames.back().allocations.push(rpp::move(a));
+            if(!this_thread_destroyed) {
+                Thread::Lock lock(this_thread.frames_lock);
+                if(this_thread.during_frame) {
+                    this_thread.frames.back().allocations.push(rpp::move(a));
+                }
             }
         }
     }
@@ -247,10 +255,6 @@ void Profile::finalize() noexcept {
         warn("Unbalanced regions: %", Region_Allocator::depth());
     } else {
         info("No regions leaked.");
-    }
-    if(net != 0) {
-        warn("Memory leaked, shutting down now...");
-        Libc::exit(1);
     }
 }
 

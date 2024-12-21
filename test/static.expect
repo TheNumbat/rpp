@@ -1,0 +1,9 @@
+[Level::info] g_vec0: Vec[]
+[Level::info] g_vec1: Vec[1, 2, 3]
+[Level::info] vec: Vec[1, 2, 3]
+[Level::info] box: Box{5}
+[Level::info] tls_vec: Vec[1, 2, 3]
+[Level::info] tls_box: Box{5}
+[Level::info] tls_vec in thread: Vec[1, 2, 3, 4, 5]
+[Level::info] tls_box in thread: Box{null}
+[Level::info] Thread returned: Vec[1, 2, 3, 4, 5]
