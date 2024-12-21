@@ -40,8 +40,18 @@ struct Static_Data {
     }
 };
 
-static Static_Data g_log_data;
+static char g_log_data_[sizeof(Static_Data)];
+static Static_Data& g_log_data = *(Static_Data*)g_log_data_;
 static thread_local u64 g_log_indent = 0;
+
+detail::StaticInitializer::StaticInitializer() noexcept
+{
+	new(g_log_data_) Static_Data();
+}
+detail::StaticInitializer::~StaticInitializer() noexcept
+{
+	g_log_data.~Static_Data();
+}
 
 #ifdef RPP_OS_WINDOWS
 

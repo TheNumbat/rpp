@@ -92,6 +92,13 @@ void log(Level level, const Location& loc, String_View fmt, const Ts&... args) n
     Region(R) output(level, loc, format<Mregion<R>>(fmt, args...).view());
 }
 
+namespace detail {
+struct StaticInitializer {
+    StaticInitializer() noexcept;
+    ~StaticInitializer() noexcept;
+} inline static_initializer;
+}; // namespace detail
+
 } // namespace Log
 
 RPP_NAMED_ENUM(Log::Level, "Level", info, RPP_CASE(info), RPP_CASE(warn), RPP_CASE(fatal));
