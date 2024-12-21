@@ -138,6 +138,7 @@ private:
         }
         ~Thread_Profile() noexcept {
             finalize();
+            this_thread_destroyed = true;
         }
 
         void finalize() noexcept {
@@ -161,6 +162,7 @@ private:
     static inline Thread::Mutex allocs_lock;
     static inline Thread::Mutex finalizers_lock;
     static inline thread_local Thread_Profile this_thread;
+    static inline thread_local bool this_thread_destroyed = false;
     static inline Map<Thread::Id, Ref<Thread_Profile>, Mhidden> threads;
     static inline Map<String_View, Alloc_Profile, Mhidden> allocs;
     static inline Vec<Function<void()>, Mhidden> finalizers;

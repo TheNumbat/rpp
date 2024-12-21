@@ -190,9 +190,11 @@ void Profile::alloc(Alloc a) noexcept {
             }
         }
         {
-            Thread::Lock lock(this_thread.frames_lock);
-            if(this_thread.during_frame) {
-                this_thread.frames.back().allocations.push(rpp::move(a));
+            if(!this_thread_destroyed) {
+                Thread::Lock lock(this_thread.frames_lock);
+                if(this_thread.during_frame) {
+                    this_thread.frames.back().allocations.push(rpp::move(a));
+                }
             }
         }
     }
