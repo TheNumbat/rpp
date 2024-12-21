@@ -44,13 +44,11 @@ alignas(Static_Data) static char g_log_data_[sizeof(Static_Data)];
 static Static_Data& g_log_data = *(Static_Data*)g_log_data_;
 static thread_local u64 g_log_indent = 0;
 
-detail::StaticInitializer::StaticInitializer() noexcept
-{
-	new(g_log_data_) Static_Data();
+detail::StaticInitializer::StaticInitializer() noexcept {
+    new(g_log_data_) Static_Data();
 }
-detail::StaticInitializer::~StaticInitializer() noexcept
-{
-	g_log_data.~Static_Data();
+detail::StaticInitializer::~StaticInitializer() noexcept {
+    g_log_data.~Static_Data();
 }
 
 #ifdef RPP_OS_WINDOWS
@@ -157,23 +155,25 @@ void output(Level level, const Location& loc, String_View msg) noexcept {
     Thread::Id thread = Thread::this_id();
     ::time_t timer = ::time(null);
 
-    Thread::Lock lock(g_log_data.lock);
+    {
+        Thread::Lock lock(g_log_data.lock);
 
-    String_View time = sys_time_string(timer);
+        String_View time = sys_time_string(timer);
 
-    printf(format_str, time.length(), time.data(), level_str, thread, loc.file.length(),
-           loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "", msg.length(), msg.data());
-    fflush(stdout);
+        printf(format_str, time.length(), time.data(), level_str, thread, loc.file.length(),
+               loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "", msg.length(), msg.data());
+        fflush(stdout);
+
+        if(g_log_data.file) {
+            fprintf(g_log_data.file, format_str, time.length(), time.data(), level_str, thread,
+                    loc.file.length(), loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "",
+                    msg.length(), msg.data());
+            fflush(g_log_data.file);
+        }
+    }
 
     for(auto& [_, callback] : g_log_data.callbacks) {
         callback(level, thread, timer, loc, msg);
-    }
-
-    if(g_log_data.file) {
-        fprintf(g_log_data.file, format_str, time.length(), time.data(), level_str, thread,
-                loc.file.length(), loc.file.data(), loc.line, g_log_indent * INDENT_SIZE, "",
-                msg.length(), msg.data());
-        fflush(g_log_data.file);
     }
 }
 
