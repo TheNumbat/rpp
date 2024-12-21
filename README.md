@@ -249,8 +249,8 @@ Assure MSVC 19.39 and cmake 3.17 (or newer) are installed and in your PATH.
 ```bash
 mkdir build
 cd build
-cmake ..
-cmake --build . -DRPP_TEST=ON
+cmake .. -DRPP_TEST=ON
+cmake --build .
 ctest -C Debug
 ```
 
