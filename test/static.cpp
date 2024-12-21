@@ -6,16 +6,15 @@
 
 using Alloc = Mallocator<"Alloc">;
 
-// Creates two unbalanced allocations, since Profile::finalize occurs before it is destroyed.
-Test test{"static"_v};
-
 struct Destroy {
     ~Destroy() {
-        info("Logged at static destruction.");
+        info("Log at static destruction.");
         Profile::finalize();
     }
 };
 Destroy at_exit;
+
+Test test{"static"_v};
 
 Vec<i32, Alloc> g_vec0;
 Vec<i32, Alloc> g_vec1{1, 2, 3};

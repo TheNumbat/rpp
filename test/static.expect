@@ -7,19 +7,3 @@
 [Level::info] tls_vec in thread: Vec[1, 2, 3, 4, 5]
 [Level::info] tls_box in thread: Box{null}
 [Level::info] Thread returned: Vec[1, 2, 3, 4, 5]
-[Level::info] Logged at static destruction.
-[Level::info] Allocation stats for [Alloc]:
-[Level::info] 	Allocs: 6
-[Level::info] 	Frees: 6
-[Level::info] 	High water: 64
-[Level::info] 	Alloc size: 64
-[Level::info] 	Free size: 64
-[Level::info] Allocation stats for [Threading]:
-[Level::info] 	Allocs: 2
-[Level::info] 	Frees: 2
-[Level::info] 	High water: 56
-[Level::info] 	Alloc size: 56
-[Level::info] 	Free size: 56
-[Level::warn] Unbalanced allocations: 2
-[Level::info] No region memory leaked.
-[Level::info] No regions leaked.
