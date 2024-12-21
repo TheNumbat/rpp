@@ -40,7 +40,7 @@ struct Static_Data {
     }
 };
 
-static char g_log_data_[sizeof(Static_Data)];
+alignas(Static_Data) static char g_log_data_[sizeof(Static_Data)];
 static Static_Data& g_log_data = *(Static_Data*)g_log_data_;
 static thread_local u64 g_log_indent = 0;
 
