@@ -93,10 +93,15 @@ void log(Level level, const Location& loc, String_View fmt, const Ts&... args) n
 }
 
 namespace detail {
-struct StaticInitializer {
-    StaticInitializer() noexcept;
-    ~StaticInitializer() noexcept;
-} inline static_initializer;
+
+struct Static_Init {
+    Static_Init() noexcept;
+    ~Static_Init() noexcept;
+};
+
+// Constructed before subsequent globals and destructed after them.
+inline Static_Init g_initializer;
+
 }; // namespace detail
 
 } // namespace Log
