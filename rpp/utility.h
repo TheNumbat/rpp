@@ -514,6 +514,9 @@ template<typename T>
 concept Copy_Constructable = __is_constructible(T, const T&);
 
 template<typename T>
+concept Trivially_Constructable = __is_trivially_constructible(T);
+
+template<typename T>
 concept Trivially_Copyable = __is_trivially_copyable(T);
 
 template<typename T>
@@ -526,7 +529,8 @@ template<typename T>
 concept Must_Destruct = !__is_trivially_destructible(T);
 
 template<typename T>
-concept Trivial = __is_trivially_constructible(T) && __is_trivially_copyable(T);
+concept Trivial = Trivially_Constructable<T> && Trivially_Copyable<T> && Trivially_Movable<T> &&
+                  Trivially_Destructible<T>;
 
 template<typename E>
 using Underlying = __underlying_type(E);
