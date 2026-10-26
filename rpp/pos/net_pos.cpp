@@ -44,6 +44,8 @@ Udp::Udp(Udp&& src) noexcept {
 }
 
 Udp& Udp::operator=(Udp&& src) noexcept {
+    if(this == &src) return *this;
+    if(fd != -1) close(fd);
     fd = src.fd;
     src.fd = -1;
     return *this;

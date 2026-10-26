@@ -218,7 +218,7 @@ void Profile::finalize() noexcept {
         for(auto& f : finalizers) {
             f();
         }
-        finalizers.~Vec();
+        finalizers = {};
     }
     this_thread.finalize();
     {
@@ -234,11 +234,11 @@ void Profile::finalize() noexcept {
                 warn("\tUnbalanced size: %", prof.second.current_set_size);
             }
         }
-        allocs.~Map();
+        allocs = {};
     }
     {
         Thread::Lock lock(threads_lock);
-        threads.~Map();
+        threads = {};
     }
     i64 net = sys_net_allocs();
     if(net != 0) {

@@ -53,7 +53,8 @@ struct Vec {
         src.capacity_ = 0;
     }
     Vec& operator=(Vec&& src) noexcept {
-        this->~Vec();
+        if(this == &src) return *this;
+        release();
         data_ = src.data_;
         length_ = src.length_;
         capacity_ = src.capacity_;
@@ -64,15 +65,7 @@ struct Vec {
     }
 
     ~Vec() noexcept {
-        if constexpr(Must_Destruct<T>) {
-            for(u64 i = 0; i < length_; i++) {
-                data_[i].~T();
-            }
-        }
-        A::free(data_);
-        data_ = null;
-        length_ = 0;
-        capacity_ = 0;
+        release();
     }
 
     template<Allocator B = A>
@@ -127,6 +120,9 @@ struct Vec {
                 for(u64 i = 0; i < length_; i++) {
                     new(&new_data[i]) T{rpp::move(data_[i])};
                 }
+            }
+            if constexpr(Must_Destruct<T>) {
+                for(u64 i = 0; i < length_; i++) data_[i].~T();
             }
         }
         A::free(data_);
@@ -262,6 +258,18 @@ struct Vec {
     }
 
 private:
+    void release() noexcept {
+        if constexpr(Must_Destruct<T>) {
+            for(u64 i = 0; i < length_; i++) {
+                data_[i].~T();
+            }
+        }
+        A::free(data_);
+        data_ = null;
+        length_ = 0;
+        capacity_ = 0;
+    }
+
     T* data_ = null;
     u64 length_ = 0;
     u64 capacity_ = 0;

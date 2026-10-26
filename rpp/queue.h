@@ -45,7 +45,8 @@ struct Queue {
         src.capacity_ = 0;
     }
     Queue& operator=(Queue&& src) noexcept {
-        this->~Queue();
+        if(this == &src) return *this;
+        release();
         data_ = src.data_;
         length_ = src.length_;
         last_ = src.last_;
@@ -58,10 +59,7 @@ struct Queue {
     }
 
     ~Queue() noexcept {
-        clear();
-        A::free(data_);
-        data_ = null;
-        capacity_ = 0;
+        release();
     }
 
     template<Allocator B = A>
@@ -102,31 +100,23 @@ struct Queue {
         if(new_capacity <= capacity_) return;
 
         T* new_data = reinterpret_cast<T*>(A::alloc(new_capacity * sizeof(T)));
-        T* start = data_ + last_ - length_;
 
         if constexpr(Trivially_Movable<T>) {
-            if(length_ <= last_) {
-                Libc::memcpy(new_data, start, sizeof(T) * length_);
-            } else {
-                u64 first = length_ - last_;
-                Libc::memcpy(new_data, start + capacity_, sizeof(T) * first);
-                Libc::memcpy(new_data + first, data_, sizeof(T) * last_);
+            if(length_ > 0) {
+                u64 start = start_idx();
+                u64 first = Math::min(length_, capacity_ - start);
+                Libc::memcpy(new_data, data_ + start, sizeof(T) * first);
+                if(first < length_)
+                    Libc::memcpy(new_data + first, data_, sizeof(T) * (length_ - first));
             }
         } else {
             static_assert(Move_Constructable<T>);
-            if(length_ <= last_) {
-                for(u64 i = 0; i < length_; i++) {
-                    new(&new_data[i]) T{rpp::move(start[i])};
-                }
-            } else {
-                u64 first = length_ - last_;
-                for(u64 i = 0; i < first; i++) {
-                    new(&new_data[i]) T{rpp::move(start[i + capacity_])};
-                }
-                for(u64 i = 0; i < last_; i++) {
-                    new(&new_data[first + i]) T{rpp::move(data_[i])};
-                }
+            for(u64 i = 0; i < length_; i++) {
+                new(&new_data[i]) T{rpp::move(data_[idx_at(i)])};
             }
+        }
+        if constexpr(Must_Destruct<T>) {
+            for(u64 i = 0; i < length_; i++) data_[idx_at(i)].~T();
         }
 
         A::free(data_);
@@ -240,32 +230,27 @@ struct Queue {
     [[nodiscard]] bool erase_first(const T& value) noexcept
         requires Equality<T> && (Trivially_Movable<T> || Move_Constructable<T>)
     {
-        bool found = false;
-        u64 idx = start_idx();
-        u64 consumed = 0;
-        while(consumed < length_) {
-            u64 next = idx == capacity_ - 1 ? 0 : idx + 1;
-            if(found) {
+        for(u64 i = 0; i < length_; i++) {
+            u64 idx = idx_at(i);
+            if(!(data_[idx] == value)) continue;
+
+            if constexpr(Must_Destruct<T>) data_[idx].~T();
+            for(u64 j = i + 1; j < length_; j++) {
+                u64 next = idx_at(j);
                 if constexpr(Trivially_Movable<T>) {
-                    Libc::memcpy(&data_[next], &data_[idx], sizeof(T));
+                    Libc::memcpy(&data_[idx], &data_[next], sizeof(T));
                 } else {
                     static_assert(Move_Constructable<T>);
-                    new(&data_[next]) T{rpp::move(data_[idx])};
+                    new(&data_[idx]) T{rpp::move(data_[next])};
                 }
-            } else if(data_[idx] == value) {
-                if constexpr(Must_Destruct<T>) {
-                    data_[idx].~T();
-                }
-                found = true;
+                if constexpr(Must_Destruct<T>) data_[next].~T();
+                idx = next;
             }
-            idx = next;
-            consumed++;
-        }
-        if(found) {
             length_--;
             last_ = last_ ? last_ - 1 : capacity_ - 1;
+            return true;
         }
-        return found;
+        return false;
     }
 
     template<bool is_const>
@@ -332,6 +317,13 @@ struct Queue {
     }
 
 private:
+    void release() noexcept {
+        clear();
+        A::free(data_);
+        data_ = null;
+        capacity_ = 0;
+    }
+
     [[nodiscard]] u64 start_idx() const noexcept {
         u64 idx = last_ - length_;
         return idx >= capacity_ ? idx + capacity_ : idx;

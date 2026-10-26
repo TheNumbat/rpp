@@ -202,7 +202,7 @@ void unsubscribe(Token token) noexcept {
     Thread::Lock lock(g_log_data->lock);
     g_log_data->callbacks.erase(token);
     if(g_log_data->callbacks.empty()) {
-        g_log_data->callbacks.~Map();
+        g_log_data->callbacks = {};
     }
 }
 

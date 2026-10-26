@@ -24,6 +24,7 @@ struct Ref {
         src.value_ = null;
     }
     constexpr Ref& operator=(Ref&& src) noexcept {
+        if(this == &src) return *this;
         value_ = src.value_;
         src.value_ = null;
         return *this;

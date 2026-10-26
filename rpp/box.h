@@ -40,17 +40,15 @@ struct Box {
         src.data_ = null;
     }
     Box& operator=(Box&& src) noexcept {
-        this->~Box();
+        if(this == &src) return *this;
+        release();
         data_ = src.data_;
         src.data_ = null;
         return *this;
     }
 
     ~Box() noexcept {
-        if(data_) {
-            A::template destroy<T>(data_);
-            data_ = null;
-        }
+        release();
     }
 
     template<typename... Args>
@@ -77,7 +75,7 @@ struct Box {
 
     template<typename... Args>
     void emplace(Args&&... args) noexcept {
-        this->~Box();
+        release();
         data_ = A::template make<T>(rpp::forward<Args>(args)...);
     }
 
@@ -104,6 +102,13 @@ struct Box {
     }
 
 private:
+    void release() noexcept {
+        if(data_) {
+            A::template destroy<T>(data_);
+            data_ = null;
+        }
+    }
+
     T* data_ = null;
 
     template<typename T2, Scalar_Allocator P2>

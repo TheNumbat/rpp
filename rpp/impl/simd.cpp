@@ -116,11 +116,19 @@ static_assert(alignof(F32x4) == 16);
 }
 
 [[nodiscard]] F32x4 F32x4::min(F32x4 a, F32x4 b) noexcept {
+#if __has_builtin(__builtin_elementwise_minnum)
+    return {__builtin_elementwise_minnum(a.data, b.data)};
+#else
     return {__builtin_elementwise_min(a.data, b.data)};
+#endif
 }
 
 [[nodiscard]] F32x4 F32x4::max(F32x4 a, F32x4 b) noexcept {
+#if __has_builtin(__builtin_elementwise_maxnum)
+    return {__builtin_elementwise_maxnum(a.data, b.data)};
+#else
     return {__builtin_elementwise_max(a.data, b.data)};
+#endif
 }
 
 [[nodiscard]] F32x4 F32x4::floor(F32x4 a) noexcept {

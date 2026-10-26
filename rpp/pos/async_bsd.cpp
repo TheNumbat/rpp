@@ -27,7 +27,8 @@ Event::Event(Event&& other) noexcept {
 }
 
 Event& Event::operator=(Event&& other) noexcept {
-    this->~Event();
+    if(this == &other) return *this;
+    release();
     fd = other.fd;
     other.fd = -1;
     signal_fd = other.signal_fd;
@@ -38,6 +39,10 @@ Event& Event::operator=(Event&& other) noexcept {
 }
 
 Event::~Event() noexcept {
+    release();
+}
+
+void Event::release() noexcept {
     if(fd != -1) close(fd);
     if(signal_fd != -1) close(signal_fd);
     fd = -1;

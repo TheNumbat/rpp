@@ -44,7 +44,8 @@ struct Heap {
         src.capacity_ = 0;
     }
     Heap& operator=(Heap&& src) noexcept {
-        this->~Heap();
+        if(this == &src) return *this;
+        release();
         data_ = src.data_;
         length_ = src.length_;
         capacity_ = src.capacity_;
@@ -55,15 +56,7 @@ struct Heap {
     }
 
     ~Heap() noexcept {
-        if constexpr(Must_Destruct<T>) {
-            for(T& v : *this) {
-                v.~T();
-            }
-        }
-        A::free(data_);
-        data_ = null;
-        length_ = 0;
-        capacity_ = 0;
+        release();
     }
 
     template<Allocator B = A>
@@ -96,12 +89,15 @@ struct Heap {
 
         T* new_data = reinterpret_cast<T*>(A::alloc(new_capacity * sizeof(T)));
         if constexpr(Trivially_Movable<T>) {
-            Libc::memcpy(new_data, data_, length_ * sizeof(T));
+            if(length_ > 0) Libc::memcpy(new_data, data_, length_ * sizeof(T));
         } else {
             static_assert(Move_Constructable<T>);
             for(u64 i = 0; i < length_; i++) {
                 new(&new_data[i]) T{rpp::move(data_[i])};
             }
+        }
+        if constexpr(Must_Destruct<T>) {
+            for(u64 i = 0; i < length_; i++) data_[i].~T();
         }
         A::free(data_);
 
@@ -169,6 +165,7 @@ struct Heap {
                 static_assert(Move_Constructable<T>);
                 new(data_) T{rpp::move(data_[length_])};
             }
+            if constexpr(Must_Destruct<T>) data_[length_].~T();
             reheap_down(0);
         }
     }
@@ -194,11 +191,26 @@ struct Heap {
     }
 
 private:
+    void release() noexcept {
+        if constexpr(Must_Destruct<T>) {
+            for(T& v : *this) {
+                v.~T();
+            }
+        }
+        A::free(data_);
+        data_ = null;
+        length_ = 0;
+        capacity_ = 0;
+    }
+
     void swap(u64 a, u64 b) noexcept
         requires Move_Constructable<T>
     {
+        if(a == b) return;
         T temp{rpp::move(data_[a])};
+        if constexpr(Must_Destruct<T>) data_[a].~T();
         new(&data_[a]) T{rpp::move(data_[b])};
+        if constexpr(Must_Destruct<T>) data_[b].~T();
         new(&data_[b]) T{rpp::move(temp)};
     }
 

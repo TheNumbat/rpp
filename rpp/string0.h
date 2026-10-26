@@ -90,10 +90,7 @@ struct String {
     }
 
     ~String() noexcept {
-        A::free(data_);
-        data_ = null;
-        capacity_ = 0;
-        length_ = 0;
+        release();
     }
 
     String(const String& src) noexcept = delete;
@@ -106,7 +103,8 @@ struct String {
         src.capacity_ = 0;
     }
     String& operator=(String&& src) noexcept {
-        this->~String();
+        if(this == &src) return *this;
+        release();
         data_ = src.data_;
         length_ = src.length_;
         capacity_ = src.capacity_;
@@ -178,6 +176,13 @@ struct String {
     [[nodiscard]] String<RA> append(const String<B>& next) const noexcept;
 
 private:
+    void release() noexcept {
+        A::free(data_);
+        data_ = null;
+        capacity_ = 0;
+        length_ = 0;
+    }
+
     u8* data_ = null;
     u64 length_ = 0;
     u64 capacity_ = 0;

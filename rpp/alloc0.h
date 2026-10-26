@@ -130,7 +130,8 @@ struct Free_List {
         src.list_ = null;
     }
     Free_List& operator=(Free_List&& src) noexcept {
-        this->~Free_List();
+        if(this == &src) return *this;
+        clear();
         list_ = src.list_;
         src.list_ = null;
         return *this;

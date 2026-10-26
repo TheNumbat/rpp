@@ -12,6 +12,15 @@ struct X {
 
 i32 main() {
     Test test{"empty"_v};
+    {
+        Vec<String<>> values;
+        values.push("first"_v.string());
+        values = {};
+        assert(values.empty());
+        values = {};
+        values.push("last"_v.string());
+        assert(values.front().view() == "last"_v);
+    }
     Trace("Array") {
         auto deduct = Array{1, 2, 3};
         static_assert(Same<decltype(deduct), Array<i32, 3>>);

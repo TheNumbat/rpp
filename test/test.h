@@ -9,6 +9,7 @@ struct Test {
     explicit Test(String_View name) : name(name) {
         token = Log::subscribe(
             [&](Log::Level lvl, Thread::Id, Log::Time, Log::Location, String_View msg) {
+                Thread::Lock lock(result_lock);
                 auto m = format<Mhidden>("[%] %\n"_v, lvl, msg);
                 for(u8 c : m) {
                     result.push(c);
@@ -41,6 +42,7 @@ struct Test {
     }
 
     String_View name;
+    Thread::Mutex result_lock;
     Vec<u8, Mhidden> result;
     Vec<u8, Files::Alloc> expected;
     Log::Token token;

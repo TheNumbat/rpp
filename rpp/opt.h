@@ -52,6 +52,7 @@ struct Opt {
     Opt& operator=(Opt&& src) noexcept
         requires Move_Constructable<T>
     {
+        if(this == &src) return *this;
         clear();
         if(src.ok_) {
             value_.construct(rpp::move(*src.value_));
@@ -63,6 +64,7 @@ struct Opt {
     Opt& operator=(T&& value) noexcept
         requires Move_Constructable<T>
     {
+        if(ok_ && &value == &*value_) return *this;
         clear();
         value_.construct(rpp::move(value));
         ok_ = true;

@@ -30,7 +30,11 @@ struct Range_Allocator {
         *this = rpp::move(src);
     }
     Range_Allocator& operator=(Range_Allocator&& src) noexcept {
-        this->~Range_Allocator();
+        if(this == &src) return *this;
+        {
+            Thread::Lock lock(mutex);
+            reset();
+        }
 
         Thread::Lock lock(src.mutex);
 

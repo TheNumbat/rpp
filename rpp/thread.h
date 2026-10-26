@@ -111,7 +111,8 @@ struct Thread {
         src.thread = OS_Thread_Null;
     }
     Thread& operator=(Thread&& src) noexcept {
-        this->~Thread();
+        if(this == &src) return *this;
+        if(thread) join();
         thread = src.thread;
         src.thread = OS_Thread_Null;
         return *this;

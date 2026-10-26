@@ -102,6 +102,8 @@ Udp::Udp(Udp&& src) noexcept {
 }
 
 Udp& Udp::operator=(Udp&& src) noexcept {
+    if(this == &src) return *this;
+    if(socket != INVALID_SOCKET) closesocket(socket);
     socket = src.socket;
     src.socket = INVALID_SOCKET;
     return *this;

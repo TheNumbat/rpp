@@ -3,6 +3,22 @@
 
 i32 main() {
     Test test{"map"_v};
+    {
+        Map<i32, String<>> values;
+        values.insert(1, "first"_v.string());
+        values.erase(1);
+        assert(!values.contains(1));
+        values.insert(1, "second"_v.string());
+        values.clear();
+        assert(values.empty());
+        assert(!values.contains(1));
+        values.insert(2, "third"_v.string());
+        values = {};
+        assert(values.empty());
+        values = {};
+        values.insert(3, "last"_v.string());
+        assert(values.get(3).view() == "last"_v);
+    }
     Trace("Map") {
         auto deduct = Map{Pair{"foo"_v, 0}, Pair{"bar"_v, 1}};
         static_assert(Same<decltype(deduct), Map<String_View, i32>>);

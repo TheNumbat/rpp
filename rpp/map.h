@@ -20,10 +20,7 @@ struct Map_Slot {
         data.construct(rpp::move(key), rpp::move(value));
     }
     constexpr ~Map_Slot() noexcept {
-        if constexpr(Must_Destruct<Pair<K, V>>) {
-            if(hash != EMPTY) data.destruct();
-        }
-        hash = EMPTY;
+        release();
     }
 
     constexpr Map_Slot(const Map_Slot&) noexcept = delete;
@@ -31,14 +28,15 @@ struct Map_Slot {
 
     constexpr Map_Slot(Map_Slot&& src) noexcept {
         hash = src.hash;
-        src.hash = EMPTY;
         if(hash != EMPTY) data.construct(rpp::move(*src.data));
+        src.release();
     }
     constexpr Map_Slot& operator=(Map_Slot&& src) noexcept {
-        this->~Map_Slot();
+        if(this == &src) return *this;
+        release();
         hash = src.hash;
-        src.hash = EMPTY;
         if(hash != EMPTY) data.construct(rpp::move(*src.data));
+        src.release();
         return *this;
     }
 
@@ -61,6 +59,14 @@ struct Map_Slot {
     constexpr static u64 EMPTY = 0;
     u64 hash = EMPTY;
     Storage<Pair<K, V>> data;
+
+private:
+    constexpr void release() noexcept {
+        if constexpr(Must_Destruct<Pair<K, V>>) {
+            if(hash != EMPTY) data.destruct();
+        }
+        hash = EMPTY;
+    }
 };
 
 } // namespace detail
@@ -78,12 +84,7 @@ struct Map {
     Map() noexcept = default;
 
     explicit Map(u64 capacity) noexcept {
-        capacity_ = Math::next_pow2(capacity);
-        shift_ = Math::ctlz(capacity_) + 1;
-        usable_ = (capacity_ / 4) * 3;
-        length_ = 0;
-        data_ = reinterpret_cast<Slot*>(A::alloc(capacity_ * sizeof(Slot)));
-        Libc::memset(data_, 0, capacity_ * sizeof(Slot));
+        reserve(capacity);
     }
 
     template<typename... Ss>
@@ -108,7 +109,8 @@ struct Map {
         src.shift_ = 0;
     }
     Map& operator=(Map&& src) noexcept {
-        this->~Map();
+        if(this == &src) return *this;
+        release();
         data_ = src.data_;
         capacity_ = src.capacity_;
         length_ = src.length_;
@@ -123,17 +125,7 @@ struct Map {
     }
 
     ~Map() noexcept {
-        if constexpr(Must_Destruct<Pair<K, V>>) {
-            for(u64 i = 0; i < capacity_; i++) {
-                data_[i].~Slot();
-            }
-        }
-        A::free(data_);
-        data_ = null;
-        capacity_ = 0;
-        length_ = 0;
-        usable_ = 0;
-        shift_ = 0;
+        release();
     }
 
     template<Allocator B = A>
@@ -142,12 +134,8 @@ struct Map {
     {
         Map<K, V, B> ret(capacity_);
         ret.length_ = length_;
-        if constexpr(Trivially_Copyable<K> && Trivially_Copyable<V>) {
-            Libc::memcpy(ret.data_, data_, capacity_ * sizeof(Slot));
-        } else {
-            for(u64 i = 0; i < capacity_; i++) {
-                if(data_[i].hash != Slot::EMPTY) new(&ret.data_[i]) Slot{data_[i].clone()};
-            }
+        for(u64 i = 0; i < capacity_; i++) {
+            if(data_[i].hash != Slot::EMPTY) ret.data_[i] = data_[i].clone();
         }
         return ret;
     }
@@ -158,15 +146,15 @@ struct Map {
         Slot* old_data = data_;
         u64 old_capacity = capacity_;
 
-        capacity_ = new_capacity;
-        data_ = reinterpret_cast<Slot*>(A::alloc(capacity_ * sizeof(Slot)));
-        Libc::memset(data_, 0, capacity_ * sizeof(Slot));
+        capacity_ = Math::max(static_cast<u64>(32), Math::next_pow2(new_capacity));
+        data_ = new(A::alloc(capacity_ * sizeof(Slot))) Slot[capacity_]{};
         usable_ = (capacity_ / 4) * 3;
         shift_ = Math::ctlz(capacity_) + 1;
 
         for(u64 i = 0; i < old_capacity; i++) {
             if(old_data[i].hash != Slot::EMPTY)
                 static_cast<void>(insert_slot(rpp::move(old_data[i])));
+            old_data[i].~Slot();
         }
         A::free(old_data);
     }
@@ -177,13 +165,7 @@ struct Map {
     }
 
     void clear() noexcept {
-        if constexpr(Must_Destruct<Pair<K, V>>) {
-            for(u64 i = 0; i < capacity_; i++) {
-                data_[i].~Slot();
-            }
-        } else {
-            Libc::memset(data_, Slot::EMPTY, capacity_ * sizeof(Slot));
-        }
+        for(u64 i = 0; i < capacity_; i++) data_[i] = {};
         length_ = 0;
     }
 
@@ -257,7 +239,7 @@ struct Map {
         for(;;) {
             u64 k = data_[idx].hash;
             if(k == hash && data_[idx].data->first == key) {
-                data_[idx].~Slot();
+                data_[idx] = {};
                 fix_up(idx);
                 length_ -= 1;
                 return true;
@@ -404,6 +386,16 @@ struct Map {
     }
 
 private:
+    void release() noexcept {
+        for(u64 i = 0; i < capacity_; i++) data_[i].~Slot();
+        A::free(data_);
+        data_ = null;
+        capacity_ = 0;
+        length_ = 0;
+        usable_ = 0;
+        shift_ = 0;
+    }
+
     [[nodiscard]] Slot& insert_slot(Slot&& slot) noexcept {
         u64 idx = slot.hash >> shift_;
         Slot* placement = null;

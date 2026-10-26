@@ -12,7 +12,7 @@
 
 namespace rpp::Async {
 
-[[nodiscard]] Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>& pool, String_View path_) noexcept {
+[[nodiscard]] Task<Opt<Vec<u8, Files::Alloc>>> read(Pool<>&, String_View path_) noexcept {
 
     int fd = -1;
     Region(R) {
@@ -42,7 +42,7 @@ namespace rpp::Async {
     co_return Opt{rpp::move(data)};
 }
 
-[[nodiscard]] Task<bool> write(Pool<>& pool, String_View path_, Slice<u8> data) noexcept {
+[[nodiscard]] Task<bool> write(Pool<>&, String_View path_, Slice<u8> data) noexcept {
 
     int fd = -1;
     Region(R) {

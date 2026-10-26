@@ -24,7 +24,8 @@ Event::Event(Event&& other) noexcept {
 }
 
 Event& Event::operator=(Event&& other) noexcept {
-    this->~Event();
+    if(this == &other) return *this;
+    release();
     fd = other.fd;
     other.fd = -1;
     mask = other.mask;
@@ -33,6 +34,10 @@ Event& Event::operator=(Event&& other) noexcept {
 }
 
 Event::~Event() noexcept {
+    release();
+}
+
+void Event::release() noexcept {
     if(fd != -1) {
         int ret = close(fd);
         assert(ret == 0);

@@ -21,13 +21,18 @@ Event::Event(Event&& other) noexcept {
 }
 
 Event& Event::operator=(Event&& other) noexcept {
-    this->~Event();
+    if(this == &other) return *this;
+    release();
     event_ = other.event_;
     other.event_ = null;
     return *this;
 }
 
 Event::~Event() noexcept {
+    release();
+}
+
+void Event::release() noexcept {
     HANDLE event = reinterpret_cast<HANDLE>(event_);
     if(event) {
         BOOL ret = CloseHandle(event);

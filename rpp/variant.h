@@ -61,6 +61,7 @@ struct Variant {
     Variant& operator=(Variant&& src) noexcept
         requires(Move_Constructable<Ts> && ...)
     {
+        if(this == &src) return *this;
         destruct();
         if constexpr((Trivially_Movable<Ts> && ...)) {
             index_ = src.index_;
@@ -97,7 +98,7 @@ struct Variant {
         return Accessors<With_Lvalue_Ref, false>::apply(rpp::forward<F>(f), data_, index_);
     }
     template<typename F>
-        requires((Invocable<F, Ts &&> && ...) && All_Same<Invoke_Result<F, Ts &&>...>)
+        requires((Invocable<F, Ts&&> && ...) && All_Same<Invoke_Result<F, Ts&&>...>)
     [[nodiscard]] auto match(F&& f) && noexcept {
         return Accessors<With_Rvalue_Ref, false>::apply(rpp::forward<F>(f), data_, index_);
     }

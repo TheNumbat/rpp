@@ -151,15 +151,7 @@ struct Task {
     }
 
     ~Task() noexcept {
-        if(handle) {
-            auto state = handle.promise().state.exchange(TASK_ABANDONED);
-            if(state == TASK_DONE) {
-                handle.destroy();
-            } else if(state != TASK_START) {
-                die("Task abandoned while being waited upon.");
-            }
-        }
-        handle = null;
+        release();
     }
 
     Task(const Task&) noexcept = delete;
@@ -170,7 +162,8 @@ struct Task {
         src.handle = null;
     }
     Task& operator=(Task&& src) noexcept {
-        this->~Task();
+        if(this == &src) return *this;
+        release();
         handle = src.handle;
         src.handle = null;
         return *this;
@@ -224,6 +217,18 @@ struct Task {
     }
 
 private:
+    void release() noexcept {
+        if(handle) {
+            auto state = handle.promise().state.exchange(TASK_ABANDONED);
+            if(state == TASK_DONE) {
+                handle.destroy();
+            } else if(state != TASK_START) {
+                die("Task abandoned while being waited upon.");
+            }
+        }
+        handle = null;
+    }
+
     std::coroutine_handle<Promise<R, A>> handle;
 };
 
@@ -266,6 +271,8 @@ struct Event {
 #endif
 
 private:
+    void release() noexcept;
+
 #ifdef RPP_OS_WINDOWS
     Event(void* event) noexcept : event_{event} {
     }

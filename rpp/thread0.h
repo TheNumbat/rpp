@@ -64,7 +64,12 @@ struct Lock {
     Lock& operator=(const Lock&) noexcept = delete;
 
     Lock(Lock&& src) noexcept = default;
-    Lock& operator=(Lock&& src) noexcept = default;
+    Lock& operator=(Lock&& src) noexcept {
+        if(this == &src) return *this;
+        if(mutex_.ok()) mutex_->unlock();
+        mutex_ = rpp::move(src.mutex_);
+        return *this;
+    }
 
 private:
     Ref<Mutex> mutex_;
@@ -146,7 +151,7 @@ private:
     i16 value_ = 0;
 #elif defined RPP_OS_LINUX
     i32 value_ = 0;
-#else 
+#else
     Cond cond;
     Mutex mutex;
     bool signaled = false;

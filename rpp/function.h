@@ -37,6 +37,7 @@ struct Function<Words, R(Args...)> {
         src.vtable = null;
     }
     Function& operator=(Function&& src) noexcept {
+        if(this == &src) return *this;
         destruct();
         if(src.vtable) src.move(storage);
         vtable = src.vtable;
@@ -81,21 +82,25 @@ private:
     }
 
     template<typename F>
-    static void f_destruct(F* src) noexcept {
+    static void f_destruct(void* storage) noexcept {
+        F* src = static_cast<F*>(storage);
         if constexpr(Must_Destruct<F>) {
             src->~F();
         }
     }
     template<typename F>
-    static void f_move(F* dst, F* src) noexcept {
+    static void f_move(void* dst, void* storage) noexcept {
+        F* src = static_cast<F*>(storage);
         if constexpr(Trivially_Movable<F>) {
             Libc::memcpy(dst, src, sizeof(F));
         } else {
             new(dst) F{rpp::move(*src)};
         }
+        f_destruct<F>(src);
     }
     template<typename F>
-    [[nodiscard]] static R f_invoke(F* src, Args... args) noexcept {
+    [[nodiscard]] static R f_invoke(void* storage, Args... args) noexcept {
+        F* src = static_cast<F*>(storage);
         return src->operator()(rpp::forward<Args>(args)...);
     }
 

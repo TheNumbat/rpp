@@ -81,6 +81,7 @@ struct Rc {
         src.data_ = null;
     }
     Rc& operator=(Rc&& src) noexcept {
+        if(this == &src) return *this;
         drop();
         data_ = src.data_;
         src.data_ = null;
@@ -184,6 +185,7 @@ struct Arc {
         src.data_ = null;
     }
     Arc& operator=(Arc&& src) noexcept {
+        if(this == &src) return *this;
         drop();
         data_ = src.data_;
         src.data_ = null;
