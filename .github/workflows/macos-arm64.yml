@@ -12,12 +12,12 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Install Clang 17
-      run: brew install llvm@17
+    - name: Install Clang 23
+      run: |
+        brew install --force-bottle llvm@23
+        echo "CXX=$(brew --prefix llvm@23)/bin/clang++" >> "$GITHUB_ENV"
     - name: Configure
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
-      env:
-        CXX: /opt/homebrew/opt/llvm@17/bin/clang++
     - name: Build
       run: cmake --build build -- -j
     - name: Test

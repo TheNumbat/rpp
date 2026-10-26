@@ -263,7 +263,7 @@ Assure clang-17 and cmake 3.17 (or newer) are installed.
 ```bash
 mkdir build
 cd build
-CXX=clang++-17 cmake .. -DRPP_TEST=ON
+CXX=clang++ cmake .. -DRPP_TEST=ON
 make -j
 ctest -C Debug
 ```

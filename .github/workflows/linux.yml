@@ -12,15 +12,14 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Install Clang 17
+    - name: Install Clang 23
       run: |
-       wget https://apt.llvm.org/llvm.sh
-       chmod +x ./llvm.sh
-       sudo ./llvm.sh 17
+        curl -fsSL https://apt.llvm.org/llvm.sh -o llvm.sh
+        sudo bash llvm.sh 23
     - name: Configure
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
       env:
-        CXX: clang++-17
+        CXX: clang++-23
     - name: Build
       run: cmake --build build -- -j
     - name: Test

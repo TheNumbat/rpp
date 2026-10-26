@@ -8,16 +8,17 @@ on:
   pull_request:
 jobs:
   build:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Install Clang 17
-      run: brew install llvm@17
+    - name: Select preinstalled Clang 18
+      run: |
+        compiler="$(brew --prefix llvm@18)/bin/clang++"
+        "$compiler" --version
+        echo "CXX=$compiler" >> "$GITHUB_ENV"
     - name: Configure
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRPP_TEST=ON
-      env:
-        CXX: /usr/local/opt/llvm@17/bin/clang++
     - name: Build
       run: cmake --build build -- -j
     - name: Test
