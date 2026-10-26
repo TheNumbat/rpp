@@ -1,7 +1,6 @@
 
 #include "../base.h"
 
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -11,13 +10,15 @@ static Thread::Atomic g_net_allocs;
 
 using Regions = Mallocator<"Regions", false>;
 
-struct alignas(16) alignas(max_align_t) Chunk {
+constexpr u64 REGION_ALIGNMENT = 16;
+
+struct alignas(REGION_ALIGNMENT) Chunk {
     Chunk* up = null;
     u64 size = 0;
     u64 used = 0;
+    u64 pad = 0;
 };
 
-constexpr u64 REGION_ALIGNMENT = alignof(Chunk);
 constexpr u64 FIRST_CHUNK_SIZE = Math::KB(1);
 constexpr u64 MAX_REGION_DEPTH = 128;
 
