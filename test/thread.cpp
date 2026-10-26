@@ -9,7 +9,9 @@ i32 main() {
         Thread::Mutex mut;
         mut.lock();
         mut.unlock();
-        { Thread::Lock lock{mut}; }
+        {
+            Thread::Lock lock{mut};
+        }
     }
     Trace("Spawn") {
         auto value = Thread::spawn([]() { return Vec<i32>{2, 3}; });

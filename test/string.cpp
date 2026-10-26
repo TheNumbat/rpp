@@ -3,6 +3,16 @@
 
 i32 main() {
     Test test{"empty"_v};
+    {
+        String<> empty;
+        String_View view;
+        assert(empty.write(0, empty) == 0);
+        assert(empty.write(0, view) == 0);
+        auto text = "unchanged"_v.string();
+        assert(text.write(text.length(), empty) == text.length());
+        assert(text.write(text.length(), view) == text.length());
+        assert(text.view() == "unchanged"_v);
+    }
     Trace("String0") {
         String_View sv = "Hello World"_v;
         String s = sv.string();

@@ -1,6 +1,7 @@
 
 #include "../base.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,12 +11,14 @@ static Thread::Atomic g_net_allocs;
 
 using Regions = Mallocator<"Regions", false>;
 
-struct Chunk {
+constexpr u64 REGION_ALIGNMENT = Math::max<u64>(16, alignof(max_align_t));
+
+struct alignas(REGION_ALIGNMENT) Chunk {
     Chunk* up = null;
     u64 size = 0;
     u64 used = 0;
 };
-static_assert(sizeof(Chunk) == 24);
+static_assert(sizeof(Chunk) % REGION_ALIGNMENT == 0);
 
 constexpr u64 FIRST_CHUNK_SIZE = Math::KB(1);
 constexpr u64 MAX_REGION_DEPTH = 128;
@@ -49,6 +52,7 @@ static void assert_brand(Region brand) noexcept {
 
 [[nodiscard]] void* Region_Allocator::alloc(Region brand, u64 size) noexcept {
     assert_brand(brand);
+    size = Math::align(size, REGION_ALIGNMENT);
     if(chunks->size - chunks->used < size) {
         new_chunk(size);
     }

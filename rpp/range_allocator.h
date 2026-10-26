@@ -60,7 +60,7 @@ struct Range_Allocator {
         explicit Block(u64 start, u64 offset, u64 size, Block* next_block,
                        Block* prev_block) noexcept
             : offset(offset), size(size), start(start), next_block(next_block),
-              prev_block(prev_block){};
+              prev_block(prev_block) {};
 
         u64 size;
         u64 start;

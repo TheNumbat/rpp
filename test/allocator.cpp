@@ -2,11 +2,41 @@
 #include "test.h"
 
 #include <rpp/rc.h>
+#include <stddef.h>
+
+static void region_alignment() {
+    struct alignas(16) Aligned_Value {
+        u64 words[2];
+    };
+    u64 initial_size = Region_Allocator::size();
+    Region(R) {
+        for(u64 size : {1u, 3u, 4u, 15u, 17u, 1001u, 4097u}) {
+            auto bytes = Vec<u8, Mregion<R>>::make(size);
+            auto values = Vec<max_align_t, Mregion<R>>::make(2);
+            auto simd_aligned = Vec<Aligned_Value, Mregion<R>>::make(1);
+            assert(reinterpret_cast<uptr>(bytes.data()) % alignof(max_align_t) == 0);
+            assert(reinterpret_cast<uptr>(values.data()) % alignof(max_align_t) == 0);
+            assert(reinterpret_cast<uptr>(simd_aligned.data()) % alignof(Aligned_Value) == 0);
+            values[0] = {};
+            simd_aligned[0] = {};
+            u64 outer_size = Region_Allocator::size();
+            Region(Nested) {
+                auto nested = Vec<u8, Mregion<Nested>>::make(8193);
+                auto aligned = Vec<max_align_t, Mregion<Nested>>::make(1);
+                assert(reinterpret_cast<uptr>(aligned.data()) % alignof(max_align_t) == 0);
+                aligned[0] = {};
+            }
+            assert(Region_Allocator::size() == outer_size);
+        }
+    }
+    assert(Region_Allocator::size() == initial_size);
+}
 
 i32 main() {
     Profile::begin_frame();
     {
         Test test{"empty"_v};
+        region_alignment();
         Region(R0) {
             auto v0 = Vec<u8, Mregion<R0>>::make(Math::MB(2));
             Region(R1) {

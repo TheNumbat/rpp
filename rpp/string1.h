@@ -121,6 +121,7 @@ template<Allocator A>
 template<Allocator B>
 [[nodiscard]] u64 String<A>::write(u64 i, const String<B>& text) noexcept {
     assert(i + text.length() <= length_);
+    if(text.empty()) return i;
     Libc::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
 }
@@ -128,6 +129,7 @@ template<Allocator B>
 template<Allocator A>
 [[nodiscard]] u64 String<A>::write(u64 i, String_View text) noexcept {
     assert(i + text.length() <= length_);
+    if(text.empty()) return i;
     Libc::memcpy(data_ + i, text.data(), text.length());
     return i + text.length();
 }

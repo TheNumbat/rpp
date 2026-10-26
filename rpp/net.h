@@ -3,7 +3,7 @@
 
 #include "base.h"
 
-#if defined RPP_OS_LINUX || defined RPP_OS_MACOS 
+#if defined RPP_OS_LINUX || defined RPP_OS_MACOS
 #include <netinet/in.h>
 #include <sys/socket.h>
 #endif
